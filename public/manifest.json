@@ -1,0 +1,22 @@
+{
+  "name": "莊子 · 逍遥游于无何有之乡",
+  "short_name": "莊子",
+  "description": "庄子全文解读 — 原文、白话翻译与深度解读",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafaf8",
+  "theme_color": "#8b4513",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

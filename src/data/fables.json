@@ -1,0 +1,565 @@
+{
+  "fables": [
+    {
+      "id": "f001",
+      "name": "鲲鹏之变",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-1",
+      "summary": "北冥有鱼名为鲲，化而为鸟名为鹏，怒而飞翼若垂天之云。",
+      "moral": "生命的内在转化——从潜藏到升华，大格局需要大积累。",
+      "keywords": [
+        "逍遥",
+        "化"
+      ]
+    },
+    {
+      "id": "f002",
+      "name": "蜩鸠笑鹏",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-3",
+      "summary": "蝉和小斑鸠嘲笑大鹏飞九万里的壮举。",
+      "moral": "以小度大，以有限衡量无限——认知的局限。",
+      "keywords": [
+        "逍遥",
+        "认知"
+      ]
+    },
+    {
+      "id": "f003",
+      "name": "朝菌蟪蛄",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-4",
+      "summary": "朝菌不知晦朔，蟪蛄不知春秋。",
+      "moral": "不同的时间尺度决定了不同的认知边界。",
+      "keywords": [
+        "认知",
+        "生死"
+      ]
+    },
+    {
+      "id": "f004",
+      "name": "列子御风",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-6",
+      "summary": "列子乘风飞行，泠然善也，然犹有所待者也。",
+      "moral": "即使能乘风飞行，仍然需要依赖风——真正的自由是无待。",
+      "keywords": [
+        "逍遥",
+        "无待"
+      ]
+    },
+    {
+      "id": "f005",
+      "name": "大瓠之用",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-7",
+      "summary": "惠子有大瓠，庄子劝其以为大樽浮于江湖。",
+      "moral": "同一事物，视角不同，价值截然不同。",
+      "keywords": [
+        "无用之用"
+      ]
+    },
+    {
+      "id": "f006",
+      "name": "樗树无用",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-8",
+      "summary": "樗树臃肿卷曲，匠者不顾，反而得以终其天年。",
+      "moral": "无用之用方为大用——跳出功利框架的生存智慧。",
+      "keywords": [
+        "无用之用",
+        "逍遥"
+      ]
+    },
+    {
+      "id": "f007",
+      "name": "吾丧我",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-1",
+      "summary": "南郭子綦隐机而坐，形如槁木心如死灰，今者吾丧我。",
+      "moral": "破除对假我的执着，进入真正的存在状态。",
+      "keywords": [
+        "齐物",
+        "坐忘"
+      ]
+    },
+    {
+      "id": "f008",
+      "name": "天籁",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-3",
+      "summary": "夫吹万不同，而使其自己也。咸其自取，怒者其谁邪？",
+      "moral": "天籁不是一种声音，而是万物自发的原理——没有主宰者。",
+      "keywords": [
+        "自然",
+        "齐物"
+      ]
+    },
+    {
+      "id": "f009",
+      "name": "庄周梦蝶",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-6",
+      "summary": "庄周梦为蝴蝶，不知周也。俄然觉，则蘧蘧然周也。",
+      "moral": "不知是梦是醒——物我两忘的物化境界。",
+      "keywords": [
+        "齐物",
+        "化",
+        "生死"
+      ]
+    },
+    {
+      "id": "f010",
+      "name": "朝三暮四",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-7",
+      "summary": "狙公赋芧，朝三暮四众狙怒，朝四暮三众狙悦。",
+      "moral": "名实未亏而喜怒为用——执着于表象的荒谬。",
+      "keywords": [
+        "齐物",
+        "认知"
+      ]
+    },
+    {
+      "id": "f011",
+      "name": "罔两问景",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-8",
+      "summary": "影子的边缘问影子为何没有独立操守。",
+      "moral": "层层依赖的追问，最终指向无待。",
+      "keywords": [
+        "齐物",
+        "无待"
+      ]
+    },
+    {
+      "id": "f012",
+      "name": "庖丁解牛",
+      "chapter": "养生主",
+      "chapterId": "03-yangsheng-zhu",
+      "passageId": "03-yangsheng-zhu-2",
+      "summary": "庖丁为文惠君解牛，以神遇而不以目视。",
+      "moral": "由技入道，顺应自然纹理，游刃有余。",
+      "keywords": [
+        "养生",
+        "自然"
+      ]
+    },
+    {
+      "id": "f013",
+      "name": "泽雉",
+      "chapter": "养生主",
+      "chapterId": "03-yangsheng-zhu",
+      "passageId": "03-yangsheng-zhu-3",
+      "summary": "泽雉十步一啄百步一饮，不蕲畜乎樊中。",
+      "moral": "自由比安逸更重要。",
+      "keywords": [
+        "养生",
+        "逍遥"
+      ]
+    },
+    {
+      "id": "f014",
+      "name": "薪尽火传",
+      "chapter": "养生主",
+      "chapterId": "03-yangsheng-zhu",
+      "passageId": "03-yangsheng-zhu-4",
+      "summary": "指穷于为薪，火传也不知其尽也。",
+      "moral": "形体有尽而精神不灭。",
+      "keywords": [
+        "养生",
+        "生死"
+      ]
+    },
+    {
+      "id": "f015",
+      "name": "栎社树",
+      "chapter": "人间世",
+      "chapterId": "04-renjian-shi",
+      "passageId": "04-renjian-shi-5",
+      "summary": "栎社树托梦匠石：以不材得终其天年。",
+      "moral": "无用之用是乱世中保全自己的智慧。",
+      "keywords": [
+        "无用之用",
+        "处世"
+      ]
+    },
+    {
+      "id": "f016",
+      "name": "支离疏",
+      "chapter": "人间世",
+      "chapterId": "04-renjian-shi",
+      "passageId": "04-renjian-shi-6",
+      "summary": "支离疏形体残缺，反而免于兵役，终其天年。",
+      "moral": "无用之用——形体残缺反而得以保全。",
+      "keywords": [
+        "无用之用",
+        "处世"
+      ]
+    },
+    {
+      "id": "f017",
+      "name": "楚狂接舆",
+      "chapter": "人间世",
+      "chapterId": "04-renjian-shi",
+      "passageId": "04-renjian-shi-7",
+      "summary": "凤兮凤兮，何如德之衰也！来世不可待，往世不可追也。",
+      "moral": "有道之人生不逢时的慨叹。",
+      "keywords": [
+        "处世",
+        "命运"
+      ]
+    },
+    {
+      "id": "f018",
+      "name": "王骀",
+      "chapter": "德充符",
+      "chapterId": "05-dechong-fu",
+      "passageId": "05-dechong-fu-1",
+      "summary": "兀者王骀不言之教，从之游者与仲尼相若。",
+      "moral": "残形全德——内在德性胜于外在形体。",
+      "keywords": [
+        "德",
+        "齐物"
+      ]
+    },
+    {
+      "id": "f019",
+      "name": "相濡以沫",
+      "chapter": "大宗师",
+      "chapterId": "06-dazong-shi",
+      "passageId": "06-dazong-shi-2",
+      "summary": "泉涸鱼相与处于陆，相濡以沫不如相忘于江湖。",
+      "moral": "与其患难相助，不如各自在广阔的天地中自由。",
+      "keywords": [
+        "生死",
+        "逍遥",
+        "自然"
+      ]
+    },
+    {
+      "id": "f020",
+      "name": "浑沌之死",
+      "chapter": "应帝王",
+      "chapterId": "07-yingdi-wang",
+      "passageId": "07-yingdi-wang-5",
+      "summary": "南海之帝为儵，七日凿七窍而浑沌死。",
+      "moral": "好心办坏事——有为政治的悲剧。",
+      "keywords": [
+        "自然无为",
+        "齐物"
+      ]
+    },
+    {
+      "id": "f021",
+      "name": "伯乐治马",
+      "chapter": "马蹄",
+      "chapterId": "09-mati",
+      "passageId": "09-mati-2",
+      "summary": "伯乐善治马，烧之剔之刻之烙之。",
+      "moral": "以人的标准改造他者，是对天性的摧残。",
+      "keywords": [
+        "自然无为",
+        "批判仁义"
+      ]
+    },
+    {
+      "id": "f022",
+      "name": "窃国者侯",
+      "chapter": "胠箧",
+      "chapterId": "10-quqie",
+      "passageId": "10-quqie-2",
+      "summary": "窃钩者诛，窃国者为诸侯。诸侯之门而仁义存焉。",
+      "moral": "仁义成了权力者的工具——对儒家道德的辛辣讽刺。",
+      "keywords": [
+        "批判仁义",
+        "齐物"
+      ]
+    },
+    {
+      "id": "f023",
+      "name": "轮扁斫轮",
+      "chapter": "天道",
+      "chapterId": "13-tiandao",
+      "passageId": "13-tiandao-4",
+      "summary": "轮扁斫轮得心应手，然不能以口授其子。",
+      "moral": "真正的智慧无法用言语传授。",
+      "keywords": [
+        "认知",
+        "自然"
+      ]
+    },
+    {
+      "id": "f024",
+      "name": "东施效颦",
+      "chapter": "天运",
+      "chapterId": "14-tianyun",
+      "passageId": "14-tianyun-3",
+      "summary": "西施病心而颦其里，丑人见之亦捧心而颦。",
+      "moral": "盲目模仿的荒谬。",
+      "keywords": [
+        "认知",
+        "自然"
+      ]
+    },
+    {
+      "id": "f025",
+      "name": "河伯望洋",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-1",
+      "summary": "河伯欣然自喜以为天下之美尽在己，见北海始旋其面目。",
+      "moral": "见过了大海才知道自己的渺小——谦虚的起点。",
+      "keywords": [
+        "认知",
+        "逍遥"
+      ]
+    },
+    {
+      "id": "f026",
+      "name": "井蛙夏虫",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-2",
+      "summary": "井蛙不可以语于海，夏虫不可以语于冰。",
+      "moral": "认知受限于空间与时间——走出自己的局限。",
+      "keywords": [
+        "认知",
+        "齐物"
+      ]
+    },
+    {
+      "id": "f027",
+      "name": "邯郸学步",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-4",
+      "summary": "寿陵余子学步于邯郸，未得国能又失其故步。",
+      "moral": "盲目模仿他人连自己本来会的都丢了。",
+      "keywords": [
+        "认知",
+        "自然"
+      ]
+    },
+    {
+      "id": "f028",
+      "name": "濠梁之辩",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-7",
+      "summary": "庄子与惠子辩于濠梁：子非鱼安知鱼之乐？",
+      "moral": "逻辑与直觉的对决——最著名的哲学辩论之一。",
+      "keywords": [
+        "认知",
+        "齐物",
+        "逍遥"
+      ]
+    },
+    {
+      "id": "f029",
+      "name": "庄子钓于濮水",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-5",
+      "summary": "楚王聘庄子，庄子持竿不顾。",
+      "moral": "宁可曳尾于涂中也不愿被庙堂束缚。",
+      "keywords": [
+        "逍遥",
+        "自然无为"
+      ]
+    },
+    {
+      "id": "f030",
+      "name": "鹓鶵腐鼠",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-6",
+      "summary": "惠子恐庄子夺其相，庄子以鹓鶵自比、腐鼠喻相位。",
+      "moral": "世俗眼中的珍宝，在高洁者眼中不过腐鼠。",
+      "keywords": [
+        "逍遥",
+        "批判仁义"
+      ]
+    },
+    {
+      "id": "f031",
+      "name": "鼓盆而歌",
+      "chapter": "至乐",
+      "chapterId": "18-zhile",
+      "passageId": "18-zhile-2",
+      "summary": "庄子妻死鼓盆而歌——生死不过是气之聚散。",
+      "moral": "超越世俗悲欢的达观生死观。",
+      "keywords": [
+        "生死",
+        "自然"
+      ]
+    },
+    {
+      "id": "f032",
+      "name": "骷髅论道",
+      "chapter": "至乐",
+      "chapterId": "18-zhile",
+      "passageId": "18-zhile-4",
+      "summary": "庄子枕骷髅而卧，骷髅梦中论死之乐。",
+      "moral": "死后无君无臣无忧无虑——对死亡的诗意超越。",
+      "keywords": [
+        "生死",
+        "自然"
+      ]
+    },
+    {
+      "id": "f033",
+      "name": "佝偻承蜩",
+      "chapter": "达生",
+      "chapterId": "19-dasheng",
+      "passageId": "19-dasheng-1",
+      "summary": "佝偻者承蜩，犹掇之也。用志不分乃凝于神。",
+      "moral": "专注至极，便能出神入化。",
+      "keywords": [
+        "养生",
+        "自然"
+      ]
+    },
+    {
+      "id": "f034",
+      "name": "梓庆削木",
+      "chapter": "达生",
+      "chapterId": "19-dasheng",
+      "passageId": "19-dasheng-2",
+      "summary": "梓庆削木为鐻，见者惊犹鬼神。斋戒静心然后入山林。",
+      "moral": "忘掉功名利禄，才能与自然合一。",
+      "keywords": [
+        "养生",
+        "自然"
+      ]
+    },
+    {
+      "id": "f035",
+      "name": "呆若木鸡",
+      "chapter": "达生",
+      "chapterId": "19-dasheng",
+      "passageId": "19-dasheng-4",
+      "summary": "斗鸡训练至望之似木鸡，其德全矣。",
+      "moral": "真正的强大不是张扬，而是沉稳内敛。",
+      "keywords": [
+        "养生",
+        "自然"
+      ]
+    },
+    {
+      "id": "f036",
+      "name": "山木与雁",
+      "chapter": "山木",
+      "chapterId": "20-shanmu",
+      "passageId": "20-shanmu-1",
+      "summary": "山中木以不材终年，主人之雁以不材死。",
+      "moral": "处乎材与不材之间——超越二元对立的智慧。",
+      "keywords": [
+        "无用之用",
+        "处世"
+      ]
+    },
+    {
+      "id": "f037",
+      "name": "解衣般礴",
+      "chapter": "田子方",
+      "chapterId": "21-tianzifang",
+      "passageId": "21-tianzifang-2",
+      "summary": "宋元君画师解衣般礴裸，是真画者也。",
+      "moral": "真正的艺术精神是破除一切束缚的自由表达。",
+      "keywords": [
+        "逍遥",
+        "自然"
+      ]
+    },
+    {
+      "id": "f038",
+      "name": "道在屎溺",
+      "chapter": "知北游",
+      "chapterId": "22-zhibeiyou",
+      "passageId": "22-zhibeiyou-5",
+      "summary": "东郭子问道，庄子答道在蝼蚁在瓦甓在屎溺。",
+      "moral": "道无处不在，越卑下处越见道之本真。",
+      "keywords": [
+        "道",
+        "自然",
+        "齐物"
+      ]
+    },
+    {
+      "id": "f039",
+      "name": "得鱼忘荃",
+      "chapter": "外物",
+      "chapterId": "26-waiwu",
+      "passageId": "26-waiwu-2",
+      "summary": "荃者所以在鱼，得鱼而忘荃。言者所以在意，得意而忘言。",
+      "moral": "工具是为目的服务的，达到目的就该放下工具。",
+      "keywords": [
+        "认知",
+        "言"
+      ]
+    },
+    {
+      "id": "f040",
+      "name": "涸辙之鲋",
+      "chapter": "外物",
+      "chapterId": "26-waiwu",
+      "passageId": "26-waiwu-1",
+      "summary": "庄周家贫，贷粟于监河侯。监河侯曰将得邑金。",
+      "moral": "远水不解近渴——当务之急不能等待空头支票。",
+      "keywords": [
+        "处世"
+      ]
+    },
+    {
+      "id": "f041",
+      "name": "蜗角之战",
+      "chapter": "则阳",
+      "chapterId": "25-zeyang",
+      "passageId": "25-zeyang-2",
+      "summary": "蜗牛两角有两国相争，伏尸数万。",
+      "moral": "从道的角度看，人类的争战不过蜗角之争。",
+      "keywords": [
+        "齐物",
+        "认知"
+      ]
+    },
+    {
+      "id": "f042",
+      "name": "儒以诗礼发冢",
+      "chapter": "外物",
+      "chapterId": "26-waiwu",
+      "passageId": "26-waiwu-3",
+      "summary": "儒生口诵诗礼，却在盗墓时用诗礼指导分工。",
+      "moral": "对儒家虚伪的辛辣讽刺。",
+      "keywords": [
+        "批判仁义"
+      ]
+    },
+    {
+      "id": "f043",
+      "name": "庄子临终",
+      "chapter": "列御寇",
+      "chapterId": "32-lieyukou",
+      "passageId": "32-lieyukou-3",
+      "summary": "庄子临终以天地为棺椁，日月为连璧。",
+      "moral": "最彻底的生死达观——与天地合一。",
+      "keywords": [
+        "生死",
+        "自然",
+        "逍遥"
+      ]
+    }
+  ]
+}

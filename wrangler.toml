@@ -1,0 +1,5 @@
+name = "zhuangzi-site"
+pages_build_output_dir = "out"
+
+[env.production]
+pages = "zhuangzi-site"

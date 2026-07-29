@@ -1,0 +1,400 @@
+{
+  "quotes": [
+    {
+      "id": "q001",
+      "text": "北冥有鱼，其名为鲲。鲲之大，不知其几千里也。化而为鸟，其名为鹏。",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-1",
+      "theme": "逍遥自由",
+      "explanation": "开篇意象，以鲲鹏之化喻生命从潜藏到升华的蜕变。"
+    },
+    {
+      "id": "q002",
+      "text": "鹏之徙于南冥也，水击三千里，抟扶摇而上者九万里，去以六月息者也。",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-2",
+      "theme": "逍遥自由",
+      "explanation": "大鹏的飞翔尚需凭借六月大风，暗示有待的主题。"
+    },
+    {
+      "id": "q003",
+      "text": "天之苍苍，其正色邪？其远而无所至极邪？",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-2",
+      "theme": "认知局限",
+      "explanation": "天蓝是它的本色吗？还是因为太远看不到尽头？第一层认知追问。"
+    },
+    {
+      "id": "q004",
+      "text": "小知不及大知，小年不及大年。",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-4",
+      "theme": "认知局限",
+      "explanation": "认知与时间的尺度决定视野的广度。"
+    },
+    {
+      "id": "q005",
+      "text": "朝菌不知晦朔，蟪蛄不知春秋。",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-4",
+      "theme": "认知局限",
+      "explanation": "生命短促者无法理解更长的时间维度。"
+    },
+    {
+      "id": "q006",
+      "text": "举世而誉之而不加劝，举世而非之而不加沮。",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-5",
+      "theme": "处世智慧",
+      "explanation": "毁誉不动于心，这是宋荣子的境界。"
+    },
+    {
+      "id": "q007",
+      "text": "至人无己，神人无功，圣人无名。",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-6",
+      "theme": "逍遥自由",
+      "explanation": "庄子理想人格的三重境界：无我执、无功业、无名声。"
+    },
+    {
+      "id": "q008",
+      "text": "今子有五石之瓠，何不虑以为大樽而浮乎江湖？",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-7",
+      "theme": "无用之用",
+      "explanation": "换个视角，无用之物可有大用。"
+    },
+    {
+      "id": "q009",
+      "text": "不夭斤斧，物无害者。无所可用，安所困苦哉！",
+      "chapter": "逍遥游",
+      "chapterId": "01-xiaoyao-you",
+      "passageId": "01-xiaoyao-you-8",
+      "theme": "无用之用",
+      "explanation": "因无用而免于砍伐——无用之用方为大用。"
+    },
+    {
+      "id": "q010",
+      "text": "形固可使如槁木，而心固可使如死灰乎？",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-1",
+      "theme": "齐物平等",
+      "explanation": "形如槁木心如死灰，不是生命枯竭，而是去除杂念后的清明。"
+    },
+    {
+      "id": "q011",
+      "text": "今者吾丧我，汝知之乎？",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-1",
+      "theme": "齐物平等",
+      "explanation": "吾丧我——破除对假我的执著，是齐物的入门。"
+    },
+    {
+      "id": "q012",
+      "text": "女闻人籁而未闻地籁，女闻地籁而未闻天籁夫！",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-1",
+      "theme": "自然无为",
+      "explanation": "人籁、地籁、天籁三重境界，天籁即自然天成。"
+    },
+    {
+      "id": "q013",
+      "text": "夫吹万不同，而使其自己也。咸其自取，怒者其谁邪？",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-3",
+      "theme": "自然无为",
+      "explanation": "天籁的奥秘：万物各自发声，背后没有一个主宰者。"
+    },
+    {
+      "id": "q014",
+      "text": "物无非彼，物无非是。自彼则不见，自知则知之。",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-5",
+      "theme": "齐物平等",
+      "explanation": "彼与此相互依存——没有绝对的对方也没有绝对的自己。"
+    },
+    {
+      "id": "q015",
+      "text": "方生方死，方死方生；方可方不可，方不可方可。",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-5",
+      "theme": "齐物平等",
+      "explanation": "一切都在流动转化中，没有固定的状态。"
+    },
+    {
+      "id": "q016",
+      "text": "彼亦一是非，此亦一是非。",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-5",
+      "theme": "齐物平等",
+      "explanation": "是非是相对的，站在不同立场有不同的标准。"
+    },
+    {
+      "id": "q017",
+      "text": "昔者庄周梦为胡蝶，栩栩然胡蝶也，自喻适志与！不知周也。",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-6",
+      "theme": "齐物平等",
+      "explanation": "庄周梦蝶——物我两忘的终极追问。"
+    },
+    {
+      "id": "q018",
+      "text": "周与胡蝶，则必有分矣。此之谓物化。",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-6",
+      "theme": "齐物平等",
+      "explanation": "物化：万物在变化中贯通，主客之别在化中消融。"
+    },
+    {
+      "id": "q019",
+      "text": "朝三而暮四。众狙皆怒。然则朝四而暮三。众狙皆悦。",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-7",
+      "theme": "齐物平等",
+      "explanation": "朝三暮四——名实未亏而喜怒为用。"
+    },
+    {
+      "id": "q020",
+      "text": "天地与我并生，而万物与我为一。",
+      "chapter": "齐物论",
+      "chapterId": "02-qiwu-lun",
+      "passageId": "02-qiwu-lun-7",
+      "theme": "齐物平等",
+      "explanation": "庄子齐物思想的最高表达。"
+    },
+    {
+      "id": "q021",
+      "text": "吾生也有涯，而知也无涯。以有涯随无涯，殆已！",
+      "chapter": "养生主",
+      "chapterId": "03-yangsheng-zhu",
+      "passageId": "03-yangsheng-zhu-1",
+      "theme": "养生之道",
+      "explanation": "以有限的生命追逐无限的知识，危险的开始。"
+    },
+    {
+      "id": "q022",
+      "text": "臣之所好者道也，进乎技矣。",
+      "chapter": "养生主",
+      "chapterId": "03-yangsheng-zhu",
+      "passageId": "03-yangsheng-zhu-1",
+      "theme": "养生之道",
+      "explanation": "庖丁解牛的核心——由技入道。"
+    },
+    {
+      "id": "q023",
+      "text": "以无厚入有间，恢恢乎其于游刃必有余地。",
+      "chapter": "养生主",
+      "chapterId": "03-yangsheng-zhu",
+      "passageId": "03-yangsheng-zhu-2",
+      "theme": "养生之道",
+      "explanation": "以无厚入有间——游刃有余的处世哲学。"
+    },
+    {
+      "id": "q024",
+      "text": "指穷于为薪，火传也，不知其尽也。",
+      "chapter": "养生主",
+      "chapterId": "03-yangsheng-zhu",
+      "passageId": "03-yangsheng-zhu-4",
+      "theme": "生死观",
+      "explanation": "薪尽火传——形体有尽而精神不灭。"
+    },
+    {
+      "id": "q025",
+      "text": "知其不可奈何而安之若命，德之至也。",
+      "chapter": "人间世",
+      "chapterId": "04-renjian-shi",
+      "passageId": "04-renjian-shi-2",
+      "theme": "处世智慧",
+      "explanation": "知道无法改变就安然接受，这是最高的德性。"
+    },
+    {
+      "id": "q026",
+      "text": "人皆知有用之用，而莫知无用之用也。",
+      "chapter": "人间世",
+      "chapterId": "04-renjian-shi",
+      "passageId": "04-renjian-shi-5",
+      "theme": "无用之用",
+      "explanation": "世人只知道有用之用，不知道无用之用才是大用。"
+    },
+    {
+      "id": "q027",
+      "text": "自其异者视之，肝胆楚越也；自其同者视之，万物皆一也。",
+      "chapter": "德充符",
+      "chapterId": "05-dechong-fu",
+      "passageId": "05-dechong-fu-2",
+      "theme": "齐物平等",
+      "explanation": "从差异看肝和胆像楚越，从相同看万物皆一。"
+    },
+    {
+      "id": "q028",
+      "text": "泉涸，鱼相与处于陆，相呴以湿，相濡以沫，不如相忘于江湖。",
+      "chapter": "大宗师",
+      "chapterId": "06-dazong-shi",
+      "passageId": "06-dazong-shi-2",
+      "theme": "生死观",
+      "explanation": "与其在困境中互相扶持，不如在自由中各不相扰。"
+    },
+    {
+      "id": "q029",
+      "text": "大块载我以形，劳我以生，佚我以老，息我以死。",
+      "chapter": "大宗师",
+      "chapterId": "06-dazong-shi",
+      "passageId": "06-dazong-shi-3",
+      "theme": "生死观",
+      "explanation": "自然赋予我形体，用生使我劳碌，用老使我安逸，用死使我安息。"
+    },
+    {
+      "id": "q030",
+      "text": "顺物自然而无容私焉，而天下治矣。",
+      "chapter": "应帝王",
+      "chapterId": "07-yingdi-wang",
+      "passageId": "07-yingdi-wang-1",
+      "theme": "自然无为",
+      "explanation": "顺应万物自然之理，不掺私意，天下自然治理。"
+    },
+    {
+      "id": "q031",
+      "text": "人皆有七窍以视听食息，此独无有，尝试凿之。日凿一窍，七日而浑沌死。",
+      "chapter": "应帝王",
+      "chapterId": "07-yingdi-wang",
+      "passageId": "07-yingdi-wang-5",
+      "theme": "自然无为",
+      "explanation": "浑沌之死——好心办坏事，有为政治的悲剧。"
+    },
+    {
+      "id": "q032",
+      "text": "凫胫虽短，续之则忧；鹤胫虽长，断之则悲。",
+      "chapter": "骈拇",
+      "chapterId": "08-pianmu",
+      "passageId": "08-pianmu-2",
+      "theme": "自然无为",
+      "explanation": "野鸭腿短接上就痛苦，鹤腿长截去就悲哀。"
+    },
+    {
+      "id": "q033",
+      "text": "窃钩者诛，窃国者为诸侯。诸侯之门而仁义存焉。",
+      "chapter": "胠箧",
+      "chapterId": "10-quqie",
+      "passageId": "10-quqie-2",
+      "theme": "批判仁义",
+      "explanation": "偷钩的被处死，偷国的却成诸侯。"
+    },
+    {
+      "id": "q034",
+      "text": "井蛙不可以语于海者，拘于虚也；夏虫不可以语于冰者，笃于时也。",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-2",
+      "theme": "认知局限",
+      "explanation": "井蛙夏虫——认知受限于空间与时间。"
+    },
+    {
+      "id": "q035",
+      "text": "以道观之，物无贵贱。",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-3",
+      "theme": "齐物平等",
+      "explanation": "从道的角度看，万物没有贵贱之分。"
+    },
+    {
+      "id": "q036",
+      "text": "子非鱼，安知鱼之乐？",
+      "chapter": "秋水",
+      "chapterId": "17-qiushui",
+      "passageId": "17-qiushui-7",
+      "theme": "认知局限",
+      "explanation": "你不是鱼，怎么知道鱼的快乐？最著名的哲学追问之一。"
+    },
+    {
+      "id": "q037",
+      "text": "庄子妻死，惠子吊之，庄子则方箕踞鼓盆而歌。",
+      "chapter": "至乐",
+      "chapterId": "18-zhile",
+      "passageId": "18-zhile-2",
+      "theme": "生死观",
+      "explanation": "庄子妻死鼓盆而歌——超越世俗悲欢的生死观。"
+    },
+    {
+      "id": "q038",
+      "text": "用志不分，乃凝于神。",
+      "chapter": "达生",
+      "chapterId": "19-dasheng",
+      "passageId": "19-dasheng-3",
+      "theme": "养生之道",
+      "explanation": "心志专一不分，精神自然凝聚。"
+    },
+    {
+      "id": "q039",
+      "text": "道不可闻，闻而非也；道不可见，见而非也；道不可言，言而非也。",
+      "chapter": "知北游",
+      "chapterId": "22-zhibeiyou",
+      "passageId": "22-zhibeiyou-3",
+      "theme": "认知局限",
+      "explanation": "道不可闻、不可见、不可言。"
+    },
+    {
+      "id": "q040",
+      "text": "道在屎溺。",
+      "chapter": "知北游",
+      "chapterId": "22-zhibeiyou",
+      "passageId": "22-zhibeiyou-5",
+      "theme": "自然无为",
+      "explanation": "道在屎溺中——道无处不在。"
+    },
+    {
+      "id": "q041",
+      "text": "荃者所以在鱼，得鱼而忘荃；蹄者所以在兔，得兔而忘蹄。",
+      "chapter": "外物",
+      "chapterId": "26-waiwu",
+      "passageId": "26-waiwu-2",
+      "theme": "认知局限",
+      "explanation": "得意忘言——工具是用来达到目的的。"
+    },
+    {
+      "id": "q042",
+      "text": "言者所以在意，得意而忘言。",
+      "chapter": "外物",
+      "chapterId": "26-waiwu",
+      "passageId": "26-waiwu-2",
+      "theme": "认知局限",
+      "explanation": "言语是捕捉意义的工具，得到意义就该忘记言语。"
+    },
+    {
+      "id": "q043",
+      "text": "在上为乌鸢食，在下为蝼蚁食。夺彼与此，何其偏也！",
+      "chapter": "列御寇",
+      "chapterId": "32-lieyukou",
+      "passageId": "32-lieyukou-3",
+      "theme": "生死观",
+      "explanation": "庄子临终：何必从乌鸦嘴里夺来给蚂蚁？"
+    },
+    {
+      "id": "q044",
+      "text": "独与天地精神往来，而不敖倪于万物。不谴是非，以与世俗处。",
+      "chapter": "天下",
+      "chapterId": "33-tianxia",
+      "passageId": "33-tianxia-3",
+      "theme": "逍遥自由",
+      "explanation": "庄子自画像：与天地精神往来，不与世俗争是非。"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "routes": [
+    {
+      "id": "ziyou",
+      "title": "如何获得内心自由",
+      "description": "从『无所待』到『逍遥游』——庄子论自由的七个层次",
+      "chapters": [
+        "01-xiaoyao-you",
+        "02-qiwu-lun",
+        "06-dazong-shi",
+        "17-qiushui",
+        "20-shanmu"
+      ],
+      "color": "#8b4513"
+    },
+    {
+      "id": "shengsi",
+      "title": "生从何来死往何去",
+      "description": "庄子的生死观：气之聚散、相忘江湖、鼓盆而歌",
+      "chapters": [
+        "03-yangsheng-zhu",
+        "06-dazong-shi",
+        "18-zhile",
+        "32-lieyukou"
+      ],
+      "color": "#6b5b7b"
+    },
+    {
+      "id": "chushi",
+      "title": "乱世中的生存智慧",
+      "description": "在险恶环境中如何保全天性——庄子的处世哲学",
+      "chapters": [
+        "04-renjian-shi",
+        "20-shanmu",
+        "08-pianmu",
+        "26-waiwu"
+      ],
+      "color": "#5b8c5b"
+    },
+    {
+      "id": "wuyong",
+      "title": "无用之用的智慧",
+      "description": "从樗树到大瓠——庄子论超越功利主义",
+      "chapters": [
+        "01-xiaoyao-you",
+        "04-renjian-shi",
+        "20-shanmu",
+        "06-dazong-shi"
+      ],
+      "color": "#8b6b3b"
+    },
+    {
+      "id": "qiwu",
+      "title": "齐物：破除二元对立的智慧",
+      "description": "是非、美丑、生死——庄子如何教我们超越二元思维",
+      "chapters": [
+        "02-qiwu-lun",
+        "05-dechong-fu",
+        "17-qiushui",
+        "25-zeyang"
+      ],
+      "color": "#5b7b8b"
+    },
+    {
+      "id": "ziran",
+      "title": "自然无为：不妄为的智慧",
+      "description": "从庖丁解牛到浑沌之死——顺应自然的法则",
+      "chapters": [
+        "03-yangsheng-zhu",
+        "07-yingdi-wang",
+        "09-mati",
+        "22-zhibeiyou"
+      ],
+      "color": "#7b8b5b"
+    },
+    {
+      "id": "zhenren",
+      "title": "理想人格：至人神人圣人",
+      "description": "庄子理想人格的多种面相——从真到圣的阶梯",
+      "chapters": [
+        "01-xiaoyao-you",
+        "06-dazong-shi",
+        "05-dechong-fu",
+        "33-tianxia"
+      ],
+      "color": "#8b5b5b"
+    }
+  ]
+}

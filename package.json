@@ -1,0 +1,34 @@
+{
+  "name": "zhuangzi-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "deploy": "npm run build && npx wrangler pages deploy out --project-name zhuangzi-site",
+    "clean": "rm -rf .next out"
+  },
+  "dependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/leaflet": "^1.9.21",
+    "d3": "^7.9.0",
+    "fuse.js": "^7.5.0",
+    "leaflet": "^1.9.4",
+    "next": "16.2.10",
+    "pinyin-pro": "^3.28.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
