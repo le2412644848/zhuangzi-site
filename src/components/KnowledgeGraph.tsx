@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import * as d3 from "d3";
+import type * as d3Type from "d3";
 import { concepts } from "@/data/concepts";
 import { useRouter } from "next/navigation";
 
-interface GraphNode extends d3.SimulationNodeDatum {
+interface GraphNode extends d3Type.SimulationNodeDatum {
   id: string;
   name: string;
 }
 
-interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
+interface GraphLink extends d3Type.SimulationLinkDatum<GraphNode> {
   source: string | GraphNode;
   target: string | GraphNode;
 }
@@ -21,10 +21,15 @@ export default function KnowledgeGraph() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!svgRef.current || !containerRef.current) return;
+    let cancelled = false;
 
-    const svg = d3.select(svgRef.current);
-    const container = containerRef.current;
+    async function render() {
+      if (!svgRef.current || !containerRef.current) return;
+      const d3 = await import("d3");
+      if (cancelled) return;
+
+      const svg = d3.select(svgRef.current);
+      const container = containerRef.current;
 
     // Clear previous content
     svg.selectAll("*").remove();
@@ -172,9 +177,14 @@ export default function KnowledgeGraph() {
       node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
     });
 
-    // Cleanup
+    return simulation;
+    }
+
+    let simulation: d3Type.Simulation<GraphNode, undefined> | null = null;
+    render().then((sim) => { if (sim) simulation = sim; });
+
     return () => {
-      simulation.stop();
+      simulation?.stop();
     };
   }, [router]);
 

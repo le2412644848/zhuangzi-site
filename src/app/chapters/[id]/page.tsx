@@ -7,6 +7,7 @@ import PassageView from "@/components/PassageView";
 import ChapterTOC from "@/components/ChapterTOC";
 import KeyboardNav from "@/components/KeyboardNav";
 import RelatedReadings from "@/components/RelatedReadings";
+import RecordReading from "@/components/RecordReading";
 import ConceptTag from "@/components/ConceptTag";
 import type { Metadata } from "next";
 
@@ -45,6 +46,7 @@ export default async function ChapterPage({ params }: Props) {
   return (
     <>
       <ChapterTOC chapter={chapter} />
+      <RecordReading chapterId={chapter.id} chapterTitle={chapter.title} />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
         <div className="mb-12">

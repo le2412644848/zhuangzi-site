@@ -7,14 +7,14 @@ import { LayoutClient } from "@/components/LayoutClient";
 
 const notoSerif = Noto_Serif_SC({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "700"],
   display: "swap",
   variable: "--font-serif",
 });
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "600"],
   display: "swap",
   variable: "--font-sans",
 });
@@ -96,17 +96,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
         <link rel="preconnect" href="https://tile.openstreetmap.org" />
         <meta name="theme-color" content="#8B5E3C" />
+        {/* Cloudflare Web Analytics — replace token to enable */}
+        {/* <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN"}'></script> */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('siteTheme')||'xuanzhi';var c={"xuanzhi":{"bp":"#FBF9F5","bs":"#F5EFE5","bc":"#FFFFFF","tp":"#2A2218","ts":"#7A6B5D","tm":"#A89880","ta":"#8B5E3C","br":"#E8E0D5","bl":"#F0EBE2"},"zhujian":{"bp":"#F3F0E4","bs":"#E8E3D2","bc":"#FAF7EC","tp":"#3A3520","ts":"#6B6340","tm":"#9B9060","ta":"#5A6B3A","br":"#D8D0B0","bl":"#E8E2C8"},"moyun":{"bp":"#F5F5F5","bs":"#EEEEEE","bc":"#FFFFFF","tp":"#1A1A1A","ts":"#5C5C5C","tm":"#999999","ta":"#333333","br":"#D5D5D5","bl":"#E5E5E5"},"qinghua":{"bp":"#F7F9FB","bs":"#EDF2F7","bc":"#FFFFFF","tp":"#1A2A3A","ts":"#4A6278","tm":"#7A8EA0","ta":"#2B5F8A","br":"#D0DDE8","bl":"#E0EAF3"}};var v=c[t]||c.xuanzhi;var r=document.documentElement;r.style.setProperty('--bg-primary',v.bp);r.style.setProperty('--bg-secondary',v.bs);r.style.setProperty('--bg-card',v.bc);r.style.setProperty('--text-primary',v.tp);r.style.setProperty('--text-secondary',v.ts);r.style.setProperty('--text-muted',v.tm);r.style.setProperty('--text-accent',v.ta);r.style.setProperty('--border-color',v.br);r.style.setProperty('--border-light',v.bl)}catch(e){}})()`,
           }}
         />
         {/* JSON-LD structured data */}

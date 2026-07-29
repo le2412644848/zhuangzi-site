@@ -15,8 +15,10 @@ function SearchContent() {
 
   useEffect(() => {
     if (initialQuery) {
-      setResults(search(initialQuery));
-      setSearched(true);
+      search(initialQuery).then((r) => {
+        setResults(r);
+        setSearched(true);
+      });
     }
   }, [initialQuery]);
 

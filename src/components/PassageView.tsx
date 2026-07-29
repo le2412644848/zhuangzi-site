@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import type { Passage, WordAnnotation } from "@/lib/chapters";
 import ConceptTag from "./ConceptTag";
 import AnnotationPanel from "./AnnotationPanel";
 import WordTooltip from "./WordTooltip";
-import PinyinAnnotator from "./PinyinAnnotator";
 import { useReadingMode } from "./ReadingModeProvider";
 import { toggleBookmark, isBookmarked } from "@/lib/annotations";
 import TranslationCompare from "./TranslationCompare";
+
+const PinyinAnnotator = dynamic(() => import("./PinyinAnnotator"), { ssr: false });
 
 interface PassageViewProps {
   passage: Passage;
@@ -96,6 +98,8 @@ export default function PassageView({ passage, chapterId, defaultExpanded = true
   const [bookmarked, setBookmarked] = useState(false);
   const [showPinyin, setShowPinyin] = useState(false);
   const [splitView, setSplitView] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const { immersive, toggle: toggleImmersive } = useReadingMode();
 
   const togglePinyin = () => setShowPinyin(!showPinyin);
@@ -106,6 +110,26 @@ export default function PassageView({ passage, chapterId, defaultExpanded = true
     const added = toggleBookmark(chapterId, passage.id, chapterId, passage.original);
     setBookmarked(added);
   }, [chapterId, passage.id, passage.original]);
+
+  const handleSpeak = useCallback(() => {
+    if (speaking) {
+      speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(passage.original);
+    utterance.lang = "zh-CN";
+    utterance.rate = 0.7;
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    speechSynthesis.speak(utterance);
+    setSpeaking(true);
+  }, [speaking, passage.original]);
+
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => { speechSynthesis.cancel(); };
+  }, []);
 
   return (
     <div className="group/passage" onMouseEnter={() => setShowTools(true)} onMouseLeave={() => setShowTools(false)}>
@@ -134,6 +158,25 @@ export default function PassageView({ passage, chapterId, defaultExpanded = true
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
             </svg>
           </button>
+          {/* Permalink */}
+          <button onClick={() => {
+            const url = `${window.location.origin}/chapters/${chapterId}#passage-${passage.id}`;
+            navigator.clipboard.writeText(url);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 1500);
+          }}
+            className="p-1.5 rounded hover:bg-[var(--hover-bg)] text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors"
+            title={linkCopied ? "已复制链接" : "复制段落链接"}>
+            {linkCopied ? (
+              <svg className="w-3.5 h-3.5 text-[var(--text-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+              </svg>
+            )}
+          </button>
           {/* Pinyin toggle */}
           <button onClick={togglePinyin}
             className={`p-1.5 rounded hover:bg-[var(--hover-bg)] transition-colors ${showPinyin ? "text-[var(--text-accent)]" : "text-[var(--text-muted)]"}`}
@@ -155,6 +198,20 @@ export default function PassageView({ passage, chapterId, defaultExpanded = true
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
             </svg>
+          </button>
+          {/* TTS — read aloud */}
+          <button onClick={handleSpeak}
+            className={`p-1.5 rounded hover:bg-[var(--hover-bg)] transition-colors ${speaking ? "text-[var(--text-accent)]" : "text-[var(--text-muted)]"}`}
+            title={speaking ? "停止朗读" : "朗读原文"}>
+            {speaking ? (
+              <svg className="w-3.5 h-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+              </svg>
+            )}
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { chapters } from "@/data/chapters";
+import { chaptersMeta } from "@/data/chapters";
 import { concepts } from "@/data/concepts";
 import type { MetadataRoute } from "next";
 
@@ -31,7 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/zhuangzi`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
   ];
 
-  const chapterPages: MetadataRoute.Sitemap = chapters.map((ch) => ({
+  const chapterPages: MetadataRoute.Sitemap = chaptersMeta.map((ch) => ({
     url: `${BASE_URL}/chapters/${ch.id}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,

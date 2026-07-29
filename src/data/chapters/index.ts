@@ -1,4 +1,5 @@
 import type { Chapter } from "@/lib/chapters";
+import { chaptersMeta, type ChapterMeta } from "./metadata";
 
 // Import all chapter JSON files
 import ch01 from "./01-xiaoyao-you.json";
@@ -35,10 +36,26 @@ import ch31 from "./31-yufu.json";
 import ch32 from "./32-lieyukou.json";
 import ch33 from "./33-tianxia.json";
 
-export const chapters: Chapter[] = [
-  ch01, ch02, ch03, ch04, ch05, ch06, ch07,
-  ch08, ch09, ch10, ch11, ch12, ch13, ch14,
-  ch15, ch16, ch17, ch18, ch19, ch20, ch21,
-  ch22, ch23, ch24, ch25, ch26, ch27, ch28,
-  ch29, ch30, ch31, ch32, ch33,
-].sort((a, b) => a.order - b.order);
+const _chapterMap: Record<string, Chapter> = {
+  "01-xiaoyao-you": ch01, "02-qiwu-lun": ch02, "03-yangsheng-zhu": ch03,
+  "04-renjian-shi": ch04, "05-dechong-fu": ch05, "06-dazong-shi": ch06,
+  "07-yingdi-wang": ch07, "08-pianmu": ch08, "09-mati": ch09,
+  "10-quqie": ch10, "11-zaiyou": ch11, "12-tiandi": ch12,
+  "13-tiandao": ch13, "14-tianyun": ch14, "15-keyi": ch15,
+  "16-shanxing": ch16, "17-qiushui": ch17, "18-zhile": ch18,
+  "19-dasheng": ch19, "20-shanmu": ch20, "21-tianzifang": ch21,
+  "22-zhibeiyou": ch22, "23-gengsangchu": ch23, "24-xuwugui": ch24,
+  "25-zeyang": ch25, "26-waiwu": ch26, "27-yuyan": ch27,
+  "28-rangwang": ch28, "29-daozhi": ch29, "30-shuojian": ch30,
+  "31-yufu": ch31, "32-lieyukou": ch32, "33-tianxia": ch33,
+};
+
+/** Full chapter data — 656KB. Only import this in detail pages or search. */
+export const chapters: Chapter[] = chaptersMeta.map((m) => _chapterMap[m.id]);
+
+/** Get a single full chapter by ID. */
+export function getFullChapter(id: string): Chapter | undefined {
+  return _chapterMap[id];
+}
+
+export { chaptersMeta, type ChapterMeta };

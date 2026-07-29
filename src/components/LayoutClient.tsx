@@ -1,12 +1,22 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import Link from "next/link";
 import { ReadingModeProvider, useReadingMode } from "./ReadingModeProvider";
 import { ThemeProvider } from "./ThemeProvider";
+import { ErrorBoundary } from "./ErrorBoundary";
 import Navigation from "./Navigation";
 import ReadingProgress from "./ReadingProgress";
 import ChatWithZhuangzi from "./ChatWithZhuangzi";
+
+function registerSW() {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Silently fail — SW is progressive enhancement
+    });
+  });
+}
 
 function Footer() {
   const { immersive } = useReadingMode();
@@ -82,6 +92,8 @@ function Footer() {
 function LayoutInner({ children }: { children: ReactNode }) {
   const { immersive } = useReadingMode();
 
+  useEffect(() => { registerSW(); }, []);
+
   return (
     <>
       {!immersive && <Navigation />}
@@ -97,7 +109,9 @@ export function LayoutClient({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <ReadingModeProvider>
-        <LayoutInner>{children}</LayoutInner>
+        <ErrorBoundary>
+          <LayoutInner>{children}</LayoutInner>
+        </ErrorBoundary>
       </ReadingModeProvider>
     </ThemeProvider>
   );

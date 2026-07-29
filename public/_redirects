@@ -1,0 +1,11 @@
+# ──────────────────────────────────────────
+# SPA fallback — unmatched paths → 404 page
+# Cloudflare Pages serves this automatically
+# for non-existent files in static export
+# ──────────────────────────────────────────
+/* /404.html 404
+
+# ──────────────────────────────────────────
+# Future redirects: uncomment when routes change
+# ──────────────────────────────────────────
+# /old-path /new-path 301

@@ -1,5 +1,10 @@
 name = "zhuangzi-site"
 pages_build_output_dir = "out"
+compatibility_date = "2025-07-29"
 
-[env.production]
-pages = "zhuangzi-site"
+# ──────────────────────────────────────────
+# Custom domain — uncomment when ready
+# ──────────────────────────────────────────
+# routes = [
+#   { pattern = "zhuangzi.example.com", custom_domain = true }
+# ]

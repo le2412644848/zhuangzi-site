@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { chapters } from "@/data/chapters";
+import { chaptersMeta } from "@/data/chapters";
 import SearchBar from "@/components/SearchBar";
 import DailyPassage from "@/components/DailyPassage";
 import ReadingHistoryWidget from "@/components/ReadingHistory";
@@ -14,9 +14,9 @@ const categories = [
 const featuredSlugs = ["01-xiaoyao-you", "02-qiwu-lun", "06-dazong-shi"];
 
 export default function Home() {
-  const totalPassages = chapters.reduce((a, c) => a + c.passages.length, 0);
+  const totalPassages = chaptersMeta.reduce((a, c) => a + c.passageCount, 0);
   const totalConcepts = 25;
-  const featuredChapters = chapters.filter((ch) => featuredSlugs.includes(ch.id));
+  const featuredChapters = chaptersMeta.filter((ch) => featuredSlugs.includes(ch.id));
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -122,7 +122,7 @@ export default function Home() {
                 {ch.summary}
               </p>
               <span className="text-[11px] text-[var(--text-muted)] mt-auto pt-1 group-hover:text-[var(--text-accent)] transition-colors">
-                {ch.passages.length} 节 →
+                {ch.passageCount} 节 →
               </span>
             </Link>
           ))}
@@ -141,7 +141,7 @@ export default function Home() {
 
         <div className="max-w-4xl mx-auto space-y-14">
           {categories.map((cat) => {
-            const catChapters = chapters.filter((c) => c.category === cat.key);
+            const catChapters = chaptersMeta.filter((c) => c.category === cat.key);
             return (
               <div key={cat.key}>
                 <div className="flex items-center gap-3 mb-5">
@@ -175,7 +175,7 @@ export default function Home() {
                         {ch.summary}
                       </p>
                       <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)] mt-auto">
-                        <span>{ch.passages.length} 段落</span>
+                        <span>{ch.passageCount} 段落</span>
                         <span className="opacity-30">·</span>
                         <span className="group-hover:text-[var(--text-accent)] transition-colors">
                           阅读 →

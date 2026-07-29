@@ -1,6 +1,6 @@
 import { chapters } from "@/data/chapters";
 import { concepts } from "@/data/concepts";
-import Fuse from "fuse.js";
+import type FuseType from "fuse.js";
 
 export interface SearchResult {
   chapterId: string;
@@ -14,42 +14,68 @@ export interface SearchResult {
   score: number;
 }
 
-// Build flat search index once
-const searchIndex = chapters.flatMap((ch) =>
-  ch.passages.map((p, i) => ({
-    chapterId: ch.id,
-    chapterTitle: ch.title,
-    chapterCategory: ch.category,
-    passageId: p.id,
-    index: i,
-    original: p.original,
-    translation: p.translation,
-    commentary: p.commentary || "",
-    concepts: p.concepts || [],
-    searchText: `${p.original} ${p.translation} ${p.commentary || ""}`,
-  }))
-);
+// ——— Lazy-init cache: only build when first search is triggered ———
+interface SearchItem {
+  chapterId: string;
+  chapterTitle: string;
+  chapterCategory: string;
+  passageId: string;
+  index: number;
+  original: string;
+  translation: string;
+  commentary: string;
+  concepts: string[];
+  searchText: string;
+}
 
-const fuse = new Fuse(searchIndex, {
-  keys: [
-    { name: "original", weight: 2 },
-    { name: "translation", weight: 1 },
-    { name: "commentary", weight: 1 },
-  ],
-  threshold: 0.4,
-  minMatchCharLength: 1,
-});
+let _searchIndex: SearchItem[] | null = null;
+let _fuse: FuseType<SearchItem> | null = null;
+
+async function ensureIndex(): Promise<{ searchIndex: SearchItem[]; fuse: FuseType<SearchItem> }> {
+  if (_searchIndex && _fuse) return { searchIndex: _searchIndex, fuse: _fuse };
+
+  const { default: Fuse } = await import("fuse.js");
+
+  _searchIndex = chapters.flatMap((ch) =>
+    ch.passages.map((p, i) => ({
+      chapterId: ch.id,
+      chapterTitle: ch.title,
+      chapterCategory: ch.category,
+      passageId: p.id,
+      index: i,
+      original: p.original,
+      translation: p.translation,
+      commentary: p.commentary || "",
+      concepts: p.concepts || [],
+      searchText: `${p.original} ${p.translation} ${p.commentary || ""}`,
+    }))
+  );
+
+  _fuse = new Fuse(_searchIndex, {
+    keys: [
+      { name: "original", weight: 2 },
+      { name: "translation", weight: 1 },
+      { name: "commentary", weight: 1 },
+    ],
+    threshold: 0.4,
+    minMatchCharLength: 1,
+  });
+
+  return { searchIndex: _searchIndex, fuse: _fuse };
+}
 
 export interface SearchFilters {
   category?: string;
   concept?: string;
 }
 
-export function search(
+export async function search(
   query: string,
   filters?: SearchFilters
-): SearchResult[] {
+): Promise<SearchResult[]> {
   if (!query.trim()) return [];
+
+  const { searchIndex, fuse } = await ensureIndex();
 
   let results = fuse.search(query);
 
@@ -94,7 +120,7 @@ export function search(
 
 function findMatchField(
   query: string,
-  item: (typeof searchIndex)[0]
+  item: SearchItem
 ): string {
   const q = query.toLowerCase();
   if (item.original.toLowerCase().includes(q)) return "original";

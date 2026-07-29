@@ -1,4 +1,4 @@
-import { chapters } from "@/data/chapters";
+import { chaptersMeta, type ChapterMeta } from "@/data/chapters";
 
 export interface Chapter {
   id: string;
@@ -39,14 +39,14 @@ export interface Concept {
   relatedConcepts: string[];
 }
 
-/** Get the next and previous chapter for navigation */
+/** Get the next and previous chapter for navigation (lightweight — uses metadata only) */
 export function getAdjacentChapters(id: string): {
-  prev: Chapter | null;
-  next: Chapter | null;
+  prev: ChapterMeta | null;
+  next: ChapterMeta | null;
 } {
-  const index = chapters.findIndex((c) => c.id === id);
+  const index = chaptersMeta.findIndex((c) => c.id === id);
   return {
-    prev: index > 0 ? chapters[index - 1] : null,
-    next: index < chapters.length - 1 ? chapters[index + 1] : null,
+    prev: index > 0 ? chaptersMeta[index - 1] : null,
+    next: index < chaptersMeta.length - 1 ? chaptersMeta[index + 1] : null,
   };
 }

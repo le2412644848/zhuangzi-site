@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { chapters } from "@/data/chapters";
+import { chaptersMeta } from "@/data/chapters";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -41,7 +41,7 @@ export default function ChaptersPage() {
 
       <div className="max-w-4xl mx-auto space-y-16">
         {categories.map((cat) => {
-          const catChapters = chapters.filter((c) => c.category === cat);
+          const catChapters = chaptersMeta.filter((c) => c.category === cat);
           const info = categoryInfo[cat];
           return (
             <section key={cat}>
@@ -81,7 +81,7 @@ export default function ChaptersPage() {
                         {ch.summary}
                       </p>
                       <div className="mt-2 flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                        <span>{ch.passages.length} 段落</span>
+                        <span>{ch.passageCount} 段落</span>
                         <span className="opacity-30">·</span>
                         <span className="group-hover:text-[var(--text-accent)] transition-colors">
                           阅读 →

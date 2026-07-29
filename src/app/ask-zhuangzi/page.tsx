@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { chat as deepseekChat, getApiKey, saveApiKey } from "@/lib/ai";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { chatMultiTurnStream, getApiKey, saveApiKey } from "@/lib/ai";
+import { search } from "@/lib/search";
 
 const LIFE_TOPICS = [
   { emoji: "😰", label: "焦虑不安" },
@@ -58,13 +59,42 @@ export default function AskZhuangziPage() {
 
     try {
       if (!apiKey) throw new Error("请先设置 DeepSeek API Key");
-      const reply = await deepseekChat({
-        systemPrompt: SYSTEM_PROMPT,
-        userMessage: userMsg.content,
-        temperature: 0.8,
-        maxTokens: 500,
-      });
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+
+      // RAG: inject relevant passages from the site as context
+      let contextPrompt = SYSTEM_PROMPT;
+      try {
+        const searchResults = await search(userMsg.content);
+        if (searchResults.length > 0) {
+          const topPassages = searchResults.slice(0, 4);
+          const context = topPassages.map((r) =>
+            `《${r.chapterTitle}》：「${r.original.slice(0, 120)}」`
+          ).join("\n");
+          contextPrompt = `${SYSTEM_PROMPT}\n\n以下是《庄子》原文中与对方困扰相关的段落，请在回答中尽可能引用：\n${context}`;
+        }
+      } catch {
+        // Search may fail (first load), fall through without context
+      }
+
+      // Stream reply — append chunks incrementally
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      await chatMultiTurnStream(
+        [
+          { role: "system", content: contextPrompt },
+          ...allMsgs.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+        ],
+        (delta) => {
+          setMessages((prev) => {
+            const copy = [...prev];
+            const last = copy[copy.length - 1];
+            if (last && last.role === "assistant") {
+              copy[copy.length - 1] = { ...last, content: last.content + delta };
+            }
+            return copy;
+          });
+        },
+        { temperature: 0.8, maxTokens: 512 }
+      );
     } catch (err) {
       setMessages((prev) => [...prev, {
         role: "assistant",

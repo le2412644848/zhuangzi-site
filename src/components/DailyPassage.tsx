@@ -1,32 +1,59 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { chapters } from "@/data/chapters";
-import type { Passage, Chapter } from "@/lib/chapters";
+import { chaptersMeta } from "@/data/chapters";
+import type { Chapter, Passage } from "@/lib/chapters";
 
-interface DailyPassage {
-  chapter: Chapter;
-  passage: Passage;
+function seededRandom(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 1664525 + 1013904223) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
+}
+
+function todaySeed(): number {
+  const today = new Date().toISOString().slice(0, 10);
+  let seed = 0;
+  for (let i = 0; i < today.length; i++) {
+    seed = ((seed << 5) - seed) + today.charCodeAt(i);
+    seed = seed & seed;
+  }
+  return Math.abs(seed);
 }
 
 export default function DailyPassage() {
-  const [daily, setDaily] = useState<DailyPassage | null>(null);
+  const [daily, setDaily] = useState<{ chapterTitle: string; chapterId: string; passage: Passage } | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    let seed = 0;
-    for (let i = 0; i < today.length; i++) {
-      seed = ((seed << 5) - seed) + today.charCodeAt(i);
-      seed = seed & seed;
+    let cancelled = false;
+
+    async function load() {
+      const rng = seededRandom(todaySeed());
+
+      // Pick chapter deterministically, then a passage within it
+      const chapterMeta = chaptersMeta[Math.floor(rng() * chaptersMeta.length)];
+
+      // Dynamic import only the chapter we need
+      const fullChapter = (await import(
+        `@/data/chapters/${chapterMeta.id}.json`
+      )) as unknown as Chapter;
+
+      if (cancelled) return;
+
+      const passage = fullChapter.passages[Math.floor(rng() * fullChapter.passages.length)];
+
+      setDaily({
+        chapterTitle: fullChapter.title,
+        chapterId: fullChapter.id,
+        passage,
+      });
     }
 
-    const allPassages: DailyPassage[] = chapters.flatMap((ch) =>
-      ch.passages.map((p) => ({ chapter: ch, passage: p }))
-    );
-    const idx = Math.abs(seed) % allPassages.length;
-    setDaily(allPassages[idx]);
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   if (!daily) return null;
@@ -72,10 +99,10 @@ export default function DailyPassage() {
               {showTranslation ? "收起译文" : "查看白话译文"}
             </button>
             <Link
-              href={`/chapters/${daily.chapter.id}`}
+              href={`/chapters/${daily.chapterId}`}
               className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors flex items-center gap-1"
             >
-              {daily.chapter.title} · 阅读全文
+              {daily.chapterTitle} · 阅读全文
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>
