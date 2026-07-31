@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAnnotation } from "@/lib/annotations";
 
 interface AnnotationPanelProps {
@@ -15,8 +15,14 @@ export default function AnnotationPanel({
   onClose,
 }: AnnotationPanelProps) {
   const { annotation, save, remove } = useAnnotation(chapterId, passageId);
-  const [text, setText] = useState(annotation?.text || "");
+  const [text, setText] = useState("");
   const [saved, setSaved] = useState(false);
+
+  // useAnnotation 的 annotation 是异步 set（初始 null），挂载后同步一次，
+  // 否则已有批注不预填，用户保存会覆盖原批注
+  useEffect(() => {
+    setText(annotation?.text ?? "");
+  }, [annotation]);
 
   const handleSave = () => {
     if (text.trim()) {

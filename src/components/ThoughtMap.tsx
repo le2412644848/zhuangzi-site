@@ -64,6 +64,9 @@ export default function ThoughtMap() {
 
   useEffect(() => {
     let cancelled = false;
+    // 提升到 useEffect 顶层，供 cleanup 停止 d3 力模拟（防卸载后空转泄漏）
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let simulation: any = null;
     const container = containerRef.current;
     if (!container) return;
 
@@ -90,7 +93,7 @@ export default function ThoughtMap() {
         .range(["var(--color-accent, #8b4513)", "var(--color-ink-light, #6b6b6b)"]);
 
       // Simulation
-      const simulation = d3.forceSimulation(nodes as any)
+      simulation = d3.forceSimulation(nodes as any)
         .force("link", d3.forceLink(links).id((d: any) => d.id).distance(80))
         .force("charge", d3.forceManyBody().strength(-200))
         .force("center", d3.forceCenter(width / 2, height / 2))
@@ -174,7 +177,11 @@ export default function ThoughtMap() {
     }
 
     render();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      // 卸载时停止 d3 力模拟计时器（与 KnowledgeGraph 一致，防止空转泄漏）
+      try { simulation?.stop(); } catch {}
+    };
   }, []);
 
   return (

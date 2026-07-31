@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { chaptersMeta } from "@/data/chapters";
+import { concepts } from "@/data/concepts";
 import SearchBar from "@/components/SearchBar";
 import DailyPassage from "@/components/DailyPassage";
 import ReadingHistoryWidget from "@/components/ReadingHistory";
@@ -15,7 +16,7 @@ const featuredSlugs = ["01-xiaoyao-you", "02-qiwu-lun", "06-dazong-shi"];
 
 export default function Home() {
   const totalPassages = chaptersMeta.reduce((a, c) => a + c.passageCount, 0);
-  const totalConcepts = 25;
+  const totalConcepts = concepts.length;
   const featuredChapters = chaptersMeta.filter((ch) => featuredSlugs.includes(ch.id));
 
   return (

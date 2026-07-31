@@ -34,7 +34,7 @@ export default function ChapterTOC({ chapter }: { chapter: Chapter }) {
   if (immersive) return null;
 
   return (
-    <div className={`fixed right-4 top-24 z-30 transition-all ${collapsed ? "w-8" : "w-48"}`}>
+    <div className={`hidden lg:block fixed right-4 top-24 z-30 transition-all ${collapsed ? "w-8" : "w-48"}`}>
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]/95 backdrop-blur-sm shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-light)] cursor-pointer"

@@ -2,12 +2,20 @@
 
 import { ReactNode, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ReadingModeProvider, useReadingMode } from "./ReadingModeProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { ErrorBoundary } from "./ErrorBoundary";
 import Navigation from "./Navigation";
 import ReadingProgress from "./ReadingProgress";
-import ChatWithZhuangzi from "./ChatWithZhuangzi";
+
+// 聊天球按需加载：内部静态引用 search → 全量章节数据(656KB)，
+// 直接静态导入会把整包数据塞进每个页面的首屏 bundle。
+// 延迟到交互/空闲后再拉取，首包体积显著下降。
+const ChatWithZhuangzi = dynamic(() => import("./ChatWithZhuangzi"), {
+  ssr: false,
+  loading: () => null,
+});
 
 function registerSW() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;

@@ -15,7 +15,7 @@ const chapterNames: Record<string, string> = {
   "01-xiaoyao-you": "逍遥游", "02-qiwu-lun": "齐物论", "03-yangsheng-zhu": "养生主",
   "04-renjian-shi": "人间世", "05-dechong-fu": "德充符", "06-dazong-shi": "大宗师",
   "07-yingdi-wang": "应帝王", "08-pianmu": "骈拇", "09-mati": "马蹄",
-  "10-quqie": "胠箧", "11-zaiyou": "在��", "12-tiandi": "天地", "13-tiandao": "天道",
+  "10-quqie": "胠箧", "11-zaiyou": "在宥", "12-tiandi": "天地", "13-tiandao": "天道",
   "14-tianyun": "天运", "15-keyi": "刻意", "16-shanxing": "缮性", "17-qiushui": "秋水",
   "18-zhile": "至乐", "19-dasheng": "达生", "20-shanmu": "山木", "21-tianzifang": "田子方",
   "22-zhibeiyou": "知北游", "23-gengsangchu": "庚桑楚", "24-xuwugui": "徐无鬼",

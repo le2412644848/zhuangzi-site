@@ -19,7 +19,8 @@ function pickRandomPassage(): { passage: Passage; chapterTitle: string } | null 
 }
 
 export default function TranslateChallengePage() {
-  const [current, setCurrent] = useState(pickRandomPassage);
+  // 初始为 null，挂载后在客户端随机选题：避免 SSR/CSR 各随机一次导致 hydration mismatch
+  const [current, setCurrent] = useState<{ passage: Passage; chapterTitle: string } | null>(null);
   const [userTranslation, setUserTranslation] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -27,6 +28,11 @@ export default function TranslateChallengePage() {
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [showReference, setShowReference] = useState(false);
+
+  // 客户端挂载后再选题（消除 SSR/CSR 不一致）
+  useEffect(() => {
+    setCurrent(pickRandomPassage());
+  }, []);
 
   // Load stats from localStorage
   useEffect(() => {

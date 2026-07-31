@@ -108,7 +108,7 @@ export default async function ConceptPage({ params }: Props) {
                 className="p-4 sm:p-5 rounded-lg border border-[var(--border-light)] bg-[var(--bg-card)]"
               >
                 <Link
-                  href={`/chapters/${chapter.id}#${passage.id}`}
+                  href={`/chapters/${chapter.id}#passage-${passage.id}`}
                   className="text-sm font-medium text-[var(--text-accent)] hover:underline"
                 >
                   {chapter.title} · {passage.id}

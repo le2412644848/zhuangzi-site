@@ -128,6 +128,7 @@ export default async function ChapterPage({ params }: Props) {
               <PassageView
                 passage={passage}
                 chapterId={chapter.id}
+                chapterTitle={chapter.title}
                 defaultExpanded={true}
               />
             </div>

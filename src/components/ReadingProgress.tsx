@@ -47,7 +47,7 @@ export default function ReadingProgress() {
       {/* Back to top button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-40 w-11 h-11 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] shadow-md flex items-center justify-center transition-all duration-300 no-print hover:border-[var(--text-accent)] hover:shadow-lg ${
+        className={`fixed bottom-24 right-4 z-40 w-11 h-11 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] shadow-md flex items-center justify-center transition-all duration-300 no-print hover:border-[var(--text-accent)] hover:shadow-lg ${
           showBackToTop
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4 pointer-events-none"

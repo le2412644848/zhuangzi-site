@@ -15,6 +15,8 @@ const PinyinAnnotator = dynamic(() => import("./PinyinAnnotator"), { ssr: false 
 interface PassageViewProps {
   passage: Passage;
   chapterId: string;
+  /** 篇名（收藏列表展示用；缺省回退 chapterId） */
+  chapterTitle?: string;
   defaultExpanded?: boolean;
 }
 
@@ -92,7 +94,7 @@ function CommentaryBlock({ commentary }: { commentary?: string }) {
   );
 }
 
-export default function PassageView({ passage, chapterId, defaultExpanded = true }: PassageViewProps) {
+export default function PassageView({ passage, chapterId, chapterTitle, defaultExpanded = true }: PassageViewProps) {
   const [showTools, setShowTools] = useState(false);
   const [showAnnotation, setShowAnnotation] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -107,9 +109,9 @@ export default function PassageView({ passage, chapterId, defaultExpanded = true
   useEffect(() => { setBookmarked(isBookmarked(chapterId, passage.id)); }, [chapterId, passage.id]);
 
   const handleBookmark = useCallback(() => {
-    const added = toggleBookmark(chapterId, passage.id, chapterId, passage.original);
+    const added = toggleBookmark(chapterId, passage.id, chapterTitle ?? chapterId, passage.original);
     setBookmarked(added);
-  }, [chapterId, passage.id, passage.original]);
+  }, [chapterId, chapterTitle, passage.id, passage.original]);
 
   const handleSpeak = useCallback(() => {
     if (speaking) {

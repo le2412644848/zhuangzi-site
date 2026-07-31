@@ -25,6 +25,8 @@ export function recordReading(chapterId: string, chapterTitle: string) {
       progress: 100,
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered.slice(0, MAX_ITEMS)));
+    // 通知已挂载的 ReadingHistoryWidget 刷新（此前监听器是死代码）
+    window.dispatchEvent(new Event("reading-recorded"));
   } catch {}
 }
 

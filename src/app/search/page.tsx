@@ -12,13 +12,23 @@ function SearchContent() {
   const initialQuery = searchParams.get("q") || "";
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialQuery) {
-      search(initialQuery).then((r) => {
-        setResults(r);
-        setSearched(true);
-      });
+      setLoading(true);
+      setError(null);
+      search(initialQuery)
+        .then((r) => {
+          setResults(r);
+          setSearched(true);
+        })
+        .catch((e) => {
+          console.error("[Search]", e);
+          setError("搜索索引加载失败，请刷新重试");
+        })
+        .finally(() => setLoading(false));
     }
   }, [initialQuery]);
 
@@ -80,7 +90,19 @@ function SearchContent() {
         <SearchBar compact />
       </div>
 
-      {searched && (
+      {loading && (
+        <div className="mb-6 text-center text-sm text-[var(--text-secondary)]">
+          正在加载搜索索引…
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-6 text-center text-sm text-[var(--color-danger)]">
+          {error}
+        </div>
+      )}
+
+      {searched && !error && (
         <div className="mb-6 text-center">
           <p className="text-sm text-[var(--text-secondary)]">
             {results.length === 0

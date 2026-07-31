@@ -96,10 +96,18 @@ export default function AskZhuangziPage() {
         { temperature: 0.8, maxTokens: 512 }
       );
     } catch (err) {
-      setMessages((prev) => [...prev, {
-        role: "assistant",
-        content: `吾今不能应：${err instanceof Error ? err.message : "未知之误"}`,
-      }]);
+      // 失败时回填之前追加的空气泡，避免"空助手气泡 + 错误气泡"两条
+      setMessages((prev) => {
+        const copy = [...prev];
+        const last = copy[copy.length - 1];
+        const errMsg = `吾今不能应：${err instanceof Error ? err.message : "未知之误"}`;
+        if (last && last.role === "assistant" && !last.content) {
+          copy[copy.length - 1] = { role: "assistant", content: errMsg };
+        } else {
+          copy.push({ role: "assistant", content: errMsg });
+        }
+        return copy;
+      });
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { chapters } from "@/data/chapters";
 import { getReadingHistory } from "@/components/ReadingHistory";
+import { getBookmarks, getAnnotations } from "@/lib/annotations";
 import Link from "next/link";
 
 interface Stats {
@@ -32,14 +33,12 @@ export default function ReportPage() {
 
     let bmCount = 0;
     try {
-      const raw = localStorage.getItem("bookmarks");
-      if (raw) bmCount = JSON.parse(raw).length;
+      bmCount = getBookmarks().length;
     } catch {}
 
     let annCount = 0;
     try {
-      const raw = localStorage.getItem("annotations");
-      if (raw) annCount = Object.keys(JSON.parse(raw)).length;
+      annCount = Object.keys(getAnnotations()).length;
     } catch {}
 
     let streak = 0;

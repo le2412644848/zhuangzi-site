@@ -12,7 +12,8 @@ function AnnotationsContent() {
 
   const annotation = useMemo(() => {
     if (ch && p && a) {
-      return { chapterId: ch, passageId: p, text: decodeURIComponent(a) };
+      // URLSearchParams.get() 已自动解码，这里不能再 decode（含 % 的文本会抛 URIError）
+      return { chapterId: ch, passageId: p, text: a };
     }
     return null;
   }, [ch, p, a]);
@@ -67,7 +68,7 @@ function AnnotationsContent() {
           {annotation.text}
         </div>
         <Link
-          href={`/chapters/${annotation.chapterId}#${annotation.passageId}`}
+          href={`/chapters/${annotation.chapterId}#passage-${annotation.passageId}`}
           className="inline-block mt-4 text-xs text-[var(--text-accent)] hover:underline"
         >
           查看原文 →
