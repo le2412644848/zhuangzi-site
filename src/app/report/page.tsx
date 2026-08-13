@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { chapters } from "@/data/chapters";
+import { chaptersMeta } from "@/data/chapters/metadata";
 import { getReadingHistory } from "@/components/ReadingHistory";
 import { getBookmarks, getAnnotations } from "@/lib/annotations";
 import Link from "next/link";
@@ -18,9 +18,9 @@ interface Stats {
 
 export default function ReportPage() {
   const [stats, setStats] = useState<Stats>({
-    totalChapters: chapters.length,
+    totalChapters: chaptersMeta.length,
     readChapters: [],
-    totalPassages: chapters.reduce((a, c) => a + c.passages.length, 0),
+    totalPassages: chaptersMeta.reduce((a, c) => a + c.passageCount, 0),
     bookmarkedCount: 0,
     annotatedCount: 0,
     streak: 0,
@@ -68,9 +68,9 @@ export default function ReportPage() {
     }
 
     setStats({
-      totalChapters: chapters.length,
+      totalChapters: chaptersMeta.length,
       readChapters: [...readIds],
-      totalPassages: chapters.reduce((a, c) => a + c.passages.length, 0),
+      totalPassages: chaptersMeta.reduce((a, c) => a + c.passageCount, 0),
       bookmarkedCount: bmCount,
       annotatedCount: annCount,
       streak,
@@ -83,7 +83,7 @@ export default function ReportPage() {
   const readPercent = Math.round(
     (stats.readChapters.length / stats.totalChapters) * 100
   );
-  const unread = chapters.filter((ch) => !stats.readChapters.includes(ch.id));
+  const unread = chaptersMeta.filter((ch) => !stats.readChapters.includes(ch.id));
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -133,7 +133,7 @@ export default function ReportPage() {
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-1">
-          {chapters.map((ch) => (
+          {chaptersMeta.map((ch) => (
             <div
               key={ch.id}
               title={ch.title}

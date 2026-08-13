@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { chat as deepseekChat } from "@/lib/ai";
-import { chapters } from "@/data/chapters";
+import { chaptersMeta } from "@/data/chapters/metadata";
 import Link from "next/link";
 
 interface Question {
@@ -75,7 +75,7 @@ export default function ReadingPathPage() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
   const [recommendation, setRecommendation] = useState<string | null>(null);
-  const [recommendedChapters, setRecommendedChapters] = useState<typeof chapters>([]);
+  const [recommendedChapters, setRecommendedChapters] = useState<typeof chaptersMeta>([]);
 
   const handleAnswer = (qId: number, value: string) => {
     const newAnswers = { ...answers, [qId]: value };
@@ -94,7 +94,7 @@ export default function ReadingPathPage() {
         const ids = CHAPTER_MAP[val];
         if (ids) ids.forEach((id) => allChIds.add(id));
       }
-      const recs = chapters.filter((ch) => allChIds.has(ch.id)).slice(0, 5);
+      const recs = chaptersMeta.filter((ch) => allChIds.has(ch.id)).slice(0, 5);
 
       // AI reasoning
       try {

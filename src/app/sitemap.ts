@@ -1,4 +1,4 @@
-import { chaptersMeta } from "@/data/chapters";
+import { chaptersMeta } from "@/data/chapters/metadata";
 import { concepts } from "@/data/concepts";
 import type { MetadataRoute } from "next";
 

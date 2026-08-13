@@ -54,6 +54,7 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="搜索原文、译文或解读…"
+          aria-label="搜索原文、译文或解读"
           className="w-full pl-11 pr-12 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--text-accent)]/20 focus:border-[var(--text-accent)]/40 transition-all shadow-sm"
         />
 

@@ -1,5 +1,3 @@
-import { chapters } from "@/data/chapters";
-import { concepts } from "@/data/concepts";
 import type FuseType from "fuse.js";
 
 export interface SearchResult {
@@ -34,7 +32,11 @@ let _fuse: FuseType<SearchItem> | null = null;
 async function ensureIndex(): Promise<{ searchIndex: SearchItem[]; fuse: FuseType<SearchItem> }> {
   if (_searchIndex && _fuse) return { searchIndex: _searchIndex, fuse: _fuse };
 
-  const { default: Fuse } = await import("fuse.js");
+  // 全文数据(703KB)与 fuse.js 均延迟到首次搜索时再加载，避免阻塞搜索页/问庄子页首屏
+  const [{ default: Fuse }, { chapters }] = await Promise.all([
+    import("fuse.js"),
+    import("@/data/chapters"),
+  ]);
 
   _searchIndex = chapters.flatMap((ch) =>
     ch.passages.map((p, i) => ({
@@ -126,15 +128,4 @@ function findMatchField(
   if (item.original.toLowerCase().includes(q)) return "original";
   if (item.translation.toLowerCase().includes(q)) return "translation";
   return "commentary";
-}
-
-/** Get all unique chapter categories */
-export function getCategories(): string[] {
-  const cats = new Set(chapters.map((c) => c.category));
-  return Array.from(cats);
-}
-
-/** Get all concepts for filter UI */
-export function getConceptList() {
-  return concepts.map((c) => ({ id: c.id, name: c.name }));
 }

@@ -58,7 +58,7 @@ export const metadata: Metadata = {
       "内篇精粹、外篇广博、杂篇绚烂。全文解读、白话翻译、概念图谱、词语索引。",
     images: [
       {
-        url: `${BASE_URL}/og-image.svg`,
+        url: `${BASE_URL}/og-image.png`,
         width: 1200,
         height: 630,
         alt: "莊子 · 逍遥游于无何有之乡",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     title: "莊子 · 逍遥游于无何有之乡",
     description:
       "内篇精粹、外篇广博、杂篇绚烂。全文解读、白话翻译、概念图谱、词语索引。",
-    images: [`${BASE_URL}/og-image.svg`],
+    images: [`${BASE_URL}/og-image.png`],
   },
   alternates: {
     canonical: BASE_URL,
@@ -130,6 +130,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-serif">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-[var(--bg-card)] focus:text-[var(--text-accent)] focus:border focus:border-[var(--border-color)] focus:shadow-lg"
+        >
+          跳到主要内容
+        </a>
         <LayoutClient>{children}</LayoutClient>
       </body>
     </html>

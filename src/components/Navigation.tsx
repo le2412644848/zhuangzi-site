@@ -129,6 +129,8 @@ export default function Navigation() {
                 onClick={() =>
                   setActiveDropdown(activeDropdown === group.label ? null : group.label)
                 }
+                aria-haspopup="menu"
+                aria-expanded={activeDropdown === group.label}
                 className={`px-2.5 py-1.5 text-sm tracking-wide rounded-lg transition-all flex items-center gap-1 ${
                   activeDropdown === group.label
                     ? "text-[var(--text-accent)] bg-[var(--hover-bg)]"

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { concepts } from "@/data/concepts";
 import type { Metadata } from "next";
-import KnowledgeGraph from "@/components/KnowledgeGraph";
-import ThoughtMap from "@/components/ThoughtMap";
+import ThoughtMapWrapper from "@/components/ThoughtMapWrapper";
+import KnowledgeGraphWrapper from "@/components/KnowledgeGraphWrapper";
 
 export const metadata: Metadata = {
   title: "核心概念",
@@ -32,7 +32,7 @@ export default function ConceptsPage() {
             核心概念在内篇七章中的分布与关联
           </p>
         </div>
-        <ThoughtMap />
+        <ThoughtMapWrapper />
       </section>
 
       {/* Knowledge Graph */}
@@ -45,7 +45,7 @@ export default function ConceptsPage() {
             交互式概念关系可视化
           </p>
         </div>
-        <KnowledgeGraph />
+        <KnowledgeGraphWrapper />
       </section>
 
       {/* Concept Cards Grid */}

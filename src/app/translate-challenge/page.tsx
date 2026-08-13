@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { chapters } from "@/data/chapters";
 import { chat as deepseekChat } from "@/lib/ai";
-import type { Passage } from "@/lib/chapters";
+import type { Passage, Chapter } from "@/lib/chapters";
 
-function pickRandomPassage(): { passage: Passage; chapterTitle: string } | null {
+function pickRandomPassage(chapters: Chapter[]): { passage: Passage; chapterTitle: string } | null {
   const all: { passage: Passage; chapterTitle: string }[] = [];
   for (const ch of chapters) {
     for (const p of ch.passages) {
@@ -28,10 +27,18 @@ export default function TranslateChallengePage() {
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [showReference, setShowReference] = useState(false);
+  // 全文数据按需加载，加载一次后缓存供 handleNext 复用
+  const [chaptersData, setChaptersData] = useState<Chapter[] | null>(null);
 
-  // 客户端挂载后再选题（消除 SSR/CSR 不一致）
+  // 客户端挂载后动态加载全文并选题（消除 SSR/CSR 不一致 + 避免全文阻塞首屏）
   useEffect(() => {
-    setCurrent(pickRandomPassage());
+    let cancelled = false;
+    import("@/data/chapters").then(({ chapters }) => {
+      if (cancelled) return;
+      setChaptersData(chapters);
+      setCurrent(pickRandomPassage(chapters));
+    });
+    return () => { cancelled = true; };
   }, []);
 
   // Load stats from localStorage
@@ -112,7 +119,7 @@ export default function TranslateChallengePage() {
   }, [userTranslation, current, loading, totalAttempts, totalScore]);
 
   const handleNext = () => {
-    setCurrent(pickRandomPassage());
+    if (chaptersData) setCurrent(pickRandomPassage(chaptersData));
     setUserTranslation("");
     setScore(null);
     setFeedback(null);

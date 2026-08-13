@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { chaptersMeta } from "@/data/chapters";
+import { chaptersMeta } from "@/data/chapters/metadata";
 import type { Chapter, Passage } from "@/lib/chapters";
 
 function seededRandom(seed: number) {

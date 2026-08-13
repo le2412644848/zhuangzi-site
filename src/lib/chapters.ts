@@ -1,4 +1,4 @@
-import { chaptersMeta, type ChapterMeta } from "@/data/chapters";
+import { chaptersMeta, type ChapterMeta } from "@/data/chapters/metadata";
 
 export interface Chapter {
   id: string;
