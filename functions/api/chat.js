@@ -3,7 +3,7 @@
 // Supports both regular and SSE streaming responses.
 // ──────────────────────────────────────────
 
-const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
+const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 
 // Simple in-memory rate limiter (per-IP, per 10s window)
 const RATE_WINDOW = 10_000;

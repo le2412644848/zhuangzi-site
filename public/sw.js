@@ -16,7 +16,7 @@ const PRECACHE_URLS = [
   "/fables/",
   "/search/",
   "/manifest.json",
-  "/404/",
+  "/404.html",
 ];
 
 // ── Install: precache core pages ──

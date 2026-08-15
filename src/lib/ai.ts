@@ -6,7 +6,7 @@
  * Falls back to direct DeepSeek API in local development.
  */
 
-const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
+const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 const PROXY_URL = "/api/chat";
 const MODEL = "deepseek-v4-flash";
 

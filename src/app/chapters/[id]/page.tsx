@@ -11,6 +11,8 @@ import RecordReading from "@/components/RecordReading";
 import ConceptTag from "@/components/ConceptTag";
 import type { Metadata } from "next";
 
+const BASE_URL = "https://zhuangzi-site.pages.dev";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -23,9 +25,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const chapter = chapters.find((c) => c.id === id);
   if (!chapter) return { title: "未找到" };
+  const url = `${BASE_URL}/chapters/${chapter.id}`;
   return {
     title: `${chapter.title} — ${chapter.category}`,
     description: chapter.summary,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${chapter.title} — ${chapter.category}`,
+      description: chapter.summary,
+      url,
+      type: "article",
+      locale: "zh_CN",
+      siteName: "莊子數位典藏",
+      images: [
+        {
+          url: `${BASE_URL}/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: chapter.title,
+        },
+      ],
+    },
   };
 }
 
@@ -42,9 +62,30 @@ export default async function ChapterPage({ params }: Props) {
   const allConcepts = [...new Set(chapter.passages.flatMap((p) => p.concepts))]
     .filter((cid) => knownConceptIds.has(cid));
   const passageCount = chapter.passages.length;
+  const conceptNames = allConcepts
+    .map((cid) => conceptsData.find((c) => c.id === cid)?.name)
+    .filter((n): n is string => Boolean(n));
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: chapter.title,
+            description: chapter.summary,
+            inLanguage: "zh-CN",
+            datePublished: "2026-07-29",
+            author: { "@type": "Organization", name: "莊子數位典藏" },
+            publisher: { "@type": "Organization", name: "莊子數位典藏" },
+            mainEntityOfPage: `${BASE_URL}/chapters/${chapter.id}`,
+            isPartOf: { "@type": "Book", name: "庄子", inLanguage: "zh-CN" },
+            about: conceptNames,
+          }),
+        }}
+      />
       <ChapterTOC chapter={chapter} />
       <RecordReading chapterId={chapter.id} chapterTitle={chapter.title} />
 
