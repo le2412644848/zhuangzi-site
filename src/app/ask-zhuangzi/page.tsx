@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { chatMultiTurnStream, getApiKey, saveApiKey } from "@/lib/ai";
 import { search } from "@/lib/search";
 

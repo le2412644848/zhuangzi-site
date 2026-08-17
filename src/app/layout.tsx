@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Noto_Serif_SC } from "next/font/google";
 import { Inter } from "next/font/google";
 import "./globals.css";

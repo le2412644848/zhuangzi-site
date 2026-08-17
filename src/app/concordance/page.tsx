@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { passageNumber } from "@/data/chapters/metadata";
 
 interface Occurrence {
   chapterId: string;
@@ -119,7 +120,7 @@ export default function ConcordancePage() {
                     </span>
                     {chapterNames[o.chapterId] || o.chapterId}
                     <span className="text-[var(--text-muted)] text-[10px]">
-                      · {o.passageId}
+                      · 第 {passageNumber(o.chapterId, o.passageId) ?? "?"} 节
                     </span>
                   </Link>
                 ))}

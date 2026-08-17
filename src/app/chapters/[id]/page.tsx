@@ -3,6 +3,7 @@ import Link from "next/link";
 import { chapters } from "@/data/chapters";
 import { concepts as conceptsData } from "@/data/concepts";
 import { getAdjacentChapters } from "@/lib/chapters";
+import { getKaojuByChapter, getKaojuFangByChapter, getPassageKaojuMap, getPassageKaojuFangMap } from "@/lib/kaoju";
 import PassageView from "@/components/PassageView";
 import ChapterTOC from "@/components/ChapterTOC";
 import KeyboardNav from "@/components/KeyboardNav";
@@ -58,6 +59,12 @@ export default async function ChapterPage({ params }: Props) {
   const prevUrl = prev ? `/chapters/${prev.id}` : null;
   const nextUrl = next ? `/chapters/${next.id}` : null;
 
+  const kaoju = getKaojuByChapter(chapter.id);
+  const kaojuCount = kaoju.length;
+  const passageKaojuMap = getPassageKaojuMap(chapter.id);
+  const passageKaojuFangMap = getPassageKaojuFangMap(chapter.id);
+  const fangKaojuCount = getKaojuFangByChapter(chapter.id).length;
+
   const knownConceptIds = new Set(conceptsData.map((c) => c.id));
   const allConcepts = [...new Set(chapter.passages.flatMap((p) => p.concepts))]
     .filter((cid) => knownConceptIds.has(cid));
@@ -111,6 +118,12 @@ export default async function ChapterPage({ params }: Props) {
             <span>{chapter.category} · 第{chapter.order}篇</span>
             <span className="opacity-30">|</span>
             <span>{passageCount} 节</span>
+            {kaojuCount > 0 && (
+              <>
+                <span className="opacity-30">|</span>
+                <span>{kaojuCount} 条注 · {fangKaojuCount} 条训诂</span>
+              </>
+            )}
             {allConcepts.length > 0 && (
               <>
                 <span className="opacity-30">|</span>
@@ -126,13 +139,23 @@ export default async function ChapterPage({ params }: Props) {
             题解
           </h2>
           <div className="text-sm text-[var(--text-primary)] leading-[1.85] space-y-3 reading-prose">
-            <p>
-              {chapter.category === "内篇"
-                ? `《${chapter.title}》为庄子内篇第${chapter.order}篇，庄子亲著。${chapter.summary}`
-                : chapter.category === "外篇"
-                  ? `《${chapter.title}》为庄子外篇之一，一般认为是庄子后学所作。${chapter.summary}`
-                  : `《${chapter.title}》为庄子杂篇之一，收录于《南华真经》。${chapter.summary}`}
-            </p>
+            {chapter.intro ? (
+              <>
+                <p>{chapter.intro}</p>
+                <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                  <span className="inline-block w-3 h-px bg-[var(--border-light)]" />
+                  <span>题解出自陈鼓应《庄子今注今译》</span>
+                </div>
+              </>
+            ) : (
+              <p>
+                {chapter.category === "内篇"
+                  ? `《${chapter.title}》为庄子内篇第${chapter.order}篇，庄子亲著。${chapter.summary}`
+                  : chapter.category === "外篇"
+                    ? `《${chapter.title}》为庄子外篇之一，一般认为是庄子后学所作。${chapter.summary}`
+                    : `《${chapter.title}》为庄子杂篇之一，收录于《南华真经》。${chapter.summary}`}
+              </p>
+            )}
             {chapter.conclusion && (
               <div className="pt-2 mt-2 border-t border-[var(--border-light)]">
                 <p>{chapter.conclusion.slice(0, 200)}{chapter.conclusion.length > 200 ? "…" : ""}</p>
@@ -171,6 +194,9 @@ export default async function ChapterPage({ params }: Props) {
                 chapterId={chapter.id}
                 chapterTitle={chapter.title}
                 defaultExpanded={true}
+                kaoju={kaoju}
+                passageKaoju={passageKaojuMap[passage.id] ?? []}
+                passageKaojuFang={passageKaojuFangMap[passage.id] ?? []}
               />
             </div>
           ))}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
 
 const settings = [
   { key: "fontSize", label: "字号", values: ["sm", "base", "lg", "xl"], labels: ["小", "中", "大", "特大"] },

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import type { Passage, WordAnnotation } from "@/lib/chapters";
+import { findKaoju, type KaojuEntry } from "@/lib/kaoju-utils";
 import ConceptTag from "./ConceptTag";
 import AnnotationPanel from "./AnnotationPanel";
 import WordTooltip from "./WordTooltip";
@@ -18,10 +19,16 @@ interface PassageViewProps {
   /** 篇名（收藏列表展示用；缺省回退 chapterId） */
   chapterTitle?: string;
   defaultExpanded?: boolean;
+  /** 本篇陈鼓应考据数据（可选） */
+  kaoju?: KaojuEntry[];
+  /** 当前 passage 的段落级考据（陈鼓应注，可选） */
+  passageKaoju?: KaojuEntry[];
+  /** 当前 passage 的段落级考据（方勇注，可选） */
+  passageKaojuFang?: KaojuEntry[];
 }
 
 /** Render original text with annotation tooltips embedded */
-function AnnotatedText({ original, annotations }: { original: string; annotations?: WordAnnotation[] }) {
+function AnnotatedText({ original, annotations, kaoju }: { original: string; annotations?: WordAnnotation[]; kaoju?: KaojuEntry[] }) {
   const segments = useMemo(() => {
     if (!annotations || annotations.length === 0) return [{ text: original, annotated: false }];
     const sorted = [...annotations].sort((a, b) => b.term.length - a.term.length);
@@ -48,7 +55,7 @@ function AnnotatedText({ original, annotations }: { original: string; annotation
     <>
       {segments.map((seg, i) =>
         seg.annotated && seg.ann ? (
-          <WordTooltip key={i} term={seg.ann.term} text={seg.ann.text}>{seg.text}</WordTooltip>
+          <WordTooltip key={i} term={seg.ann.term} text={seg.ann.text} kaoju={findKaoju(kaoju, seg.ann.term)}>{seg.text}</WordTooltip>
         ) : (
           <span key={i}>{seg.text}</span>
         )
@@ -58,12 +65,12 @@ function AnnotatedText({ original, annotations }: { original: string; annotation
 }
 
 /** Format commentary with 逐字注/章旨 split */
-function CommentaryBlock({ commentary }: { commentary?: string }) {
-  if (!commentary) return null;
-
+function CommentaryBlock({ commentary, kaoju }: { commentary?: string; kaoju?: KaojuEntry[] }) {
   const renderHtml = (text: string) => text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
+  // Hooks 必须无条件调用（不能在早期 return 之后）
   const parts = useMemo(() => {
+    if (!commentary) return { zhuzi: null as string | null, zhangzhi: null as string | null, rest: null as string | null };
     const zhuzi = commentary.match(/\u3010逐字注\u3011\n\n([\s\S]*?)(?:\n\n\u3010章旨\u3011|$)/);
     const zhangzhi = commentary.match(/\u3010章旨\u3011\n\n([\s\S]*?)$/);
     return {
@@ -73,6 +80,8 @@ function CommentaryBlock({ commentary }: { commentary?: string }) {
     };
   }, [commentary]);
 
+  if (!commentary) return null;
+
   return (
     <div className="space-y-4 commentary-text">
       {parts.rest && <p className="reading-prose" dangerouslySetInnerHTML={{ __html: renderHtml(parts.rest) }} />}
@@ -80,7 +89,25 @@ function CommentaryBlock({ commentary }: { commentary?: string }) {
         <div>
           <h4 className="text-xs font-semibold text-[var(--text-accent)] mb-2 tracking-[0.08em]">逐字注</h4>
           <div className="text-sm text-[var(--text-primary)] leading-relaxed space-y-2">
-            {parts.zhuzi.split(/\n\n/).map((block, i) => (<p key={i} dangerouslySetInnerHTML={{ __html: renderHtml(block) }} />))}
+            {parts.zhuzi.split(/\n\n/).map((block, i) => {
+              const m = block.match(/^『([^』]+)』/);
+              const kj = m ? findKaoju(kaoju, m[1]) : null;
+              return (
+                <div key={i}>
+                  <p dangerouslySetInnerHTML={{ __html: renderHtml(block) }} />
+                  {kj && (kj.explanation || kj.citations.length > 0) && (
+                    <p className="mt-0.5 pl-3 border-l-2 border-[var(--border-light)] text-xs text-[var(--text-muted)] leading-relaxed">
+                      <span className="font-medium text-[var(--text-secondary)]">训诂：</span>
+                      {kj.explanation}
+                      {kj.citations.length > 0 && (
+                        <span className="text-[var(--text-muted)]">（{kj.citations.map((c) => c.author).slice(0, 2).join("、")}
+                          {kj.citations.length > 2 ? `等${kj.citations.length}家` : ""}）</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -94,7 +121,62 @@ function CommentaryBlock({ commentary }: { commentary?: string }) {
   );
 }
 
-export default function PassageView({ passage, chapterId, chapterTitle, defaultExpanded = true }: PassageViewProps) {
+/** 段落级注（折叠区）：陈鼓应注 / 方勇训诂 */
+function KaojuSection({ title, entries }: { title: string; entries: KaojuEntry[] }) {
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const toggle = (seq: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(seq)) next.delete(seq); else next.add(seq);
+      return next;
+    });
+  };
+  if (!entries || entries.length === 0) return null;
+  return (
+    <details className="mt-4 group/kaoju">
+      <summary className="cursor-pointer select-none inline-flex items-center gap-1.5 text-xs text-[var(--text-accent)] hover:underline">
+        <svg className="w-3.5 h-3.5 transition-transform group-open/kaoju:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+        {title}（{entries.length} 条）
+      </summary>
+      <div className="mt-2 pl-3 border-l-2 border-[var(--border-light)] space-y-2.5">
+        {entries.map((e) => (
+          <div key={e.seq} className="text-xs leading-relaxed">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-medium text-[var(--text-accent)]">{e.term}</span>
+              {e.explanation && (
+                <span className="text-[var(--text-primary)]">{e.explanation}</span>
+              )}
+            </div>
+            {e.citations.length > 0 && (
+              <div className="mt-1 space-y-1">
+                {(expanded.has(e.seq) ? e.citations : e.citations.slice(0, 2)).map((c, i) => (
+                  <div key={i} className="text-[11px] text-[var(--text-secondary)] leading-snug">
+                    <span className="text-[var(--text-accent)] font-medium">{c.author}</span>
+                    <span>：</span>
+                    <span>{c.quote.length > 80 ? c.quote.slice(0, 80) + "…" : c.quote}</span>
+                    {c.source && <span className="text-[var(--text-muted)]">（《{c.source}》）</span>}
+                  </div>
+                ))}
+                {e.citations.length > 2 && (
+                  <button
+                    onClick={() => toggle(e.seq)}
+                    className="text-[11px] text-[var(--text-accent)] hover:underline"
+                  >
+                    {expanded.has(e.seq) ? "收起注家" : `查看全部 ${e.citations.length} 家注`}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+export default function PassageView({ passage, chapterId, chapterTitle, defaultExpanded = true, kaoju, passageKaoju, passageKaojuFang }: PassageViewProps) {
   const [showTools, setShowTools] = useState(false);
   const [showAnnotation, setShowAnnotation] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -228,7 +310,7 @@ export default function PassageView({ passage, chapterId, chapterTitle, defaultE
               {showPinyin ? (
                 <PinyinAnnotator text={passage.original} enabled={true} />
               ) : (
-                <AnnotatedText original={passage.original} annotations={passage.annotations} />
+                <AnnotatedText original={passage.original} annotations={passage.annotations} kaoju={kaoju} />
               )}
             </p>
           </div>
@@ -249,7 +331,7 @@ export default function PassageView({ passage, chapterId, chapterTitle, defaultE
               {showPinyin ? (
                 <PinyinAnnotator text={passage.original} enabled={true} />
               ) : (
-                <AnnotatedText original={passage.original} annotations={passage.annotations} />
+                <AnnotatedText original={passage.original} annotations={passage.annotations} kaoju={kaoju} />
               )}
             </p>
           </div>
@@ -266,9 +348,19 @@ export default function PassageView({ passage, chapterId, chapterTitle, defaultE
       {/* Commentary */}
       {passage.commentary && (
         <div className="mb-5">
-          <CommentaryBlock commentary={passage.commentary} />
+          <CommentaryBlock commentary={passage.commentary} kaoju={kaoju} />
         </div>
       )}
+
+      {/* 段落级注（陈鼓应 + 方勇） */}
+      <div className="mb-5">
+        {passageKaoju && passageKaoju.length > 0 && (
+          <KaojuSection title="陈鼓应注" entries={passageKaoju} />
+        )}
+        {passageKaojuFang && passageKaojuFang.length > 0 && (
+          <KaojuSection title="方勇训诂" entries={passageKaojuFang} />
+        )}
+      </div>
 
       {/* Concept tags */}
       {passage.concepts.length > 0 && (

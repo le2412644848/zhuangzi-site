@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { chat as deepseekChat } from "@/lib/ai";
 
 interface CrossReferencePanelProps {

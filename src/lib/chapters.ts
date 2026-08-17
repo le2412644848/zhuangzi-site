@@ -7,6 +7,8 @@ export interface Chapter {
   order: number;
   summary: string;
   conclusion?: string;
+  /** 陈鼓应《今注今译》篇首题解 */
+  intro?: string;
   passages: Passage[];
 }
 

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { concepts } from "@/data/concepts";
 import { chapters } from "@/data/chapters";
+import { passageNumber } from "@/data/chapters/metadata";
 import ConceptTag from "@/components/ConceptTag";
 import type { Metadata } from "next";
 
@@ -149,7 +150,7 @@ export default async function ConceptPage({ params }: Props) {
                     href={`/chapters/${chapter.id}#passage-${passage.id}`}
                     className="text-sm font-medium text-[var(--text-accent)] hover:underline"
                   >
-                    {chapter.title} · {passage.id}
+                    {chapter.title} · 第 {passageNumber(chapter.id, passage.id) ?? "?"} 节
                   </Link>
                   <p className="mt-2 text-sm text-[var(--text-primary)] leading-relaxed original-text">
                     {passage.original.length > 200

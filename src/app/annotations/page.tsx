@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useMemo } from "react";
+import { chaptersMeta, passageNumber } from "@/data/chapters/metadata";
 
 function AnnotationsContent() {
   const searchParams = useSearchParams();
@@ -60,9 +61,9 @@ function AnnotationsContent() {
             href={`/chapters/${annotation.chapterId}`}
             className="text-[var(--text-accent)] hover:underline"
           >
-            {annotation.chapterId.replace("-", "·")}
+            {chaptersMeta.find((m) => m.id === annotation.chapterId)?.title ?? annotation.chapterId}
           </Link>
-          {" · "}段落 {annotation.passageId}
+          {" · "}第 {passageNumber(annotation.chapterId, annotation.passageId) ?? annotation.passageId} 节
         </div>
         <div className="text-sm text-[var(--text-primary)] leading-relaxed bg-[var(--bg-secondary)] rounded p-4">
           {annotation.text}

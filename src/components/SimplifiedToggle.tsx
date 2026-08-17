@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 const TRAD_MAP: Record<string, string> = {
   "门": "門", "们": "們", "与": "與", "万": "萬", "义": "義", "个": "個", "为": "為", "书": "書",

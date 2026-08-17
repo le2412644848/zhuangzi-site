@@ -12,6 +12,15 @@ export interface ChapterMeta {
   summary: string;
   conclusion?: string;
   passageCount: number;
+  /** 各 passage 的 id 列表（按序），用于把 passageId 映射为「第 N 节」 */
+  passageIds?: string[];
+}
+
+/** 计算某 passage 在篇内的节号（1-based），查不到返回 null */
+export function passageNumber(chapterId: string, passageId: string): number | null {
+  const meta = chaptersMeta.find((m) => m.id === chapterId);
+  const idx = meta?.passageIds?.indexOf(passageId) ?? -1;
+  return idx >= 0 ? idx + 1 : null;
 }
 
 export const chaptersMeta: ChapterMeta[] = metadata;
