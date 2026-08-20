@@ -96,6 +96,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem("siteTheme");
     if (saved && Object.keys(themes).includes(saved)) {
+      // 挂载后读 localStorage 主题 + mounted 标志（hydration-safe）
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTheme(saved as ThemeName);
     }
     setMounted(true);

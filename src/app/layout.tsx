@@ -1,23 +1,10 @@
 import type { Metadata } from "next";
-import { Noto_Serif_SC } from "next/font/google";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { LayoutClient } from "@/components/LayoutClient";
 
-const notoSerif = Noto_Serif_SC({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-  variable: "--font-serif",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-  variable: "--font-sans",
-});
-
+// 字体改用系统字体栈（见 globals.css 的 :root 定义）。
+// 原因：next/font/google 会在构建时联网拉取 Google Fonts，在受限网络/CI 中
+// 必然失败导致 build 中断；且其只抓 latin 子集，中文本就回退到系统宋体。
 const BASE_URL = "https://zhuangzi-site.pages.dev";
 
 export const metadata: Metadata = {
@@ -90,12 +77,11 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${notoSerif.variable} ${inter.variable} h-full antialiased`}
+      className="h-full antialiased"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>
-        <link rel="preconnect" href="https://tile.openstreetmap.org" />
         <meta name="theme-color" content="#8B5E3C" />
         {/* Cloudflare Web Analytics — replace token to enable */}
         {/* <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN"}'></script> */}

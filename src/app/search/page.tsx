@@ -17,6 +17,8 @@ function SearchContent() {
 
   useEffect(() => {
     if (initialQuery) {
+      // URL 参数触发数据加载，先置 loading（挂载后执行）
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true);
       setError(null);
       search(initialQuery)

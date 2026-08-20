@@ -8,6 +8,8 @@ export default function VerticalModeToggle() {
   useEffect(() => {
     const stored = localStorage.getItem("verticalMode");
     if (stored === "true") {
+      // 挂载后读 localStorage（hydration-safe：SSR 无法访问 localStorage）
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVertical(true);
       document.documentElement.classList.add("vertical-mode");
     }

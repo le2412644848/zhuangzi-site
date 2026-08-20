@@ -2,34 +2,30 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import type * as d3Type from "d3";
 import { concepts } from "@/data/concepts";
 
-// Concept-to-chapter mapping (which chapters discuss each concept)
-interface ConceptNode {
+// 力导向图节点/链接类型（替代 any，保证类型安全）
+interface MapNode extends d3Type.SimulationNodeDatum {
   id: string;
-  name: string;
+  name?: string;
+  title?: string;
   group: number;
 }
 
-interface ChapterNode {
-  id: string;
-  title: string;
-  group: number;
-}
-
-interface Link {
-  source: string;
-  target: string;
+interface MapLink extends d3Type.SimulationLinkDatum<MapNode> {
+  source: string | MapNode;
+  target: string | MapNode;
   value: number;
 }
 
 // Build graph data from concepts
-const conceptData = concepts.map((c, i) => ({
+const conceptData = concepts.map((c) => ({
   id: c.id,
   name: c.name,
   group: 1,
   description: c.description,
-  chapters: (c as unknown as { relatedChapters?: string[] }).relatedChapters || [],
+  chapters: c.relatedChapters || [],
 }));
 
 const innerChapters = [
@@ -43,12 +39,12 @@ const innerChapters = [
 ];
 
 // Build links: connect concepts to their related inner chapters
-const nodes = [
+const nodes: MapNode[] = [
   ...innerChapters.map((ch) => ({ ...ch, group: 0 })),
   ...conceptData.map((c) => ({ id: c.id, name: c.name, group: 1 })),
 ];
 
-const links: { source: string; target: string; value: number }[] = [];
+const links: MapLink[] = [];
 for (const c of conceptData) {
   for (const chId of c.chapters) {
     if (innerChapters.some((ic) => ic.id === chId)) {
@@ -64,9 +60,8 @@ export default function ThoughtMap() {
 
   useEffect(() => {
     let cancelled = false;
-    // 提升到 useEffect 顶层，供 cleanup 停止 d3 力模拟（防卸载后空转泄漏）
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let simulation: any = null;
+    // 供 cleanup 停止 d3 力模拟（防卸载后空转泄漏）
+    let simulation: d3Type.Simulation<MapNode, undefined> | null = null;
     const container = containerRef.current;
     if (!container) return;
 
@@ -87,14 +82,9 @@ export default function ThoughtMap() {
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height]);
 
-      // Color scale
-      const color = d3.scaleOrdinal<string>()
-        .domain(["0", "1"])
-        .range(["var(--color-accent, #8b4513)", "var(--color-ink-light, #6b6b6b)"]);
-
       // Simulation
-      simulation = d3.forceSimulation(nodes as any)
-        .force("link", d3.forceLink(links).id((d: any) => d.id).distance(80))
+      simulation = d3.forceSimulation<MapNode>(nodes)
+        .force("link", d3.forceLink<MapNode, MapLink>(links).id((d) => d.id).distance(80))
         .force("charge", d3.forceManyBody().strength(-200))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force("collision", d3.forceCollide().radius(30));
@@ -110,29 +100,29 @@ export default function ThoughtMap() {
 
       // Nodes
       const node = svg.append("g")
-        .selectAll("g")
+        .selectAll<SVGGElement, MapNode>("g")
         .data(nodes)
         .join("g")
-        .call(d3.drag<any, any>()
+        .call(d3.drag<SVGGElement, MapNode>()
           .on("start", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
+            if (!event.active) simulation!.alphaTarget(0.3).restart();
+            d.fx = d.x ?? null;
+            d.fy = d.y ?? null;
           })
           .on("drag", (event, d) => {
             d.fx = event.x;
             d.fy = event.y;
           })
           .on("end", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
+            if (!event.active) simulation!.alphaTarget(0);
             d.fx = null;
             d.fy = null;
-          }) as any);
+          }));
 
       // Circles
       node.append("circle")
-        .attr("r", (d: any) => d.group === 0 ? 14 : 10)
-        .attr("fill", (d: any) => d.group === 0
+        .attr("r", (d: MapNode) => d.group === 0 ? 14 : 10)
+        .attr("fill", (d: MapNode) => d.group === 0
           ? "var(--text-accent, #8b4513)"
           : "var(--text-secondary, #6b6b6b)")
         .attr("stroke", "var(--bg-card, #fff)")
@@ -140,15 +130,15 @@ export default function ThoughtMap() {
 
       // Labels
       node.append("text")
-        .text((d: any) => d.name || d.title)
+        .text((d: MapNode) => d.name || d.title || "")
         .attr("x", 16)
         .attr("y", 4)
-        .attr("font-size", (d: any) => d.group === 0 ? "13px" : "11px")
+        .attr("font-size", (d: MapNode) => d.group === 0 ? "13px" : "11px")
         .attr("fill", "var(--text-primary)")
         .attr("font-family", "var(--font-serif, serif)");
 
       // Hover tooltip
-      node.on("mouseenter", (event: any, d: any) => {
+      node.on("mouseenter", (event: MouseEvent, d: MapNode) => {
         const concept = conceptData.find((c) => c.id === d.id);
         if (concept) {
           setTooltip({
@@ -161,18 +151,18 @@ export default function ThoughtMap() {
       }).on("mouseleave", () => setTooltip(null));
 
       // Click to select
-      node.on("click", (_event: any, d: any) => {
+      node.on("click", (_event: MouseEvent, d: MapNode) => {
         setSelectedNode(d.id);
       });
 
       // Tick
       simulation.on("tick", () => {
         link
-          .attr("x1", (d: any) => d.source.x)
-          .attr("y1", (d: any) => d.source.y)
-          .attr("x2", (d: any) => d.target.x)
-          .attr("y2", (d: any) => d.target.y);
-        node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+          .attr("x1", (d: MapLink) => (d.source as MapNode).x ?? 0)
+          .attr("y1", (d: MapLink) => (d.source as MapNode).y ?? 0)
+          .attr("x2", (d: MapLink) => (d.target as MapNode).x ?? 0)
+          .attr("y2", (d: MapLink) => (d.target as MapNode).y ?? 0);
+        node.attr("transform", (d: MapNode) => `translate(${d.x ?? 0},${d.y ?? 0})`);
       });
     }
 

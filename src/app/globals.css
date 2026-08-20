@@ -14,7 +14,7 @@
   --color-ink: #2A2218;            /* 松烟墨 — 主文字 */
   --color-ink-warm: #3A2F22;       /* 暖墨 — 深色文字 */
   --color-ink-soft: #7A6B5D;       /* 淡墨 — 副文字 */
-  --color-ink-muted: #A89880;      /* 浅墨 — 辅助文字 */
+  --color-ink-muted: #7D6E57;      /* 浅墨 — 辅助文字（#A89880 对比度仅 2.67，加深至 4.71 达 WCAG AA） */
   --color-accent: #8B5E3C;         /* 檀木色 — 主强调 */
   --color-accent-deep: #6B3A2A;    /* 深檀 — 悬停/激活 */
   --color-accent-gold: #B8975A;    /* 金箔 — 装饰性强调 */
@@ -77,6 +77,15 @@
 }
 
 /* ============================================
+   Font Variables (system stack — no network fetch)
+   ============================================ */
+:root {
+  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+}
+
+/* ============================================
    CSS Variables — Dark Mode
    ============================================ */
 .dark {
@@ -86,7 +95,7 @@
   --bg-card-hover: #302D27;
   --text-primary: var(--color-dm-text);
   --text-secondary: var(--color-dm-text-soft);
-  --text-muted: #7A7268;
+  --text-muted: #8D8478;
   --text-accent: var(--color-dm-accent);
   --border-color: var(--color-dm-border);
   --border-light: #2D2A25;
@@ -494,6 +503,16 @@ html {
   /* Reading progress thinner */
   .reading-progress-bar {
     height: 1px;
+  }
+}
+
+/* ============================================
+   触屏设备（无 hover）工具栏常驻
+   ============================================ */
+@media (hover: none) {
+  .passage-toolbar {
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
 }
 

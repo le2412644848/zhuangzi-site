@@ -18,6 +18,8 @@ export default function QuoteCard() {
   };
 
   useEffect(() => {
+    // 随机选句必须在客户端执行，避免 SSR/CSR 随机数不同导致水合不一致
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     pickRandom();
   }, []);
 

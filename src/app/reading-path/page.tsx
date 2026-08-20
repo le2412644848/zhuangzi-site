@@ -90,7 +90,7 @@ export default function ReadingPathPage() {
     try {
       // Local recommendation based on answers
       const allChIds = new Set<string>();
-      for (const [qId, val] of Object.entries(answers)) {
+      for (const [, val] of Object.entries(answers)) {
         const ids = CHAPTER_MAP[val];
         if (ids) ids.forEach((id) => allChIds.add(id));
       }

@@ -43,7 +43,6 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-const allLinks = navGroups.flatMap((g) => g.items);
 const primaryLinks = [
   { href: "/", label: "首页" },
   { href: "/chapters", label: "篇章" },
@@ -58,19 +57,31 @@ export default function Navigation() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click or Escape
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const onMouseDown = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setActiveDropdown(null);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setActiveDropdown(null);
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
+    // 路由变化时重置导航状态（派生状态同步，属合法模式）
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMenuOpen(false);
     setActiveDropdown(null);
   }, [pathname]);
@@ -188,6 +199,8 @@ export default function Navigation() {
             onClick={() => setMenuOpen(!menuOpen)}
             className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--hover-bg)] transition-colors ml-1"
             aria-label={menuOpen ? "关闭菜单" : "打开菜单"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
           >
             <svg
               className="w-5 h-5"
@@ -212,7 +225,7 @@ export default function Navigation() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-[var(--border-light)] bg-[var(--bg-primary)] shadow-lg animate-fade-in">
+        <div id="mobile-menu" className="md:hidden border-t border-[var(--border-light)] bg-[var(--bg-primary)] shadow-lg animate-fade-in">
           <div className="px-4 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
             {/* Primary links */}
             <div className="space-y-1">

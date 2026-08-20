@@ -67,6 +67,8 @@ export default function ReportPage() {
       }
     }
 
+    // 挂载后读 localStorage 统计（hydration-safe）
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStats({
       totalChapters: chaptersMeta.length,
       readChapters: [...readIds],

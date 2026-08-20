@@ -56,6 +56,8 @@ export function useAnnotation(chapterId: string, passageId: string) {
   const [annotation, setAnnotation] = useState<Annotation | null>(null);
 
   useEffect(() => {
+    // 挂载后读 localStorage 初始化（hydration-safe）
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnnotation(getAnnotation(chapterId, passageId));
   }, [chapterId, passageId]);
 

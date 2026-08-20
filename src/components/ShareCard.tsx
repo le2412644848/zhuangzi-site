@@ -105,6 +105,8 @@ export default function ShareCard({ text, chapterTitle, onClose }: ShareCardProp
           {/* Generated image */}
           {imgUrl && (
             <div className="rounded-lg overflow-hidden border border-[var(--border-light)]">
+              {/* canvas.toDataURL 生成的 data URL，next/image 不支持，需用原生 img */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={imgUrl} alt="分享卡片" className="w-full" />
             </div>
           )}

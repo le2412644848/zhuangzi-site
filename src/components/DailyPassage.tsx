@@ -5,6 +5,45 @@ import Link from "next/link";
 import { chaptersMeta } from "@/data/chapters/metadata";
 import type { Chapter, Passage } from "@/lib/chapters";
 
+// 显式按章映射，避免模板字符串动态 import（会让 Turbopack 把 33 章全文
+// 打成一个 ~1MB chunk，首页即全量下载）。显式映射 → 每章独立分包，
+// 运行时只拉取当天命中的那一章（约 20~60KB）。
+const chapterLoaders: Record<string, () => Promise<{ default: Chapter }>> = {
+  "01-xiaoyao-you": () => import("@/data/chapters/01-xiaoyao-you.json"),
+  "02-qiwu-lun": () => import("@/data/chapters/02-qiwu-lun.json"),
+  "03-yangsheng-zhu": () => import("@/data/chapters/03-yangsheng-zhu.json"),
+  "04-renjian-shi": () => import("@/data/chapters/04-renjian-shi.json"),
+  "05-dechong-fu": () => import("@/data/chapters/05-dechong-fu.json"),
+  "06-dazong-shi": () => import("@/data/chapters/06-dazong-shi.json"),
+  "07-yingdi-wang": () => import("@/data/chapters/07-yingdi-wang.json"),
+  "08-pianmu": () => import("@/data/chapters/08-pianmu.json"),
+  "09-mati": () => import("@/data/chapters/09-mati.json"),
+  "10-quqie": () => import("@/data/chapters/10-quqie.json"),
+  "11-zaiyou": () => import("@/data/chapters/11-zaiyou.json"),
+  "12-tiandi": () => import("@/data/chapters/12-tiandi.json"),
+  "13-tiandao": () => import("@/data/chapters/13-tiandao.json"),
+  "14-tianyun": () => import("@/data/chapters/14-tianyun.json"),
+  "15-keyi": () => import("@/data/chapters/15-keyi.json"),
+  "16-shanxing": () => import("@/data/chapters/16-shanxing.json"),
+  "17-qiushui": () => import("@/data/chapters/17-qiushui.json"),
+  "18-zhile": () => import("@/data/chapters/18-zhile.json"),
+  "19-dasheng": () => import("@/data/chapters/19-dasheng.json"),
+  "20-shanmu": () => import("@/data/chapters/20-shanmu.json"),
+  "21-tianzifang": () => import("@/data/chapters/21-tianzifang.json"),
+  "22-zhibeiyou": () => import("@/data/chapters/22-zhibeiyou.json"),
+  "23-gengsangchu": () => import("@/data/chapters/23-gengsangchu.json"),
+  "24-xuwugui": () => import("@/data/chapters/24-xuwugui.json"),
+  "25-zeyang": () => import("@/data/chapters/25-zeyang.json"),
+  "26-waiwu": () => import("@/data/chapters/26-waiwu.json"),
+  "27-yuyan": () => import("@/data/chapters/27-yuyan.json"),
+  "28-rangwang": () => import("@/data/chapters/28-rangwang.json"),
+  "29-daozhi": () => import("@/data/chapters/29-daozhi.json"),
+  "30-shuojian": () => import("@/data/chapters/30-shuojian.json"),
+  "31-yufu": () => import("@/data/chapters/31-yufu.json"),
+  "32-lieyukou": () => import("@/data/chapters/32-lieyukou.json"),
+  "33-tianxia": () => import("@/data/chapters/33-tianxia.json"),
+};
+
 function seededRandom(seed: number) {
   let s = seed;
   return () => {
@@ -35,11 +74,12 @@ export default function DailyPassage() {
 
       // Pick chapter deterministically, then a passage within it
       const chapterMeta = chaptersMeta[Math.floor(rng() * chaptersMeta.length)];
+      const loader = chapterLoaders[chapterMeta.id];
+      if (!loader) return;
 
-      // Dynamic import only the chapter we need
-      const fullChapter = (await import(
-        `@/data/chapters/${chapterMeta.id}.json`
-      )) as unknown as Chapter;
+      // 只按需加载命中章节（JSON 动态 import 返回 { default: ... }）
+      const mod = await loader();
+      const fullChapter = (mod.default ?? (mod as unknown as Chapter)) as Chapter;
 
       if (cancelled) return;
 

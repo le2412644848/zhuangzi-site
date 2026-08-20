@@ -16,6 +16,8 @@ export default function ReadingSettings() {
     const saved = localStorage.getItem("readingSettings");
     if (saved) {
       try {
+        // 挂载后读 localStorage 初始化（hydration-safe）
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setValues(JSON.parse(saved));
       } catch {}
     }

@@ -13,7 +13,6 @@ interface CrossReferencePanelProps {
 export default function CrossReferencePanel({
   selectedText,
   chapterTitle,
-  chapterId,
   onClose,
 }: CrossReferencePanelProps) {
   const [result, setResult] = useState<string | null>(null);
@@ -133,7 +132,7 @@ ${selectedText}
                 <div className="mt-2 space-y-2">
                   {originalQuotes.map((q, i) => (
                     <div key={i} className="p-2 rounded border border-[var(--border-light)]">
-                      <p className="text-xs text-[var(--text-primary)] leading-relaxed">"{q.quote}"</p>
+                      <p className="text-xs text-[var(--text-primary)] leading-relaxed">&quot;{q.quote}&quot;</p>
                       <p className="text-[10px] text-[var(--text-secondary)] mt-1">— {q.source}</p>
                     </div>
                   ))}

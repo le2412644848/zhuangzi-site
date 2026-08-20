@@ -32,9 +32,6 @@ export default function ConcordanceHeatmapPage() {
     return all.slice(0, maxWords);
   }, [maxWords]);
 
-  // Get max count for scaling
-  const maxCount = useMemo(() => Math.max(...words.map(w => w.count), 1), [words]);
-
   // Build heatmap data: for each word, count per chapter
   const heatmap = useMemo(() => {
     return words.map(w => {

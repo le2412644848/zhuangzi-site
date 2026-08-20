@@ -21,6 +21,7 @@ export default function AnnotationPanel({
   // useAnnotation 的 annotation 是异步 set（初始 null），挂载后同步一次，
   // 否则已有批注不预填，用户保存会覆盖原批注
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setText(annotation?.text ?? "");
   }, [annotation]);
 

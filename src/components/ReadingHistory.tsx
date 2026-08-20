@@ -43,6 +43,8 @@ export default function ReadingHistoryWidget() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
+    // 挂载后读 localStorage 阅读历史（hydration-safe）
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistory(getReadingHistory());
     const handler = () => setHistory(getReadingHistory());
     window.addEventListener("reading-recorded", handler);

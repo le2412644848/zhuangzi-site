@@ -8,10 +8,10 @@ export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
 
   useEffect(() => {
+    // 挂载后读 localStorage 收藏（hydration-safe）
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBookmarks(getBookmarks());
   }, []);
-
-  const refresh = () => setBookmarks(getBookmarks());
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">

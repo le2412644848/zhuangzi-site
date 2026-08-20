@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import locations from "@/data/map-locations.json";
 
 // Fix default marker icon paths (Leaflet webpack issue)
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
@@ -28,8 +28,8 @@ export default function ZhuangziMap() {
       maxZoom: 18,
     }).addTo(map);
 
-    (locations as any[]).forEach((loc) => {
-      const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+    locations.forEach((loc) => {
+      const marker = L.marker([loc.lat, loc.lng] as [number, number]).addTo(map);
       marker.bindPopup(`<b>${loc.name}</b><br>${loc.desc}<br><i>${loc.event}</i>`);
     });
 

@@ -76,7 +76,7 @@ export default function Home() {
               { num: "33", label: "篇章", sub: "内·外·杂" },
               { num: String(totalPassages), label: "段落", sub: "逐字注解" },
               { num: `${totalConcepts}+`, label: "核心概念", sub: "知识图谱" },
-            ].map((stat, i) => (
+            ].map((stat) => (
               <div key={stat.label} className="flex flex-col items-center gap-1">
                 <span className="stat-number text-2xl sm:text-3xl">{stat.num}</span>
                 <span className="text-sm font-medium text-[var(--text-primary)] tracking-wide">

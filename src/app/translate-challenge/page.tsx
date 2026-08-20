@@ -26,7 +26,8 @@ export default function TranslateChallengePage() {
   const [loading, setLoading] = useState(false);
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
-  const [showReference, setShowReference] = useState(false);
+  // 参考译文：提交后 AI 返回，展示给用户对照（原 showReference 只 set 不读，功能残缺）
+  const [referenceTranslation, setReferenceTranslation] = useState<string | null>(null);
   // 全文数据按需加载，加载一次后缓存供 handleNext 复用
   const [chaptersData, setChaptersData] = useState<Chapter[] | null>(null);
 
@@ -47,6 +48,8 @@ export default function TranslateChallengePage() {
       const saved = localStorage.getItem("translate_stats");
       if (saved) {
         const s = JSON.parse(saved);
+        // 挂载后读 localStorage 初始化（hydration-safe）
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTotalAttempts(s.attempts || 0);
         setTotalScore(s.score || 0);
       }
@@ -105,11 +108,9 @@ export default function TranslateChallengePage() {
       setTotalScore(newScore);
       saveStats(newTotal, newScore);
 
-      // Store reference translation for reveal
+      // 保存参考译文供用户对照
       if (refMatch) {
-        setShowReference(true);
-        // Store in temp storage
-        try { localStorage.setItem("last_ref_translation", refMatch[1].trim()); } catch {}
+        setReferenceTranslation(refMatch[1].trim());
       }
     } catch (err) {
       setFeedback(`出错了：${err instanceof Error ? err.message : "请稍后再试"}`);
@@ -123,7 +124,7 @@ export default function TranslateChallengePage() {
     setUserTranslation("");
     setScore(null);
     setFeedback(null);
-    setShowReference(false);
+    setReferenceTranslation(null);
   };
 
   if (!current) {
@@ -203,6 +204,12 @@ export default function TranslateChallengePage() {
           </div>
           {feedback && (
             <p className="text-sm text-[var(--text-primary)] leading-relaxed">{feedback}</p>
+          )}
+          {referenceTranslation && (
+            <div className="pt-3 border-t border-[var(--border-light)]">
+              <div className="text-xs font-medium text-[var(--text-accent)] mb-1.5">参考译文</div>
+              <p className="text-sm text-[var(--text-primary)] leading-relaxed">{referenceTranslation}</p>
+            </div>
           )}
           <div className="text-xs text-[var(--text-secondary)]">
             出自《{current.chapterTitle}》

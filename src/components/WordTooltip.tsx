@@ -20,7 +20,11 @@ export default function WordTooltip({ term, text, children, kaoju }: WordTooltip
   const triggerRef = useRef<HTMLSpanElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    // 客户端挂载标志，避免 SSR 阶段 createPortal 访问 document
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);

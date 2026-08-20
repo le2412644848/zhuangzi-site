@@ -184,6 +184,7 @@ export default function KnowledgeGraph() {
     render().then((sim) => { if (sim) simulation = sim; });
 
     return () => {
+      cancelled = true;
       simulation?.stop();
     };
   }, [router]);
