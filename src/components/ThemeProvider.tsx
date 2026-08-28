@@ -1,128 +1,105 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, ReactNode,useCallback, useContext, useEffect, useState } from "react";
 
-export type ThemeName = "xuanzhi" | "zhujian" | "moyun" | "qinghua";
+import {
+  DEFAULT_THEME,
+  isThemeName,
+  THEME_STORAGE_KEY,
+  themeCssVarEntries,
+  type ThemeName,
+  themes,
+} from "@/lib/theme";
 
-interface ThemeColors {
-  bgPrimary: string;
-  bgSecondary: string;
-  bgCard: string;
-  textPrimary: string;
-  textSecondary: string;
-  textMuted: string;
-  textAccent: string;
-  borderColor: string;
-  borderLight: string;
-}
-
-export const themes: Record<ThemeName, { name: string; icon: string; colors: ThemeColors }> = {
-  xuanzhi: {
-    name: "宣纸",
-    icon: "📜",
-    colors: {
-      bgPrimary: "#FBF9F5",
-      bgSecondary: "#F5EFE5",
-      bgCard: "#FFFFFF",
-      textPrimary: "#2A2218",
-      textSecondary: "#7A6B5D",
-      textMuted: "#A89880",
-      textAccent: "#8B5E3C",
-      borderColor: "#E8E0D5",
-      borderLight: "#F0EBE2",
-    },
-  },
-  zhujian: {
-    name: "竹简",
-    icon: "🎋",
-    colors: {
-      bgPrimary: "#F3F0E4",
-      bgSecondary: "#E8E3D2",
-      bgCard: "#FAF7EC",
-      textPrimary: "#3A3520",
-      textSecondary: "#6B6340",
-      textMuted: "#9B9060",
-      textAccent: "#5A6B3A",
-      borderColor: "#D8D0B0",
-      borderLight: "#E8E2C8",
-    },
-  },
-  moyun: {
-    name: "墨韵",
-    icon: "🖌️",
-    colors: {
-      bgPrimary: "#F5F5F5",
-      bgSecondary: "#EEEEEE",
-      bgCard: "#FFFFFF",
-      textPrimary: "#1A1A1A",
-      textSecondary: "#5C5C5C",
-      textMuted: "#999999",
-      textAccent: "#333333",
-      borderColor: "#D5D5D5",
-      borderLight: "#E5E5E5",
-    },
-  },
-  qinghua: {
-    name: "青花",
-    icon: "🏺",
-    colors: {
-      bgPrimary: "#F7F9FB",
-      bgSecondary: "#EDF2F7",
-      bgCard: "#FFFFFF",
-      textPrimary: "#1A2A3A",
-      textSecondary: "#4A6278",
-      textMuted: "#7A8EA0",
-      textAccent: "#2B5F8A",
-      borderColor: "#D0DDE8",
-      borderLight: "#E0EAF3",
-    },
-  },
-};
+// 调色板已迁移至 @/lib/theme（单一数据源）。此处只负责状态与副作用。
+// 重新导出以兼容既有 import 点（ThemeSwitcher 等）。
+export { themes };
+export type { ThemeName };
 
 interface ThemeContextType {
   theme: ThemeName;
   setTheme: (t: ThemeName) => void;
+  /** 已挂载（读过 localStorage）。未挂载前不要依赖 theme 做视觉判断。 */
+  mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "xuanzhi",
+  theme: DEFAULT_THEME,
   setTheme: () => {},
+  mounted: false,
 });
 
+/** 把主题写入 document —— 与 head 内联脚本使用完全相同的映射表 */
+function applyTheme(name: ThemeName) {
+  const root = document.documentElement;
+  for (const [cssVar, value] of themeCssVarEntries(name)) {
+    root.style.setProperty(cssVar, value);
+  }
+  const def = themes[name];
+  // 深色主题挂上 .dark：globals.css 的 .dark 规则（含 hero-gradient）由此生效。
+  root.classList.toggle("dark", def.dark);
+  // 让原生控件（滚动条、表单、日期选择器）跟随主题明暗
+  root.style.colorScheme = def.dark ? "dark" : "light";
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", def.themeColor);
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ThemeName>("xuanzhi");
+  const [theme, setThemeState] = useState<ThemeName>(DEFAULT_THEME);
   const [mounted, setMounted] = useState(false);
 
+  // 首次挂载：与内联脚本保持一致地解析初始主题
+  // （已存主题 → 用它；否则跟随系统深色偏好）
   useEffect(() => {
-    const saved = localStorage.getItem("siteTheme");
-    if (saved && Object.keys(themes).includes(saved)) {
-      // 挂载后读 localStorage 主题 + mounted 标志（hydration-safe）
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTheme(saved as ThemeName);
+    let initial: ThemeName = DEFAULT_THEME;
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (isThemeName(saved)) {
+        initial = saved;
+      } else if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+        initial = "yedu";
+      }
+    } catch {
+      // localStorage 不可用（隐私模式 / 已禁用）→ 用默认主题
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setThemeState(initial);
+    applyTheme(initial);
     setMounted(true);
   }, []);
 
+  // 用户没手动选过主题时，跟随系统明暗切换
   useEffect(() => {
     if (!mounted) return;
-    localStorage.setItem("siteTheme", theme);
-    const c = themes[theme].colors;
-    const root = document.documentElement;
-    root.style.setProperty("--bg-primary", c.bgPrimary);
-    root.style.setProperty("--bg-secondary", c.bgSecondary);
-    root.style.setProperty("--bg-card", c.bgCard);
-    root.style.setProperty("--text-primary", c.textPrimary);
-    root.style.setProperty("--text-secondary", c.textSecondary);
-    root.style.setProperty("--text-muted", c.textMuted);
-    root.style.setProperty("--text-accent", c.textAccent);
-    root.style.setProperty("--border-color", c.borderColor);
-    root.style.setProperty("--border-light", c.borderLight);
-    // Ensure dark mode doesn't override theme
-    root.classList.remove("dark");
-  }, [theme, mounted]);
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!mq) return;
+    const onChange = (e: MediaQueryListEvent) => {
+      try {
+        if (localStorage.getItem(THEME_STORAGE_KEY)) return; // 用户已显式选择，尊重之
+      } catch {
+        return;
+      }
+      const next: ThemeName = e.matches ? "yedu" : DEFAULT_THEME;
+      setThemeState(next);
+      applyTheme(next);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [mounted]);
+
+  const setTheme = useCallback((next: ThemeName) => {
+    setThemeState(next);
+    applyTheme(next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // 存储不可用时仍然应用主题，只是不持久化
+    }
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );

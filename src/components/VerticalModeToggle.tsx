@@ -25,14 +25,17 @@ export default function VerticalModeToggle() {
   return (
     <button
       onClick={toggle}
-      className={`text-xs px-2 py-1 rounded border transition-colors ${
+      aria-pressed={vertical}
+      className={`text-xs min-w-[32px] min-h-[32px] px-2 py-1 rounded border transition-colors ${
         vertical
           ? "border-[var(--text-accent)] text-[var(--text-accent)] bg-[var(--text-accent)]/10"
           : "border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
       }`}
-      title={vertical ? "切换到横排" : "切换到古籍竖排"}
+      title={vertical ? "切换到横排排版" : "切换到古籍竖排排版"}
     >
-      {vertical ? "竖排" : "横排"}
+      {/* 文案指代「目标态」（与 SimplifiedToggle 的「繁/简」一致），
+          aria-pressed 表达「当前态」（视觉复审 V7-5） */}
+      {vertical ? "横排" : "竖排"}
     </button>
   );
 }

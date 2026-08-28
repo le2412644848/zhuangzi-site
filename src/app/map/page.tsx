@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import MapWrapper from "@/components/MapWrapper";
 
-export const metadata: Metadata = { title: "庄子地理" };
+import MapWrapper from "@/components/MapWrapper";
+import { buildPageMetadata } from "@/lib/site";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "庄子地理",
+  description:
+    "《庄子》地理图 — 蒙城、濮水、濠梁等文中地名的今地考订与位置标注，还原庄周活动范围与寓言发生地。",
+  path: "/map",
+});
 
 export default function MapPage() {
   return (

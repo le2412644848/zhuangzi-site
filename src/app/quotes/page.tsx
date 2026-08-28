@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useMemo,useState } from "react";
+
 import quotesData from "@/data/quotes.json";
 
 const themes = [
@@ -17,6 +18,8 @@ interface Quote {
   passageId: string;
   theme: string;
   explanation: string;
+  translation?: string;
+  usage?: string;
 }
 
 export default function QuotesPage() {
@@ -48,7 +51,7 @@ export default function QuotesPage() {
             onClick={() => setTheme(t)}
             className={`text-xs px-3 py-1.5 rounded-full transition-all ${
               theme === t
-                ? "bg-[var(--text-accent)] text-white border-[var(--text-accent)] font-medium"
+                ? "bg-[var(--text-accent)] text-[var(--bg-primary)] border-[var(--text-accent)] font-medium"
                 : "tag text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
@@ -61,25 +64,39 @@ export default function QuotesPage() {
         共 {quotes.length} 句
       </p>
 
-      {/* Quotes list */}
+      {/* Quotes list（每句带锚点：章节页原文的名句标记跳转目标） */}
       <div className="space-y-4">
         {quotes.map((q) => (
           <div
             key={q.id}
-            className="card p-5 sm:p-6 hover:-translate-y-0.5 transition-transform"
+            id={q.id}
+            className="card p-5 sm:p-6 hover:-translate-y-0.5 transition-transform scroll-mt-20"
           >
-            <Link
-              href={`/chapters/${q.chapterId}`}
-              className="text-xs font-medium text-[var(--text-accent)] tracking-[0.06em] mb-3 inline-block hover:text-[var(--color-accent-deep)] transition-colors"
-            >
-              {q.chapter}
-            </Link>
-            <blockquote className="text-sm sm:text-base text-[var(--text-primary)] leading-[1.9] tracking-wide font-serif mb-3">
+            <div className="flex items-center justify-between mb-3">
+              <Link
+                href={`/chapters/${q.chapterId}`}
+                className="text-xs font-medium text-[var(--text-accent)] tracking-[0.06em] inline-block hover:text-[var(--color-accent-deep)] transition-colors"
+              >
+                {q.chapter}
+              </Link>
+              <span className="tag">{q.theme}</span>
+            </div>
+            <blockquote className="text-sm sm:text-base text-[var(--text-primary)] leading-[1.9] tracking-wide font-serif mb-4">
               &ldquo;{q.text}&rdquo;
             </blockquote>
-            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              {q.explanation}
+            {q.translation && (
+              <p className="text-sm text-[var(--text-secondary)] leading-[1.9] pl-3 border-l-2 border-[var(--border-light)] mb-3">
+                {q.translation}
+              </p>
+            )}
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-3">
+              <span className="font-medium text-[var(--text-accent)]">解读</span>　{q.explanation}
             </p>
+            {q.usage && (
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                <span className="font-medium text-[var(--text-accent)]">今日适用</span>　{q.usage}
+              </p>
+            )}
           </div>
         ))}
       </div>

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { search, type SearchResult } from "@/lib/search";
-import SearchBar from "@/components/SearchBar";
+import { useSearchParams } from "next/navigation";
+import { useEffect,useState } from "react";
 import { Suspense } from "react";
+
+import SearchBar from "@/components/SearchBar";
+import { search, type SearchResult } from "@/lib/search";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -51,10 +52,12 @@ function SearchContent() {
   const highlightMatch = (text: string, q: string) => {
     if (!q.trim()) return text;
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${escaped})`, "gi");
+    const regex = new RegExp(`(${escaped})`, "i");
     const parts = text.split(regex);
+    // split 带捕获组时，匹配项必落在奇数下标，直接 i % 2 === 1 判断，
+    // 规避全局正则 test() 的 lastIndex 陷阱（视觉复审 N3）
     return parts.map((part, i) =>
-      regex.test(part) ? (
+      i % 2 === 1 ? (
         <mark
           key={i}
           className="bg-[var(--text-accent)]/15 text-[var(--text-accent)] rounded px-0.5"
@@ -89,7 +92,7 @@ function SearchContent() {
       </div>
 
       <div className="mb-8 flex justify-center">
-        <SearchBar compact />
+        <SearchBar compact initialValue={initialQuery} />
       </div>
 
       {loading && (
@@ -105,7 +108,7 @@ function SearchContent() {
       )}
 
       {searched && !error && (
-        <div className="mb-6 text-center">
+        <div className="mb-6 text-center" role="status" aria-live="polite">
           <p className="text-sm text-[var(--text-secondary)]">
             {results.length === 0
               ? `未找到与「${initialQuery}」相关的内容`
@@ -132,8 +135,10 @@ function SearchContent() {
             <p className="text-sm text-[var(--text-primary)] leading-[1.9] tracking-wide font-serif mb-2">
               {highlightMatch(getSnippet(result.original, initialQuery), initialQuery)}
             </p>
+            {/* 译文只作对照展示，不高亮 —— 搜索只匹配原文，
+                译文里恰有同词并不代表该段因译文命中 */}
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-2">
-              {highlightMatch(result.translation, initialQuery)}
+              {result.translation}
             </p>
           </Link>
         ))}

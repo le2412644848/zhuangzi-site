@@ -1,13 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { Chapter } from "@/lib/chapters";
-import { useReadingMode } from "./ReadingModeProvider";
+import { useEffect,useState } from "react";
 
-export default function ChapterTOC({ chapter }: { chapter: Chapter }) {
+interface TocItem {
+  id: string;
+  label: string;
+}
+
+interface ChapterTOCProps {
+  /** 目录条目（服务端已裁剪为 id + 短标题，避免整篇章节对象进 RSC 载荷） */
+  items: TocItem[];
+}
+
+/**
+ * 章节目录（右侧固定悬浮）。
+ *
+ * 章节页减重：props 从「整个 chapter 对象」收窄为「id + 短标签」数组 ——
+ * 原实现把整篇章节（原文/译文/注疏全文）序列化进 RSC 载荷。
+ * 沉浸模式隐藏由 CSS 完成（html.immersive-mode .chapter-toc），
+ * 组件不再订阅任何全局状态。
+ *
+ * 短标签本身已带「N. 」前缀（服务端 `${i + 1}. ${原文…}`），
+ * 组件不再叠加序号，避免出现「1. 1. 北冥有鱼」的重复编号（视觉复审 N4）。
+ */
+export default function ChapterTOC({ items }: ChapterTOCProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
-  const { immersive } = useReadingMode();
 
   // Track which passage is currently in view
   useEffect(() => {
@@ -22,19 +40,18 @@ export default function ChapterTOC({ chapter }: { chapter: Chapter }) {
       { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
     );
 
-    chapter.passages.forEach((p) => {
+    items.forEach((p) => {
       const el = document.getElementById(`passage-${p.id}`);
       if (el) observer.observe(el);
     });
 
     return () => observer.disconnect();
-  }, [chapter.passages]);
+  }, [items]);
 
-  if (chapter.passages.length <= 1) return null;
-  if (immersive) return null;
+  if (items.length <= 1) return null;
 
   return (
-    <div className={`hidden lg:block fixed right-4 top-24 z-30 transition-all ${collapsed ? "w-8" : "w-48"}`}>
+    <div className={`chapter-toc hidden lg:block fixed right-4 top-24 z-30 transition-all ${collapsed ? "w-8" : "w-48"}`}>
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]/95 backdrop-blur-sm shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-light)] cursor-pointer"
@@ -50,7 +67,7 @@ export default function ChapterTOC({ chapter }: { chapter: Chapter }) {
         {/* TOC items */}
         {!collapsed && (
           <div className="max-h-[60vh] overflow-y-auto py-1">
-            {chapter.passages.map((p, i) => (
+            {items.map((p) => (
               <a
                 key={p.id}
                 href={`#passage-${p.id}`}
@@ -64,8 +81,7 @@ export default function ChapterTOC({ chapter }: { chapter: Chapter }) {
                     : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)]"
                 }`}
               >
-                <span className="text-[10px] mr-1 text-[var(--text-secondary)]">{i + 1}.</span>
-                {p.original.slice(0, 12)}{p.original.length > 12 ? "…" : ""}
+                {p.label}
               </a>
             ))}
           </div>

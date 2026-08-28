@@ -1,24 +1,80 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useEffect, useId,useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
 import type { KaojuEntry } from "@/lib/kaoju-utils";
+import { findKaoju } from "@/lib/kaoju-utils";
+import { renderEmphasis } from "@/lib/markup";
 
 interface WordTooltipProps {
   term: string;
   text: string;
   children: React.ReactNode;
-  /** 陈鼓应《今注今译》考据（训诂 + 历代注家），可空 */
-  kaoju?: KaojuEntry | null;
+  /** 所属篇 id —— 训诂数据按篇懒加载（/data/kaoju/<id>.json），不进首屏载荷 */
+  chapterId: string;
+  /**
+   * 名句光晕：该词条与原文内嵌名句区间重叠时置 true —— 词条本身保持
+   * tooltip 交互，仅叠加与 quote-mark 相同的高亮底色（按钮内不能嵌 <a>，
+   * 跳转由名句的纯文本部分承担）。
+   */
+  quoteHalo?: boolean | undefined;
 }
 
-export default function WordTooltip({ term, text, children, kaoju }: WordTooltipProps) {
+/** 篇级考据（陈鼓应词条）模块级缓存：每个篇只 fetch 一次 */
+const kaojuCache = new Map<string, Promise<KaojuEntry[]>>();
+function loadChapterKaoju(chapterId: string): Promise<KaojuEntry[]> {
+  let p = kaojuCache.get(chapterId);
+  if (!p) {
+    p = fetch(`/data/kaoju/${chapterId}.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.entries?.chen ?? [])
+      .catch(() => []);
+    kaojuCache.set(chapterId, p);
+  }
+  return p;
+}
+
+/**
+ * 词语注释浮层 —— 全站阅读体验的核心交互。
+ *
+ * 原实现是 `<span onMouseEnter/onMouseLeave/onClick>`：没有 tabIndex、没有
+ * role、没有键盘事件、没有 Escape 关闭、没有 aria 关联。后果是
+ * 「键盘用户和屏幕阅读器用户完全无法获取逐字注」——对一个古籍注疏站来说，
+ * 等于主要内容之一对这部分用户不存在。
+ *
+ * 本次修正对齐 WCAG 2.1：
+ *  - 1.4.13 Content on Hover or Focus：可悬停、可聚焦触发，可 Esc 关闭，
+ *    指针移入浮层本身不会关闭（原本有 200ms 宽限，保留）。
+ *  - 2.1.1 Keyboard：改为真正的 <button>，Enter/Space 可切换。
+ *  - 4.1.2 Name, Role, Value：aria-expanded / aria-describedby 关联浮层内容。
+ *  - 触屏：原来 hover 不可用时只能靠 onClick 且无任何可见提示；现在按钮语义
+ *    天然支持点击，并有 44px 最小触控高度（见 globals.css）。
+ */
+export default function WordTooltip({ term, text, children, chapterId, quoteHalo }: WordTooltipProps) {
   const [show, setShow] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, below: false });
   const [showAll, setShowAll] = useState(false);
-  const triggerRef = useRef<HTMLSpanElement>(null);
+  // undefined = 尚未加载；null = 已加载但无命中
+  const [kaoju, setKaoju] = useState<KaojuEntry | null | undefined>(undefined);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tooltipId = useId();
+
+  // 首次打开时懒加载篇级考据并在客户端查找命中条目（findKaoju 是纯函数）。
+  // 训诂内容因此不进首屏 HTML/RSC 载荷，只在需要时下载。
+  useEffect(() => {
+    if (!show || kaoju !== undefined) return;
+    let cancelled = false;
+    loadChapterKaoju(chapterId).then((entries) => {
+      if (cancelled) return;
+      setKaoju(findKaoju(entries, term));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [show, kaoju, chapterId, term]);
 
   useEffect(() => {
     // 客户端挂载标志，避免 SSR 阶段 createPortal 访问 document
@@ -26,34 +82,70 @@ export default function WordTooltip({ term, text, children, kaoju }: WordTooltip
     setMounted(true);
   }, []);
 
-  const handleMouseEnter = () => {
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    // 视口顶部空间不足时向下弹出，避免 tooltip 被截断
+    const below = rect.top < 170;
+    // 浮层宽 288px(w-72) 且以 translateX(-50%) 居中：靠近屏幕左右边缘的注释词
+    // 会把浮层推出视口（375px 宽的手机上尤其明显，原实现会直接被裁掉）。
+    // 这里把中心点夹紧到「半宽 + 8px 边距」的可用区间内。
+    const half = Math.min(288, window.innerWidth - 16) / 2;
+    const margin = 8;
+    const centre = rect.left + rect.width / 2;
+    const clamped = Math.min(
+      Math.max(centre, half + margin),
+      window.innerWidth - half - margin
+    );
+    setPosition({
+      top: below ? rect.bottom + 8 : rect.top - 8,
+      left: clamped,
+      below,
+    });
+  }, []);
+
+  const open = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     updatePosition();
     setShow(true);
-  };
+  }, [updatePosition]);
 
-  const handleMouseLeave = () => {
+  /** 延迟关闭：允许指针从触发词移动到浮层上而不闪断 */
+  const closeSoon = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setShow(false), 200);
-  };
+  }, []);
 
-  const updatePosition = () => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      // 视口顶部空间不足时向下弹出，避免 tooltip 被截断
-      const below = rect.top < 170;
-      setPosition({
-        top: below ? rect.bottom + 8 : rect.top - 8,
-        left: rect.left + rect.width / 2,
-        below,
-      });
-    }
-  };
+  const closeNow = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setShow(false);
+  }, []);
 
-  // Close on scroll
+  // 滚动时关闭（浮层用 fixed 定位，不随内容滚动）
   useEffect(() => {
+    if (!show) return;
     const onScroll = () => setShow(false);
     window.addEventListener("scroll", onScroll, true);
     return () => window.removeEventListener("scroll", onScroll, true);
+  }, [show]);
+
+  // WCAG 1.4.13：Esc 必须能关闭浮层，且焦点回到触发元素
+  useEffect(() => {
+    if (!show) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        closeNow();
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [show, closeNow]);
+
+  // 卸载时清掉待执行的关闭定时器
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
   }, []);
 
   const citations = kaoju?.citations ?? [];
@@ -61,14 +153,16 @@ export default function WordTooltip({ term, text, children, kaoju }: WordTooltip
 
   const tooltip = show && mounted ? (
     <div
-      className="fixed z-[9999] w-72 sm:w-80 max-h-[70vh] overflow-y-auto p-3 rounded-xl shadow-lg border border-[var(--border-color)] bg-[var(--bg-card)] text-sm leading-relaxed pointer-events-auto"
+      id={tooltipId}
+      role="tooltip"
+      className="fixed z-[9999] w-[min(18rem,calc(100vw-1rem))] sm:w-80 max-h-[70vh] overflow-y-auto p-3 rounded-xl shadow-lg border border-[var(--border-color)] bg-[var(--bg-card)] text-sm leading-relaxed pointer-events-auto"
       style={{
         top: position.top,
         left: position.left,
         transform: position.below ? "translate(-50%, 0)" : "translate(-50%, -100%)",
       }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={open}
+      onMouseLeave={closeSoon}
     >
       <div
         className={`absolute left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 border-r border-b border-[var(--border-color)] bg-[var(--bg-card)] ${
@@ -79,7 +173,7 @@ export default function WordTooltip({ term, text, children, kaoju }: WordTooltip
         「{term}」
       </div>
       <div className="text-[var(--text-primary)] text-xs leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") }}
+        dangerouslySetInnerHTML={{ __html: renderEmphasis(text) }}
       />
 
       {kaoju && (kaoju.explanation || citations.length > 0) && (
@@ -104,7 +198,9 @@ export default function WordTooltip({ term, text, children, kaoju }: WordTooltip
               ))}
               {citations.length > 2 && (
                 <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); setShowAll(!showAll); }}
+                  aria-expanded={showAll}
                   className="text-[11px] text-[var(--text-accent)] hover:underline"
                 >
                   {showAll ? "收起" : `展开全部 ${citations.length} 家注`}
@@ -119,17 +215,29 @@ export default function WordTooltip({ term, text, children, kaoju }: WordTooltip
 
   return (
     <>
-      <span
+      {/*
+        用 <button> 而非 <span>：天然可聚焦、可 Enter/Space 触发、有正确 role。
+        display:inline 保持在正文流中不破坏行距；文字仍继承正文字号。
+      */}
+      <button
         ref={triggerRef}
-        className="inline cursor-help group"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={() => setShow(!show)}
+        type="button"
+        aria-expanded={show}
+        aria-describedby={show ? tooltipId : undefined}
+        aria-label={`${term} — 查看注释`}
+        className="inline cursor-help text-left font-[inherit] text-[inherit] leading-[inherit] bg-transparent p-0 border-0 align-baseline"
+        onMouseEnter={open}
+        onMouseLeave={closeSoon}
+        onFocus={open}
+        onBlur={closeSoon}
+        onClick={() => (show ? closeNow() : open())}
       >
-        <span className="border-b-2 border-dotted border-[var(--text-accent)]/40 hover:border-[var(--text-accent)] transition-colors">
+        <span
+          className={`border-b-2 border-dotted border-[var(--text-accent)]/40 hover:border-[var(--text-accent)] focus-visible:border-[var(--text-accent)] transition-colors${quoteHalo ? " quote-halo" : ""}`}
+        >
           {children}
         </span>
-      </span>
+      </button>
       {tooltip && createPortal(tooltip, document.body)}
     </>
   );

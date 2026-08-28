@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import type * as d3Type from "d3";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
 import { concepts } from "@/data/concepts";
 
 // 力导向图节点/链接类型（替代 any，保证类型安全）

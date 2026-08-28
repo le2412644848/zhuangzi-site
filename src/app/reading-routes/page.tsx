@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import routesData from "@/data/reading-routes.json";
 
 interface Route {

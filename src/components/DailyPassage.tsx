@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useEffect,useState } from "react";
+
 import { chaptersMeta } from "@/data/chapters/metadata";
 import type { Chapter, Passage } from "@/lib/chapters";
 
@@ -73,7 +74,7 @@ export default function DailyPassage() {
       const rng = seededRandom(todaySeed());
 
       // Pick chapter deterministically, then a passage within it
-      const chapterMeta = chaptersMeta[Math.floor(rng() * chaptersMeta.length)];
+      const chapterMeta = chaptersMeta[Math.floor(rng() * chaptersMeta.length)]!;
       const loader = chapterLoaders[chapterMeta.id];
       if (!loader) return;
 
@@ -83,7 +84,7 @@ export default function DailyPassage() {
 
       if (cancelled) return;
 
-      const passage = fullChapter.passages[Math.floor(rng() * fullChapter.passages.length)];
+      const passage = fullChapter.passages[Math.floor(rng() * fullChapter.passages.length)]!;
 
       setDaily({
         chapterTitle: fullChapter.title,
@@ -99,15 +100,21 @@ export default function DailyPassage() {
   if (!daily) return null;
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8 mb-20">
-      <div className="max-w-xl mx-auto">
-        <div className="card p-6 sm:p-8 relative overflow-hidden">
-          {/* Decorative accent line */}
-          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--text-accent)]/30 via-[var(--color-accent-gold)]/20 to-transparent" />
+    <section
+      className="px-4 sm:px-6 lg:px-8 mb-20 animate-fade-in-up"
+      style={{ animationDelay: "0.15s" }}
+    >
+      <div className="max-w-2xl mx-auto">
+        <div className="daily-passage-book">
+          {/* 缎带书签 */}
+          <span className="ribbon-bookmark" aria-hidden="true">
+            每日一庄
+          </span>
 
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-[var(--text-accent)] tracking-[0.12em] uppercase">
-              每日一庄
+          {/* 页眉：篇名 + 日期 */}
+          <div className="flex items-center justify-between mb-5">
+            <span className="text-xs font-semibold text-[var(--text-accent)] tracking-[0.12em]">
+              {daily.chapterTitle}
             </span>
             <span className="text-[11px] text-[var(--text-muted)]">
               {new Date().toLocaleDateString("zh-CN", {
@@ -117,36 +124,51 @@ export default function DailyPassage() {
             </span>
           </div>
 
-          <blockquote className="text-sm sm:text-base text-[var(--text-primary)] leading-[1.9] tracking-wide font-serif mb-4">
-            &ldquo;{daily.passage.original.slice(0, 160)}
-            {daily.passage.original.length > 160 ? "…" : ""}&rdquo;
-          </blockquote>
-
-          {showTranslation && (
-            <div className="mb-4 p-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-light)]">
-              <p className="text-xs sm:text-sm text-[var(--text-secondary)] italic leading-relaxed">
-                {daily.passage.translation.slice(0, 140)}
-                {daily.passage.translation.length > 140 ? "…" : ""}
+          {/* 书页主体：左竖排提字 + 右展开译注 */}
+          <div className="flex gap-5 sm:gap-7">
+            <div className="vertical-extract flex-none" aria-hidden="true">
+              <p className="font-serif">
+                {(() => {
+                  // 竖排取 4 的倍数（列高 6 字 × 4 列 = 24 字），避免末列孤字悬挂
+                  const n = Math.min(24, Math.floor(daily.passage.original.length / 4) * 4);
+                  return daily.passage.original.slice(0, n) + (daily.passage.original.length > n ? "…" : "");
+                })()}
               </p>
             </div>
-          )}
 
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowTranslation(!showTranslation)}
-              className="text-xs font-medium text-[var(--text-accent)] hover:text-[var(--color-accent-deep)] transition-colors"
-            >
-              {showTranslation ? "收起译文" : "查看白话译文"}
-            </button>
-            <Link
-              href={`/chapters/${daily.chapterId}`}
-              className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors flex items-center gap-1"
-            >
-              {daily.chapterTitle} · 阅读全文
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
+            <div className="flex-1 min-w-0">
+              <blockquote className="text-sm sm:text-base text-[var(--text-primary)] leading-[1.9] tracking-wide font-serif">
+                &ldquo;{daily.passage.original.slice(0, 120)}
+                {daily.passage.original.length > 120 ? "…" : ""}&rdquo;
+              </blockquote>
+
+              {showTranslation && (
+                <div className="mt-4 p-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-light)]">
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] italic leading-relaxed">
+                    {daily.passage.translation.slice(0, 140)}
+                    {daily.passage.translation.length > 140 ? "…" : ""}
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center justify-between">
+                <button
+                  onClick={() => setShowTranslation(!showTranslation)}
+                  className="text-xs font-medium text-[var(--text-accent)] hover:text-[var(--color-accent-deep)] transition-colors"
+                >
+                  {showTranslation ? "收起译文" : "查看白话译文"}
+                </button>
+                <Link
+                  href={`/chapters/${daily.chapterId}`}
+                  className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors flex items-center gap-1"
+                >
+                  {daily.chapterTitle} · 阅读全文
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

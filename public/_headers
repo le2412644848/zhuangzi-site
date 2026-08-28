@@ -1,33 +1,47 @@
 # ──────────────────────────────────────────
-# Global security headers
+# 全局安全响应头
+#
+# 注意：Cloudflare Pages 的 _headers 对同一路径模式的多个区块行为不保证合并，
+# 此前文件里有**两个独立的 /* 区块**（一个放通用头、一个放 CSP），
+# 属于易碎写法 —— 一旦解析规则按「后者覆盖前者」处理，前一块的头会整体丢失。
+# 现已合并为单一 /* 区块。
 # ──────────────────────────────────────────
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-DNS-Prefetch-Control: off
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  # 注：不设 Cross-Origin-Embedder-Policy: require-corp —— 它会拦掉
+  # 高德地图瓦片（不带 CORP 头）。Leaflet 标记图标已自托管
+  # （public/vendor/leaflet/，见 TODO 3.9），只剩高德瓦片这一项障碍。
+  # 若将来瓦片也自托管，可再开启 COEP 以获得跨源隔离。
+  #
+  # Content-Security-Policy
+  # 'unsafe-inline' 仍为 script-src 所需，原因：
+  #   1. layout.tsx 的防闪烁主题脚本必须同步内联执行（否则首帧闪色）
+  #   2. 各页 JSON-LD 结构化数据必须内联（ld+json 不支持外链 src）
+  # 由于 _headers 是**静态**文件、无法按请求下发 nonce，而 JSON-LD 内容
+  # 每页不同导致 hash 无法穷举，故暂时保留 'unsafe-inline'。
+  # 缓解措施：全站进入 dangerouslySetInnerHTML 的内容统一走
+  # src/lib/markup.ts 的 renderEmphasis()（先转义再只还原 **粗体**）。
+  # 收紧路径见 docs/IMPROVEMENT-ROADMAP.md 第三节。
+  #
+  # img-src:     高德瓦片(webrd0{1-4}.is.autonavi.com)；地图标记图标已自托管
+  # connect-src: api.deepseek.com (BYOK AI) + 高德瓦片
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://webrd01.is.autonavi.com https://webrd02.is.autonavi.com https://webrd03.is.autonavi.com https://webrd04.is.autonavi.com; connect-src 'self' https://api.deepseek.com https://tile.openstreetmap.org https://webrd01.is.autonavi.com https://webrd02.is.autonavi.com https://webrd03.is.autonavi.com https://webrd04.is.autonavi.com; font-src 'self'; media-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
 
 # ──────────────────────────────────────────
-# Content-Security-Policy
-# 'unsafe-inline' needed for:
-#   - layout.tsx anti-flicker theme <script>
-#   - layout.tsx JSON-LD structured data
-#   - Next.js inline style hydration
-# img-src: 高德瓦片(webrd0{1-4}.is.autonavi.com) + Leaflet 标记图标(cdnjs)
-# connect-src: api.deepseek.com (AI), 高德瓦片
-# ──────────────────────────────────────────
-/*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://webrd01.is.autonavi.com https://webrd02.is.autonavi.com https://webrd03.is.autonavi.com https://webrd04.is.autonavi.com https://cdnjs.cloudflare.com; connect-src 'self' https://api.deepseek.com https://tile.openstreetmap.org https://webrd01.is.autonavi.com https://webrd02.is.autonavi.com https://webrd03.is.autonavi.com https://webrd04.is.autonavi.com; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
-
-# ──────────────────────────────────────────
-# Static assets with content hash — immutable
+# 内容哈希命名的静态资源 — 永久不可变
 # ──────────────────────────────────────────
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
 
 # ──────────────────────────────────────────
-# Images & assets
+# 图片与静态资产
 # ──────────────────────────────────────────
 /*.png
   Cache-Control: public, max-age=31536000, immutable
@@ -35,12 +49,29 @@
 /*.svg
   Cache-Control: public, max-age=604800, must-revalidate
 
+# 自托管子集字体（内容哈希固定，见 TODO 3.1）
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
 /*.json
   Cache-Control: public, max-age=3600, must-revalidate
 
 # ──────────────────────────────────────────
-# HTML — short TTL with stale-while-revalidate
-# Cloudflare CDN serves stale during revalidation
+# Service Worker 必须不被长缓存，否则新版本无法及时接管
+# ──────────────────────────────────────────
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# ──────────────────────────────────────────
+# HTML — 短 TTL + stale-while-revalidate
+# Cloudflare CDN 在回源校验期间继续提供旧副本
 # ──────────────────────────────────────────
 /*.html
   Cache-Control: public, max-age=0, must-revalidate, stale-while-revalidate=3600
+
+# ──────────────────────────────────────────
+# AI 代理绝不缓存
+# ──────────────────────────────────────────
+/api/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex

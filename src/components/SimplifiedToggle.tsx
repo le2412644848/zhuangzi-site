@@ -1,125 +1,110 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 
-const TRAD_MAP: Record<string, string> = {
-  "门": "門", "们": "們", "与": "與", "万": "萬", "义": "義", "个": "個", "为": "為", "书": "書",
-  "乐": "樂", "云": "雲", "关": "關", "兴": "興", "养": "養", "农": "農", "冯": "馮", "决": "決",
-  "动": "動", "胜": "勝", "劳": "勞", "势": "勢", "千": "韆", "华": "華", "卫": "衛", "历": "曆",
-  "压": "壓", "县": "縣", "发": "發", "变": "變", "只": "隻", "台": "臺", "叶": "葉", "后": "後",
-  "吓": "嚇", "听": "聽", "启": "啟", "员": "員", "问": "問", "呜": "嗚", "园": "園", "围": "圍",
-  "国": "國", "图": "圖", "圣": "聖", "场": "場", "备": "備", "复": "復", "头": "頭", "实": "實",
-  "宝": "寶", "对": "對", "导": "導", "将": "將", "尔": "爾", "尘": "塵", "尝": "嘗", "岁": "歲",
-  "岂": "豈", "师": "師", "帐": "帳", "帮": "幫", "广": "廣", "庄": "莊", "庆": "慶", "库": "庫",
-  "应": "應", "庙": "廟", "废": "廢", "开": "開", "异": "異", "弃": "棄", "张": "張", "弹": "彈",
-  "归": "歸", "当": "當", "录": "錄", "彻": "徹", "征": "徵", "忆": "憶", "忧": "憂", "怀": "懷",
-  "态": "態", "恶": "惡", "恼": "惱", "悬": "懸", "惊": "驚", "惩": "懲", "戏": "戲", "战": "戰",
-  "执": "執", "扩": "擴", "扰": "擾", "无": "無", "时": "時", "显": "顯", "会": "會", "机": "機",
-  "杀": "殺", "杂": "雜", "权": "權", "来": "來", "杨": "楊", "极": "極", "构": "構", "树": "樹",
-  "样": "樣", "欢": "歡", "气": "氣", "汉": "漢", "汤": "湯", "沟": "溝", "洁": "潔", "润": "潤",
-  "涨": "漲", "滩": "灘", "灭": "滅", "灯": "燈", "灵": "靈", "点": "點", "热": "熱", "爱": "愛",
-  "爷": "爺", "犹": "猶", "独": "獨", "狱": "獄", "获": "獲", "兽": "獸", "现": "現", "环": "環",
-  "电": "電", "画": "畫", "毕": "畢", "疗": "療", "疯": "瘋", "盖": "蓋", "众": "眾", "睁": "睜",
-  "碍": "礙", "礼": "禮", "穷": "窮", "窃": "竊", "笔": "筆", "节": "節", "类": "類", "粮": "糧",
-  "终": "終", "经": "經", "结": "結", "给": "給", "绝": "絕", "统": "統", "续": "續", "网": "網",
-  "罢": "罷", "罗": "羅", "罚": "罰", "习": "習", "联": "聯", "聪": "聰", "胀": "脹", "胶": "膠",
-  "举": "舉", "旧": "舊", "舰": "艦", "艰": "艱", "艺": "藝", "药": "藥", "处": "處", "号": "號",
-  "虫": "蟲", "补": "補", "装": "裝", "见": "見", "观": "觀", "规": "規", "觉": "覺", "解": "解",
-  "认": "認", "记": "記", "讲": "講", "论": "論", "设": "設", "识": "識", "诉": "訴", "词": "詞",
-  "译": "譯", "试": "試", "诗": "詩", "诚": "誠", "话": "話", "该": "該", "详": "詳", "语": "語",
-  "误": "誤", "说": "說", "请": "請", "诸": "諸", "读": "讀", "课": "課", "谁": "誰", "调": "調",
-  "谈": "談", "谋": "謀", "谢": "謝", "证": "證", "评": "評", "诊": "診", "丰": "豐", "贝": "貝",
-  "负": "負", "贡": "貢", "财": "財", "责": "責", "贤": "賢", "货": "貨", "质": "質", "贩": "販",
-  "贪": "貪", "贫": "貧", "购": "購", "贮": "貯", "贯": "貫", "贱": "賤", "贴": "貼", "贵": "貴",
-  "贷": "貸", "贸": "貿", "费": "費", "贺": "賀", "资": "資", "贾": "賈", "赏": "賞", "赐": "賜",
-  "赔": "賠", "赖": "賴", "赚": "賺", "赛": "賽", "赞": "贊", "赠": "贈", "赵": "趙", "赶": "趕",
-  "起": "起", "越": "越", "趋": "趨", "超": "超", "转": "轉", "轮": "輪", "软": "軟", "轰": "轟",
-  "轻": "輕", "载": "載", "较": "較", "辅": "輔", "辆": "輛", "辉": "輝", "辈": "輩", "达": "達",
-  "迁": "遷", "运": "運", "还": "還", "这": "這", "进": "進", "远": "遠", "违": "違", "连": "連",
-  "迟": "遲", "选": "選", "逊": "遜", "递": "遞", "遥": "遙", "遭": "遭", "避": "避", "邮": "郵",
-  "邹": "鄒", "邓": "鄧", "郑": "鄭", "邻": "鄰", "郁": "鬱", "队": "隊", "阳": "陽", "阴": "陰",
-  "阵": "陣", "阶": "階", "际": "際", "陆": "陸", "陈": "陳", "险": "險", "陪": "陪", "随": "隨",
-  "隐": "隱", "隶": "隸", "难": "難", "雨": "雨", "雪": "雪", "雾": "霧", "静": "靜", "非": "非",
-  "面": "麵", "革": "革", "韦": "韋", "音": "音", "页": "頁", "顶": "頂", "项": "項", "顺": "順",
-  "须": "須", "顾": "顧", "顿": "頓", "预": "預", "领": "領", "颈": "頸", "频": "頻", "题": "題",
-  "颜": "顏", "额": "額", "风": "風", "飞": "飛", "食": "食", "饥": "飢", "饭": "飯", "饮": "飲",
-  "饱": "飽", "饿": "餓", "馆": "館", "马": "馬", "驱": "驅", "驶": "駛", "驾": "駕", "骂": "罵",
-  "骑": "騎", "骗": "騙", "鱼": "魚", "鲁": "魯", "鲜": "鮮", "鸟": "鳥", "鸡": "雞", "鸣": "鳴",
-  "鸭": "鴨", "鸽": "鴿", "鹅": "鵝", "鹤": "鶴", "鹂": "鸝", "鹿": "鹿", "丽": "麗", "麦": "麥",
-  "黄": "黃", "黑": "黑", "默": "默", "齐": "齊", "齿": "齒", "龙": "龍", "龟": "龜", "专": "專",
-  "业": "業", "丛": "叢", "东": "東", "丝": "絲", "两": "兩", "严": "嚴", "中": "中", "串": "串",
-  "临": "臨", "乌": "烏", "乔": "喬", "乡": "鄉", "买": "買", "乱": "亂", "争": "爭", "于": "於",
-  "亏": "虧", "亚": "亞", "产": "產", "亩": "畝", "亲": "親", "亿": "億", "仅": "僅", "从": "從",
-  "仑": "侖", "仓": "倉", "仪": "儀", "价": "價", "优": "優", "伙": "夥", "传": "傳", "伤": "傷",
-  "伦": "倫", "伪": "偽", "体": "體", "余": "餘", "侠": "俠", "侣": "侶", "侥": "僥", "侦": "偵",
-  "侧": "側", "侨": "僑", "侩": "儈", "侮": "侮", "侯": "侯", "侵": "侵", "侶": "侶", "便": "便",
-  "系": "係", "促": "促", "俄": "俄", "俊": "俊", "俪": "儷", "俗": "俗", "俘": "俘", "保": "保",
-  "信": "信", "俩": "倆", "俭": "儉", "修": "修", "俯": "俯", "俱": "俱", "倍": "倍", "倒": "倒",
-  "倾": "傾", "假": "假", "停": "停", "储": "儲", "催": "催", "傲": "傲", "傻": "傻", "像": "像",
-  "仆": "僕",
-};
-
-const SIMP_MAP: Record<string, string> = {};
-for (const [simp, trad] of Object.entries(TRAD_MAP)) {
-  SIMP_MAP[trad] = simp;
-}
+import { SIMP_MAP, TRAD_MAP } from "@/data/trad-map";
 
 type Script = "simp" | "trad";
+
+const SKIP_TAGS = new Set([
+  "SCRIPT",
+  "STYLE",
+  "INPUT",
+  "TEXTAREA",
+  "SVG",
+  "PATH",
+  "CODE",
+  "PRE",
+  "KBD",
+]);
 
 function convertText(text: string, target: Script): string {
   const map = target === "trad" ? TRAD_MAP : SIMP_MAP;
   let result = "";
   for (const char of text) {
-    result += map[char] || char;
+    result += map[char] ?? char;
   }
   return result;
 }
 
+function collectTextNodes(): Text[] {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => {
+      const parent = node.parentElement;
+      if (!parent) return NodeFilter.FILTER_REJECT;
+      if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+      // 允许局部标记「不要转换」（如已是繁体的站点标识）
+      if (parent.closest("[data-no-script-convert]")) return NodeFilter.FILTER_REJECT;
+      if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
+  const nodes: Text[] = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+  return nodes;
+}
+
+/**
+ * 简/繁字形切换。
+ *
+ * 两点修正（原实现的问题）：
+ *
+ * 1. **文本讹误** —— 原表含「一简对多繁」的逐字映射，最典型的是
+ *    千→韆（「韆」只用于「鞦韆」），会把《逍遥游》「不知其几千里也」
+ *    转成「几韆里」；同类还有 面→麵、只→隻、发→發、历→曆、后→後、于→於。
+ *    现映射表由 scripts/gen-trad-map.mjs 生成，仅保留无歧义的一对一字，
+ *    歧义字保持原样（宁可少转，不可转错）。
+ *
+ * 2. **不可逆的 DOM 改写** —— 原实现直接覆写 textContent，来回切换靠反向表
+ *    再转一次；映射非双射时无法还原，反复切换会累积讹字。
+ *    现在首次转换前把原文存入 WeakMap，切回简体时优先按原文还原。
+ *
+ * 已知限制：本组件在客户端遍历 DOM 改写文本，React 重新渲染后新节点会恢复
+ * 简体（不会产生错字，只是失效）。彻底方案是在数据层提供繁体字段或
+ * 引入 opencc 级别的词组转换，见 docs/IMPROVEMENT-ROADMAP.md。
+ */
 export default function SimplifiedToggle() {
   const [script, setScript] = useState<Script>("simp");
+  // 原文备份：保证「繁 → 简」无损还原，而不是再做一次有损反向映射
+  const originals = useRef(new WeakMap<Text, string>());
 
   const applyScript = useCallback((target: Script) => {
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          const parent = node.parentElement;
-          if (!parent) return NodeFilter.FILTER_REJECT;
-          const tag = parent.tagName;
-          if (["SCRIPT", "STYLE", "INPUT", "TEXTAREA", "SVG"].includes(tag))
-            return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
-        },
-      }
-    );
-
-    const textNodes: Text[] = [];
-    while (walker.nextNode()) {
-      textNodes.push(walker.currentNode as Text);
-    }
-
-    for (const node of textNodes) {
-      const converted = convertText(node.textContent || "", target);
-      if (converted !== node.textContent) {
-        node.textContent = converted;
+    for (const node of collectTextNodes()) {
+      const current = node.textContent ?? "";
+      if (target === "trad") {
+        if (!originals.current.has(node)) originals.current.set(node, current);
+        const converted = convertText(originals.current.get(node) ?? current, "trad");
+        if (converted !== current) node.textContent = converted;
+      } else {
+        const original = originals.current.get(node);
+        const restored = original ?? convertText(current, "simp");
+        if (restored !== current) node.textContent = restored;
       }
     }
+    // 字形变了，语言标记也要跟着变，否则屏幕阅读器与搜索引擎拿到错误的脚本信号
+    document.documentElement.lang = target === "trad" ? "zh-Hant" : "zh-Hans";
   }, []);
 
   const toggle = () => {
-    const next = script === "simp" ? "trad" : "simp";
+    const next: Script = script === "simp" ? "trad" : "simp";
     setScript(next);
     applyScript(next);
   };
 
+  const label = script === "simp" ? "切换到繁体字形" : "切換到簡體字形";
+
   return (
     <button
+      type="button"
       onClick={toggle}
-      className="text-xs px-2.5 py-1 rounded-md border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-accent)] hover:border-[var(--text-accent)] transition-colors"
-      title={script === "simp" ? "切换到繁体" : "切換到簡體"}
+      aria-pressed={script === "trad"}
+      aria-label={label}
+      title={label}
+      className="text-xs min-w-[32px] min-h-[32px] px-2.5 py-1 rounded-md border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-accent)] hover:border-[var(--text-accent)] transition-colors"
     >
-      {script === "simp" ? "繁" : "简"}
+      <span aria-hidden="true" data-no-script-convert>
+        {script === "simp" ? "繁" : "简"}
+      </span>
     </button>
   );
 }

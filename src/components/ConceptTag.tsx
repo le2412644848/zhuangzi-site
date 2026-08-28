@@ -1,6 +1,5 @@
-"use client";
-
 import Link from "next/link";
+
 import { concepts } from "@/data/concepts";
 
 interface ConceptTagProps {

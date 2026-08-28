@@ -1,8 +1,9 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo } from "react";
+
 import { chaptersMeta, passageNumber } from "@/data/chapters/metadata";
 
 function AnnotationsContent() {

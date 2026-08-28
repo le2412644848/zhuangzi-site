@@ -43,7 +43,8 @@ async function callDirect(url: string, messages: { role: string; content: string
       max_tokens: opts.maxTokens ?? 500,
       temperature: opts.temperature ?? 0.7,
     }),
-    signal: opts.signal,
+    // exactOptionalPropertyTypes：undefined 不能直接赋给可选属性
+    ...(opts.signal ? { signal: opts.signal } : {}),
   });
 
   if (!res.ok) {
@@ -65,7 +66,7 @@ async function callViaProxy(messages: { role: string; content: string }[], apiKe
       maxTokens: opts.maxTokens ?? 500,
       temperature: opts.temperature ?? 0.7,
     }),
-    signal: opts.signal,
+    ...(opts.signal ? { signal: opts.signal } : {}),
   });
 
   if (!res.ok) {
@@ -80,7 +81,7 @@ async function callViaProxy(messages: { role: string; content: string }[], apiKe
 export async function chat(options: ChatOptions): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("请先设置 DeepSeek API Key（点击右下角 ⚙️）");
+    throw new Error("请先设置 DeepSeek API Key（点击右下角设置按钮）");
   }
 
   const messages = [
@@ -108,15 +109,21 @@ export async function chatMultiTurn(
 ): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("请先设置 DeepSeek API Key（点击右下角 ⚙️）");
+    throw new Error("请先设置 DeepSeek API Key（点击右下角设置按钮）");
   }
 
   // Try proxy first, fallback to direct
   try {
-    return await callViaProxy(messages, apiKey, { temperature: opts?.temperature, maxTokens: opts?.maxTokens });
+    return await callViaProxy(messages, apiKey, {
+      temperature: opts?.temperature ?? 0.7,
+      maxTokens: opts?.maxTokens ?? 500,
+    });
   } catch (proxyErr) {
     try {
-      return await callDirect(DEEPSEEK_URL, messages, apiKey, { temperature: opts?.temperature, maxTokens: opts?.maxTokens });
+      return await callDirect(DEEPSEEK_URL, messages, apiKey, {
+        temperature: opts?.temperature ?? 0.7,
+        maxTokens: opts?.maxTokens ?? 500,
+      });
     } catch {
       throw proxyErr;
     }
@@ -134,7 +141,7 @@ export async function chatMultiTurnStream(
 ): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("请先设置 DeepSeek API Key（点击右下角 ⚙️）");
+    throw new Error("请先设置 DeepSeek API Key（点击右下角设置按钮）");
   }
 
   const payload = {
@@ -151,7 +158,7 @@ export async function chatMultiTurnStream(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: opts?.signal,
+      ...(opts?.signal ? { signal: opts.signal } : {}),
     });
   } catch {
     // Proxy unavailable — try direct DeepSeek
@@ -168,7 +175,7 @@ export async function chatMultiTurnStream(
         temperature: payload.temperature,
         stream: true,
       }),
-      signal: opts?.signal,
+      ...(opts?.signal ? { signal: opts.signal } : {}),
     });
   }
 

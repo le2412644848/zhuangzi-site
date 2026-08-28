@@ -1,18 +1,25 @@
-import { notFound } from "next/navigation";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import ChapterTOC from "@/components/ChapterTOC";
+import ConceptTag from "@/components/ConceptTag";
+import KeyboardNav from "@/components/KeyboardNav";
+import PassageView, { locateQuoteInOriginal, type PassageQuote } from "@/components/PassageView";
+import RecordReading from "@/components/RecordReading";
+import RelatedReadings from "@/components/RelatedReadings";
 import { chapters } from "@/data/chapters";
 import { concepts as conceptsData } from "@/data/concepts";
+import quotesData from "@/data/quotes.json";
 import { getAdjacentChapters } from "@/lib/chapters";
-import { getKaojuByChapter, getKaojuFangByChapter, getPassageKaojuMap, getPassageKaojuFangMap } from "@/lib/kaoju";
-import PassageView from "@/components/PassageView";
-import ChapterTOC from "@/components/ChapterTOC";
-import KeyboardNav from "@/components/KeyboardNav";
-import RelatedReadings from "@/components/RelatedReadings";
-import RecordReading from "@/components/RecordReading";
-import ConceptTag from "@/components/ConceptTag";
-import type { Metadata } from "next";
-
-const BASE_URL = "https://zhuangzi-site.pages.dev";
+import { getKaojuByChapter, getKaojuFangByChapter, getPassageKaojuFangMap,getPassageKaojuMap } from "@/lib/kaoju";
+import {
+  canonicalUrl,
+  CONTENT_LAST_MODIFIED,
+  ogImageFor,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/site";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -26,26 +33,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const chapter = chapters.find((c) => c.id === id);
   if (!chapter) return { title: "未找到" };
-  const url = `${BASE_URL}/chapters/${chapter.id}`;
+  const url = canonicalUrl(`/chapters/${chapter.id}`);
+  const title = `${chapter.title} — ${chapter.category}`;
+  // 每篇独立 OG 图（构建期生成，见 scripts/gen-og-images.mjs）
+  const ogImage = ogImageFor(`/chapters/${chapter.id}`);
   return {
-    title: `${chapter.title} — ${chapter.category}`,
+    title,
     description: chapter.summary,
     alternates: { canonical: url },
     openGraph: {
-      title: `${chapter.title} — ${chapter.category}`,
+      title,
       description: chapter.summary,
       url,
       type: "article",
       locale: "zh_CN",
-      siteName: "莊子數位典藏",
-      images: [
-        {
-          url: `${BASE_URL}/og-image.png`,
-          width: 1200,
-          height: 630,
-          alt: chapter.title,
-        },
-      ],
+      siteName: SITE_NAME,
+      images: [{ ...ogImage, alt: chapter.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} — ${SITE_NAME}`,
+      description: chapter.summary,
+      images: [ogImage.url],
     },
   };
 }
@@ -58,6 +67,7 @@ export default async function ChapterPage({ params }: Props) {
   const { prev, next } = getAdjacentChapters(id);
   const prevUrl = prev ? `/chapters/${prev.id}` : null;
   const nextUrl = next ? `/chapters/${next.id}` : null;
+  const chapterUrl = canonicalUrl(`/chapters/${chapter.id}`);
 
   const kaoju = getKaojuByChapter(chapter.id);
   const kaojuCount = kaoju.length;
@@ -73,6 +83,29 @@ export default async function ChapterPage({ params }: Props) {
     .map((cid) => conceptsData.find((c) => c.id === cid)?.name)
     .filter((n): n is string => Boolean(n));
 
+  // 目录条目在服务端裁剪为 id + 短标题：原实现把整篇章节对象传给
+  // 客户端 ChapterTOC，导致原文/译文/注疏全文被序列化进 RSC 载荷。
+  const tocItems = chapter.passages.map((p, i) => ({
+    id: p.id,
+    label: `${i + 1}. ${p.original.slice(0, 12)}${p.original.length > 12 ? "…" : ""}`,
+  }));
+
+  // 构建期：本篇名句按段落分组（只保留能在对应段落原文中精确定位的
+  // 句子），供原文内嵌高亮 + 跳转 /quotes 锚点（对标古诗文网名句标记）。
+  // 定位用 locateQuoteInOriginal 两级匹配（去句末标点 / 去全部标点回映射），
+  // 标记文本以原文切片渲染 —— 引文数据与原文标点常不一致。
+  const quotesByPassage = new Map<string, PassageQuote[]>();
+  for (const q of quotesData.quotes) {
+    if (q.chapterId !== chapter.id) continue;
+    const passage = chapter.passages.find((p) => p.id === q.passageId);
+    if (!passage) continue;
+    const slice = locateQuoteInOriginal(q.text, passage.original);
+    if (!slice) continue;
+    const list = quotesByPassage.get(q.passageId) ?? [];
+    list.push({ id: q.id, text: slice, theme: q.theme, explanation: q.explanation });
+    quotesByPassage.set(q.passageId, list);
+  }
+
   return (
     <>
       <script
@@ -80,20 +113,65 @@ export default async function ChapterPage({ params }: Props) {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Article",
-            headline: chapter.title,
-            description: chapter.summary,
-            inLanguage: "zh-CN",
-            datePublished: "2026-07-29",
-            author: { "@type": "Organization", name: "莊子數位典藏" },
-            publisher: { "@type": "Organization", name: "莊子數位典藏" },
-            mainEntityOfPage: `${BASE_URL}/chapters/${chapter.id}`,
-            isPartOf: { "@type": "Book", name: "庄子", inLanguage: "zh-CN" },
-            about: conceptNames,
+            "@graph": [
+              {
+                // Chapter 比泛化的 Article 更贴合「书中一篇」的实体类型，
+                // 并通过 isPartOf 挂到根布局声明的 Book 上，形成整书结构。
+                "@type": ["Chapter", "Article"],
+                "@id": `${chapterUrl}#chapter`,
+                headline: chapter.title,
+                name: chapter.title,
+                description: chapter.summary,
+                inLanguage: "zh-Hans",
+                // 原为硬编码的 "2026-07-29" —— 未来日期会被搜索引擎判为无效，
+                // 且缺 dateModified。改为构建期常量。
+                datePublished: CONTENT_LAST_MODIFIED,
+                dateModified: CONTENT_LAST_MODIFIED,
+                position: chapter.order,
+                wordCount: chapter.passages.reduce(
+                  (n, p) => n + p.original.length,
+                  0
+                ),
+                author: { "@type": "Person", name: "庄周", alternateName: "庄子" },
+                publisher: { "@id": `${SITE_URL}/#organization` },
+                mainEntityOfPage: { "@type": "WebPage", "@id": chapterUrl },
+                isPartOf: { "@id": `${SITE_URL}/#book` },
+                about: conceptNames.map((n) => ({
+                  "@type": "DefinedTerm",
+                  name: n,
+                })),
+                url: chapterUrl,
+              },
+              {
+                // 面包屑：此前全站没有 BreadcrumbList，搜索结果里拿不到层级路径
+                "@type": "BreadcrumbList",
+                "@id": `${chapterUrl}#breadcrumb`,
+                itemListElement: [
+                  {
+                    "@type": "ListItem",
+                    position: 1,
+                    name: "首页",
+                    item: canonicalUrl("/"),
+                  },
+                  {
+                    "@type": "ListItem",
+                    position: 2,
+                    name: "篇章",
+                    item: canonicalUrl("/chapters"),
+                  },
+                  {
+                    "@type": "ListItem",
+                    position: 3,
+                    name: chapter.title,
+                    item: chapterUrl,
+                  },
+                ],
+              },
+            ],
           }),
         }}
       />
-      <ChapterTOC chapter={chapter} />
+      <ChapterTOC items={tocItems} />
       <RecordReading chapterId={chapter.id} chapterTitle={chapter.title} />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
@@ -182,7 +260,7 @@ export default async function ChapterPage({ params }: Props) {
         <div className="vertical-content">
           {chapter.passages.map((passage, idx) => (
             <div key={passage.id} id={`passage-${passage.id}`}>
-              <div className="flex items-center gap-3 mb-8 mt-12 first:mt-0">
+              <div className="flex items-center gap-3 mb-3 mt-8 first:mt-0">
                 <span className="text-xs font-medium text-[var(--text-muted)] tracking-[0.08em]">
                   第{idx + 1}节
                 </span>
@@ -195,6 +273,7 @@ export default async function ChapterPage({ params }: Props) {
                 chapterTitle={chapter.title}
                 defaultExpanded={true}
                 kaoju={kaoju}
+                quotes={quotesByPassage.get(passage.id)}
                 passageKaoju={passageKaojuMap[passage.id] ?? []}
                 passageKaojuFang={passageKaojuFangMap[passage.id] ?? []}
               />

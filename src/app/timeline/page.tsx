@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import Timeline from "@/components/Timeline";
 
-export const metadata: Metadata = {
+import Timeline from "@/components/Timeline";
+import { buildPageMetadata } from "@/lib/site";
+
+export const metadata: Metadata = buildPageMetadata({
   title: "时间线",
-};
+  description:
+    "庄子生平与战国大事年表 — 以时间轴串联庄周所处的时代背景、诸子活动与《庄子》文本形成过程。",
+  path: "/timeline",
+});
 
 export default function TimelinePage() {
   return (

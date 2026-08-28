@@ -1,17 +1,25 @@
-import type { Metadata } from "next";
 import "./globals.css";
-import { LayoutClient } from "@/components/LayoutClient";
+
+import type { Metadata, Viewport } from "next";
+
+import ChatFab from "@/components/ChatFab";
+import Footer from "@/components/Footer";
+import Navigation from "@/components/Navigation";
+import ReadingProgress from "@/components/ReadingProgress";
+import ShortcutsHelp from "@/components/ShortcutsHelp";
+import SWRegister from "@/components/SWRegister";
+import { canonicalUrl,OG_IMAGE, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { buildInlineThemeScript, DEFAULT_THEME,themes } from "@/lib/theme";
 
 // 字体改用系统字体栈（见 globals.css 的 :root 定义）。
 // 原因：next/font/google 会在构建时联网拉取 Google Fonts，在受限网络/CI 中
 // 必然失败导致 build 中断；且其只抓 latin 子集，中文本就回退到系统宋体。
-const BASE_URL = "https://zhuangzi-site.pages.dev";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
+  metadataBase: new URL(SITE_URL),
   title: {
-    template: "%s — 莊子數位典藏",
-    default: "莊子 · 逍遥游于无何有之乡",
+    template: `%s — ${SITE_NAME}`,
+    default: SITE_TAGLINE,
   },
   description:
     "庄子全文解读 — 内篇七篇、外篇十五篇、杂篇十一篇。原文、白话翻译与深度解读，包含概念知识图谱、词语索引、寓言故事、名句精选、地理地图和主题阅读路线。",
@@ -20,9 +28,9 @@ export const metadata: Metadata = {
     "庄子寓言", "齐物论", "养生主", "秋水", "庄子哲学", "南华真经",
     "古典文学", "先秦哲学", "国学经典",
   ],
-  authors: [{ name: "莊子數位典藏" }],
-  creator: "莊子數位典藏",
-  publisher: "莊子數位典藏",
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
   robots: {
     index: true,
     follow: true,
@@ -37,36 +45,97 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "zh_CN",
-    url: BASE_URL,
-    siteName: "莊子數位典藏",
-    title: "莊子 · 逍遥游于无何有之乡",
+    url: canonicalUrl("/"),
+    siteName: SITE_NAME,
+    title: SITE_TAGLINE,
     description:
       "内篇精粹、外篇广博、杂篇绚烂。全文解读、白话翻译、概念图谱、词语索引。",
-    images: [
-      {
-        url: `${BASE_URL}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "莊子 · 逍遥游于无何有之乡",
-      },
-    ],
+    images: [{ ...OG_IMAGE, alt: SITE_TAGLINE }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "莊子 · 逍遥游于无何有之乡",
+    title: SITE_TAGLINE,
     description:
       "内篇精粹、外篇广博、杂篇绚烂。全文解读、白话翻译、概念图谱、词语索引。",
-    images: [`${BASE_URL}/og-image.png`],
+    images: [OG_IMAGE.url],
   },
-  alternates: {
-    canonical: BASE_URL,
-  },
+  // ⚠️ 这里**不能**设置 alternates.canonical。
+  // Next.js 的 metadata 会向下继承：根布局写死 canonical=首页后，所有未在
+  // 自身 generateMetadata 里覆盖它的路由（此前共 22 个，含 /chapters、
+  // /concepts、/quotes、/fables、/timeline 等枢纽页）都会输出
+  // <link rel="canonical" href="首页">，等于告诉搜索引擎「我是首页的副本」，
+  // 从而被判重去索引。canonical 现由各路由自行声明。
+  alternates: undefined,
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "莊子",
   },
   manifest: "/manifest.json",
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // 允许缩放：古籍阅读中读者常需放大辨认生僻字，禁用缩放属无障碍缺陷
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: themes[DEFAULT_THEME].themeColor,
+  colorScheme: "light dark",
+};
+
+// 站点级 JSON-LD：WebSite（含站内搜索）+ Organization + 作为丛书的 Book
+const siteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      alternateName: "庄子数位典藏",
+      url: canonicalUrl("/"),
+      description:
+        "庄子全文解读 — 内篇七篇、外篇十五篇、杂篇十一篇。原文、白话翻译与深度解读。",
+      inLanguage: "zh-Hans",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${canonicalUrl("/search")}?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: canonicalUrl("/"),
+      logo: { "@type": "ImageObject", url: OG_IMAGE.url },
+    },
+    {
+      "@type": "Book",
+      "@id": `${SITE_URL}/#book`,
+      name: "庄子",
+      alternateName: ["南华真经", "莊子"],
+      inLanguage: "zh-Hant",
+      numberOfPages: 33,
+      bookEdition: "今本三十三篇（内篇七、外篇十五、杂篇十一）",
+      author: {
+        "@type": "Person",
+        name: "庄周",
+        alternateName: "庄子",
+        birthDate: "-0369",
+        deathDate: "-0286",
+        description: "战国时期宋国蒙人，道家学派代表人物。",
+        sameAs: "https://www.wikidata.org/wiki/Q4700",
+      },
+      genre: ["哲学", "先秦诸子", "道家"],
+      url: canonicalUrl("/chapters"),
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -76,42 +145,21 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="zh-CN"
+      lang="zh-Hans"
       className="h-full antialiased"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>
-        <meta name="theme-color" content="#8B5E3C" />
         {/* Cloudflare Web Analytics — replace token to enable */}
         {/* <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN"}'></script> */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('siteTheme')||'xuanzhi';var c={"xuanzhi":{"bp":"#FBF9F5","bs":"#F5EFE5","bc":"#FFFFFF","tp":"#2A2218","ts":"#7A6B5D","tm":"#A89880","ta":"#8B5E3C","br":"#E8E0D5","bl":"#F0EBE2"},"zhujian":{"bp":"#F3F0E4","bs":"#E8E3D2","bc":"#FAF7EC","tp":"#3A3520","ts":"#6B6340","tm":"#9B9060","ta":"#5A6B3A","br":"#D8D0B0","bl":"#E8E2C8"},"moyun":{"bp":"#F5F5F5","bs":"#EEEEEE","bc":"#FFFFFF","tp":"#1A1A1A","ts":"#5C5C5C","tm":"#999999","ta":"#333333","br":"#D5D5D5","bl":"#E5E5E5"},"qinghua":{"bp":"#F7F9FB","bs":"#EDF2F7","bc":"#FFFFFF","tp":"#1A2A3A","ts":"#4A6278","tm":"#7A8EA0","ta":"#2B5F8A","br":"#D0DDE8","bl":"#E0EAF3"}};var v=c[t]||c.xuanzhi;var r=document.documentElement;r.style.setProperty('--bg-primary',v.bp);r.style.setProperty('--bg-secondary',v.bs);r.style.setProperty('--bg-card',v.bc);r.style.setProperty('--text-primary',v.tp);r.style.setProperty('--text-secondary',v.ts);r.style.setProperty('--text-muted',v.tm);r.style.setProperty('--text-accent',v.ta);r.style.setProperty('--border-color',v.br);r.style.setProperty('--border-light',v.bl)}catch(e){}})()`,
-          }}
-        />
-        {/* JSON-LD structured data */}
+
+        {/* 防闪烁主题脚本：内容由 @/lib/theme 的调色板生成，不再手抄字面量 */}
+        <script dangerouslySetInnerHTML={{ __html: buildInlineThemeScript() }} />
+
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "莊子數位典藏",
-              url: BASE_URL,
-              description:
-                "庄子全文解读 — 内篇七篇、外篇十五篇、杂篇十一篇。原文、白话翻译与深度解读。",
-              inLanguage: "zh-CN",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: {
-                  "@type": "EntryPoint",
-                  urlTemplate: `${BASE_URL}/search?q={search_term_string}`,
-                },
-                "query-input": "required name=search_term_string",
-              },
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
       </head>
       <body className="min-h-full flex flex-col font-serif">
@@ -121,9 +169,21 @@ export default function RootLayout({
         >
           跳到主要内容
         </a>
-        <LayoutClient>{children}</LayoutClient>
+        {/*
+          章节页减重 v2：页面主体**不经过任何 client 祖先**。
+          静态导出会把 client 组件的 server children 完整序列化进 RSC 载荷
+          （此前 LayoutClient 包裹整页，是章节页 33 万字符重复载荷的根源），
+          现在 Navigation / 进度条 / 页脚 / SW 注册 / 聊天球全部与 <main>
+          并列渲染；沉浸模式由 CSS（html.immersive-mode）隐藏各 chrome。
+        */}
+        <Navigation />
+        <ReadingProgress />
+        <main id="main-content" tabIndex={-1} className="flex-1 outline-none">{children}</main>
+        <Footer />
+        <ChatFab />
+        <ShortcutsHelp />
+        <SWRegister />
       </body>
     </html>
   );
 }
-

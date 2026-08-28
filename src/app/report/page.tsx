@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { chaptersMeta } from "@/data/chapters/metadata";
-import { getReadingHistory } from "@/components/ReadingHistory";
-import { getBookmarks, getAnnotations } from "@/lib/annotations";
 import Link from "next/link";
+import { useEffect,useState } from "react";
+
+import { getReadingHistory } from "@/components/ReadingHistory";
+import { chaptersMeta } from "@/data/chapters/metadata";
+import { getAnnotations,getBookmarks } from "@/lib/annotations";
 
 interface Stats {
   totalChapters: number;

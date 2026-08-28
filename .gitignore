@@ -41,7 +41,30 @@ yarn-error.log*
 next-env.d.ts
 
 # data processing artifacts
+# 注意：ignore 规则对**已被 git 跟踪**的文件无效。
+# 仓库里现存的 _qiwu_data.json / _updates_02..07.json / updates_json/ 仍在版本控制中，
+# 需先执行：
+#   git rm --cached _qiwu_data.json _updates_0*.json updates_json/*.json
 _updates_*.json
+_qiwu_data.json
+updates_json/
+
+# test / build tooling
+/coverage
+/test-results
+/playwright-report
+.vitest
 
 # wrangler
 .wrangler/
+
+# 懒加载数据（构建期由 scripts/gen-lazy-data.mjs 生成）
+/public/data/
+# OG 图（构建期由 scripts/gen-og-images.mjs 生成）
+/public/og/
+# 字体源（约 25MB，子集化产物 public/fonts/zhuangzi-serif.woff2 提交）
+/scripts/fonts/NotoSerifSC.ttf
+/scripts/fonts/chars.txt
+
+# local screenshots (acceptance evidence, not source)
+screenshots/

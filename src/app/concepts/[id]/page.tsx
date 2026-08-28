@@ -1,12 +1,12 @@
-import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { concepts } from "@/data/concepts";
+import { notFound } from "next/navigation";
+
+import ConceptTag from "@/components/ConceptTag";
 import { chapters } from "@/data/chapters";
 import { passageNumber } from "@/data/chapters/metadata";
-import ConceptTag from "@/components/ConceptTag";
-import type { Metadata } from "next";
-
-const BASE_URL = "https://zhuangzi-site.pages.dev";
+import { concepts } from "@/data/concepts";
+import { canonicalUrl, ogImageFor, SITE_NAME, SITE_URL } from "@/lib/site";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -20,7 +20,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const concept = concepts.find((c) => c.id === id);
   if (!concept) return { title: "未找到" };
-  const url = `${BASE_URL}/concepts/${concept.id}`;
+  const url = canonicalUrl(`/concepts/${concept.id}`);
+  // 每概念独立 OG 图（构建期生成，见 scripts/gen-og-images.mjs）
+  const ogImage = ogImageFor(`/concepts/${concept.id}`);
   return {
     title: concept.name,
     description: concept.summary,
@@ -31,15 +33,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       type: "article",
       locale: "zh_CN",
-      siteName: "莊子數位典藏",
-      images: [
-        {
-          url: `${BASE_URL}/og-image.png`,
-          width: 1200,
-          height: 630,
-          alt: concept.name,
-        },
-      ],
+      siteName: SITE_NAME,
+      images: [{ ...ogImage, alt: concept.name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${concept.name} — 庄子核心概念`,
+      description: concept.summary,
+      images: [ogImage.url],
     },
   };
 }
@@ -61,6 +62,8 @@ export default async function ConceptPage({ params }: Props) {
     .map((cid) => concepts.find((c) => c.id === cid))
     .filter(Boolean);
 
+  const conceptUrl = canonicalUrl(`/concepts/${concept.id}`);
+
   return (
     <>
       <script
@@ -68,15 +71,38 @@ export default async function ConceptPage({ params }: Props) {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "DefinedTerm",
-            name: concept.name,
-            description: concept.summary,
-            inLanguage: "zh-CN",
-            inDefinedTermSet: {
-              "@type": "DefinedTermSet",
-              name: "庄子核心概念",
-            },
-            mainEntityOfPage: `${BASE_URL}/concepts/${concept.id}`,
+            "@graph": [
+              {
+                "@type": "DefinedTerm",
+                "@id": `${conceptUrl}#term`,
+                name: concept.name,
+                description: concept.summary,
+                inLanguage: "zh-Hans",
+                inDefinedTermSet: {
+                  "@type": "DefinedTermSet",
+                  "@id": `${SITE_URL}/concepts/#termset`,
+                  name: "庄子核心概念",
+                  url: canonicalUrl("/concepts"),
+                },
+                url: conceptUrl,
+                mainEntityOfPage: { "@type": "WebPage", "@id": conceptUrl },
+                // 该概念在原文中出现的篇章，给搜索引擎一条实体→文本的关联
+                subjectOf: relatedPassages.slice(0, 10).map((rp) => ({
+                  "@type": "Chapter",
+                  name: rp.chapter.title,
+                  url: canonicalUrl(`/chapters/${rp.chapter.id}`),
+                })),
+              },
+              {
+                "@type": "BreadcrumbList",
+                "@id": `${conceptUrl}#breadcrumb`,
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "首页", item: canonicalUrl("/") },
+                  { "@type": "ListItem", position: 2, name: "核心概念", item: canonicalUrl("/concepts") },
+                  { "@type": "ListItem", position: 3, name: concept.name, item: conceptUrl },
+                ],
+              },
+            ],
           }),
         }}
       />

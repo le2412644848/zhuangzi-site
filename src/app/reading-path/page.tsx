@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { chat as deepseekChat } from "@/lib/ai";
-import { chaptersMeta } from "@/data/chapters/metadata";
 import Link from "next/link";
+import { useState } from "react";
+
+import { chaptersMeta } from "@/data/chapters/metadata";
+import { chat as deepseekChat } from "@/lib/ai";
 
 interface Question {
   id: number;
@@ -118,7 +119,7 @@ export default function ReadingPathPage() {
   };
 
   if (step < QUESTIONS.length) {
-    const q = QUESTIONS[step];
+    const q = QUESTIONS[step]!;
     return (
       <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="mb-8">

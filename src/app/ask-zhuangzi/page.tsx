@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect,useRef, useState } from "react";
+
 import { chatMultiTurnStream, getApiKey, saveApiKey } from "@/lib/ai";
 import { search } from "@/lib/search";
 
 const LIFE_TOPICS = [
-  { emoji: "😰", label: "焦虑不安" },
-  { emoji: "💼", label: "职场困扰" },
-  { emoji: "💔", label: "人情冷暖" },
-  { emoji: "🌗", label: "生死无常" },
-  { emoji: "🎯", label: "人生方向" },
-  { emoji: "🏔️", label: "欲望得失" },
-  { emoji: "🪞", label: "自我认知" },
-  { emoji: "🌊", label: "世事变迁" },
+  { seal: "安", label: "焦虑不安" },
+  { seal: "事", label: "职场困扰" },
+  { seal: "情", label: "人情冷暖" },
+  { seal: "化", label: "生死无常" },
+  { seal: "向", label: "人生方向" },
+  { seal: "欲", label: "欲望得失" },
+  { seal: "己", label: "自我认知" },
+  { seal: "遷", label: "世事变迁" },
 ];
 
 const SYSTEM_PROMPT = `你是庄子（庄周），战国时期道家思想家，《庄子》一书的作者。用户带着现实生活的困扰来向你求教。
@@ -34,6 +35,8 @@ export default function AskZhuangziPage() {
   const [apiKey, setApiKey] = useState("");
   const [showSetup, setShowSetup] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // 是否已有用户消息：首次挂载只有问候语，不应自动滚屏（视觉复审 N2）
+  const hasInteracted = useRef(false);
 
   useEffect(() => {
     const saved = getApiKey();
@@ -41,7 +44,10 @@ export default function AskZhuangziPage() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // 仅在有用户消息后滚动；首次挂载跳过，避免打开页面即下滚约 300px
+    if (!hasInteracted.current) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    bottomRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
   }, [messages]);
 
   const handleTopic = (topic: string) => {
@@ -51,6 +57,7 @@ export default function AskZhuangziPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
+    hasInteracted.current = true;
     const userMsg = { role: "user" as const, content: input.trim() };
     const allMsgs = [...messages, userMsg];
     setMessages(allMsgs);
@@ -140,7 +147,10 @@ export default function AskZhuangziPage() {
           {LIFE_TOPICS.map((t) => (
             <button key={t.label} onClick={() => handleTopic(t.label)}
               className="px-3 py-1.5 text-xs rounded-full border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--text-accent)] hover:text-[var(--text-accent)] transition-colors">
-              {t.emoji} {t.label}
+              <span className="seal-char" aria-hidden="true">
+                {t.seal}
+              </span>
+              {t.label}
             </button>
           ))}
         </div>

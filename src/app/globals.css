@@ -1,40 +1,65 @@
 @import "tailwindcss";
 
 /* ============================================
+   自托管子集宋体（TODO 3.1）
+   生成：python scripts/subset-font.py（Noto Serif SC / OFL，按全站用字子集）
+   font-display: swap —— 首帧系统回退、加载后无缝替换；
+   可变字体，字重 400–900 由 wght 轴提供。
+   ============================================ */
+@font-face {
+  font-family: "Zhuangzi Serif";
+  src: url("/fonts/zhuangzi-serif.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+4E00-9FFF, U+3000-303F, U+FF00-FFEF, U+2000-206F, U+00A0-00FF, U+2010-2027;
+}
+
+/* ============================================
    莊子數位典藏 · Design System v2.0
    设计方向: 温暖诗意 × 编辑级排版 × 画廊式留白
    Inspired by: Editorial Poetic Min + Soft Blur Art Gallery
    ============================================ */
 
 @theme inline {
-  /* ── Color Palette ── */
-  --color-paper: #FBF9F5;          /* 暖宣纸 — 页面主背景 */
-  --color-paper-warm: #F5EFE5;     /* 暖茶纸 — 次级背景、卡片背景 */
-  --color-paper-cream: #FAF6EE;    /* 奶油纸 — 卡片浮层 */
-  --color-ink: #2A2218;            /* 松烟墨 — 主文字 */
-  --color-ink-warm: #3A2F22;       /* 暖墨 — 深色文字 */
-  --color-ink-soft: #7A6B5D;       /* 淡墨 — 副文字 */
-  --color-ink-muted: #7D6E57;      /* 浅墨 — 辅助文字（#A89880 对比度仅 2.67，加深至 4.71 达 WCAG AA） */
-  --color-accent: #8B5E3C;         /* 檀木色 — 主强调 */
-  --color-accent-deep: #6B3A2A;    /* 深檀 — 悬停/激活 */
-  --color-accent-gold: #B8975A;    /* 金箔 — 装饰性强调 */
-  --color-accent-vermilion: #C45A4A; /* 朱砂 — 重要标记 */
-  --color-border: #E8E0D5;         /* 绢边 — 边框 */
-  --color-border-light: #F0EBE2;   /* 轻绢 — 浅边框 */
-  --color-border-strong: #D4C8B0;  /* 浓绢 — 深边框 */
+  /* ── Color Palette（设计规范 v1.0 微调 + 竹青） ── */
+  --color-paper: #FAF8F4;          /* 暖宣纸 — 页面主背景 */
+  --color-paper-warm: #F3ECE1;     /* 暖茶纸 — 次级背景、卡片背景 */
+  --color-paper-cream: #FDFBF7;    /* 奶油纸 — 卡片浮层 */
+  --color-ink: #231C14;            /* 松烟墨 — 主文字 */
+  --color-ink-warm: #362B1F;       /* 暖墨 — 深色文字 */
+  --color-ink-soft: #665747;       /* 淡墨 — 副文字 */
+  /* 浅墨 — 辅助文字。#A89880 仅 2.67:1，不达 WCAG AA；规范 #827463 仍只 4.28:1，
+     加深至 #7E7062（4.52:1）达标。 ⚠️ 真正生效的值来自 src/lib/theme.ts。 */
+  --color-ink-muted: #7E7062;
+  --color-accent: #8E5431;         /* 檀木色 — 主强调 */
+  --color-accent-deep: #703D20;    /* 深檀 — 悬停/激活 */
+  --color-accent-gold: #BFA05E;    /* 金箔 — 装饰性强调 */
+  --color-accent-vermilion: #C24438; /* 朱砂 — 重要标记 */
+  --color-danger: #C24438;           /* 危险/错误语义（主题感知值由 theme.ts 行内脚本覆盖） */
+  --color-accent-bamboo: #416353;  /* 远山竹青 — 概念标签/指示线（静态兜底，
+                                    主题感知值由 theme.ts 行内脚本覆盖） */
+  --color-border: #E8DFCF;         /* 绢边 — 边框 */
+  --color-border-light: #F2ECE1;   /* 轻绢 — 浅边框 */
+  --color-border-strong: #D5C7B0;  /* 浓绢 — 深边框 */
 
-  /* Dark mode */
-  --color-dm-bg: #1C1915;          /* 暗夜宣纸 */
-  --color-dm-bg-elevated: #24211C; /* 暗夜浮层 */
-  --color-dm-bg-card: #2A2722;     /* 暗夜卡片 */
-  --color-dm-text: #E5DED3;        /* 暗夜文字 */
-  --color-dm-text-soft: #A09888;   /* 暗夜副文 */
-  --color-dm-accent: #C8956A;      /* 暗夜檀木 */
-  --color-dm-accent-gold: #D4B87A; /* 暗夜金箔 */
-  --color-dm-border: #332E28;      /* 暗夜边框 */
+  /* Dark mode（夜读主题同步微调） */
+  --color-dm-bg: #161412;          /* 暗夜宣纸 */
+  --color-dm-bg-elevated: #1F1B16; /* 暗夜浮层 */
+  --color-dm-bg-card: #24201A;     /* 暗夜卡片 */
+  --color-dm-text: #EAE4D9;        /* 暗夜文字 */
+  --color-dm-text-soft: #A69D8E;   /* 暗夜副文 */
+  --color-dm-accent: #D49B6A;      /* 暗夜檀木 */
+  --color-dm-accent-gold: #DEBE7C; /* 暗夜金箔 */
+  --color-dm-bamboo: #689781;      /* 暗夜竹青（v1.0 新增） */
+  --color-dm-border: #38322A;      /* 暗夜边框 */
 
-  /* ── Typography ── */
-  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  /* ── Typography ──
+     自托管子集宋体（TODO 3.1）：public/fonts/zhuangzi-serif.woff2 由
+     python scripts/subset-font.py 按全站用字生成（Noto Serif SC / OFL）。
+     font-display: swap 保证首帧用系统回退、加载后平滑换字；
+     1.56MB 子集含全站正文+考据引文 4570 字。 */
+  --font-serif: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
   --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 
@@ -80,33 +105,40 @@
    Font Variables (system stack — no network fetch)
    ============================================ */
 :root {
-  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --font-serif: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
   --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 }
 
 /* ============================================
-   CSS Variables — Dark Mode
+   Dark Mode (.dark)
+
+   配色本身**不再**写在这里。所有可换肤颜色由 src/lib/theme.ts 定义，
+   并通过 <head> 内联脚本 + ThemeProvider 以行内样式写到 :root —
+   行内样式优先级高于本文件，重复声明只会造成两份互相漂移的真值
+   （历史上正是这样让一处 WCAG 修复被静默覆盖）。
+   `.dark` 类仍由 ThemeProvider 挂载，供下面这类**结构性**深色规则使用。
    ============================================ */
 .dark {
-  --bg-primary: var(--color-dm-bg);
-  --bg-secondary: var(--color-dm-bg-elevated);
-  --bg-card: var(--color-dm-bg-card);
-  --bg-card-hover: #302D27;
-  --text-primary: var(--color-dm-text);
-  --text-secondary: var(--color-dm-text-soft);
-  --text-muted: #8D8478;
-  --text-accent: var(--color-dm-accent);
-  --border-color: var(--color-dm-border);
-  --border-light: #2D2A25;
-  --border-strong: #403B34;
-  --hover-bg: rgba(200, 149, 106, 0.08);
-  --hover-bg-strong: rgba(200, 149, 106, 0.14);
-  --selection-bg: rgba(200, 149, 106, 0.20);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.20);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.30);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.35);
+  /* 阴影在深色背景上需要更强的黑度才可见 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.38);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+/* 深色下减淡装饰性渐变，避免发灰 */
+.dark .commentary-text {
+  background: linear-gradient(
+    to right,
+    rgba(217, 167, 108, 0.06),
+    transparent 40%
+  );
+}
+
+.dark .chapter-badge {
+  background: linear-gradient(135deg, rgba(217, 167, 108, 0.14), rgba(212, 184, 122, 0.08));
+  border-color: rgba(217, 167, 108, 0.22);
 }
 
 /* ============================================
@@ -192,19 +224,25 @@ html {
 
 /* ============================================
    Card Styles
+   视觉复审 v2（设计升级规范五.2）：
+   - hover 微浮动 -4px（原 -1px，不够明显）
+   - 边框 hover 改为 accent 40% 透明（原实色 text-accent，过重）
+   - 阴影换暖调檀木调（原灰墨 shadow-md），更温润
+   - 过渡 300ms ease-out（原 ease-out-expo，规范统一为 ease-out）
+   阴影 rgba 用 --shadow-rgb 基色，随主题切换（深色为纯黑）。
    ============================================ */
 .card {
   border-radius: 12px;
   border: 1px solid var(--border-light);
   background: var(--bg-card);
-  transition: all var(--duration-normal) var(--ease-out-expo);
-  box-shadow: var(--shadow-sm);
+  transition: all var(--duration-normal) ease-out;
+  box-shadow: 0 2px 10px rgba(var(--shadow-rgb), 0.04);
 }
 
 .card:hover {
-  border-color: var(--text-accent);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--text-accent) 40%, transparent);
+  box-shadow: 0 12px 32px rgba(var(--shadow-rgb), 0.12);
+  transform: translateY(-4px);
 }
 
 .card-interactive {
@@ -212,13 +250,113 @@ html {
   border: 1px solid var(--border-light);
   background: var(--bg-card);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-out-expo);
+  transition: all var(--duration-normal) ease-out;
+  box-shadow: 0 2px 10px rgba(var(--shadow-rgb), 0.04);
 }
 
 .card-interactive:hover {
-  border-color: var(--text-accent);
-  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--text-accent) 40%, transparent);
+  box-shadow: 0 12px 32px rgba(var(--shadow-rgb), 0.12);
   background: var(--bg-card-hover);
+  transform: translateY(-4px);
+}
+
+/* ============================================
+   Button Styles（设计升级规范五.3）
+   全站此前无统一按钮类，散落各页用 Tailwind arbitrary 拼装，
+   hover 态不一致。补 .btn-primary / .btn-secondary 语义类：
+   - primary：檀木实底，hover 加深 + 微光外发散
+   - secondary：细绢边，hover 墨染淡渗
+   字号/圆角/内边距给默认值，调用方可按需覆盖。
+   ============================================ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: #FFFFFF;
+  background: var(--text-accent);
+  border: 1px solid var(--text-accent);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out-expo),
+              box-shadow var(--duration-fast) var(--ease-out-expo),
+              transform var(--duration-fast) var(--ease-out-expo);
+}
+.btn-primary:hover {
+  background: var(--color-accent-deep);
+  border-color: var(--color-accent-deep);
+  /* 微光外发散：主题感知的檀木光晕 */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 18%, transparent),
+              0 6px 16px rgba(var(--shadow-rgb), 0.18);
+}
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out-expo),
+              border-color var(--duration-fast) var(--ease-out-expo),
+              color var(--duration-fast) var(--ease-out-expo);
+}
+.btn-secondary:hover {
+  /* 墨染淡渗：暖底 + 边框转檀木 */
+  background: var(--hover-bg);
+  border-color: color-mix(in srgb, var(--text-accent) 40%, transparent);
+  color: var(--text-accent);
+}
+.btn-secondary:active {
+  background: var(--hover-bg-strong);
+}
+
+/* 触屏最小尺寸继承全局 44px 规则（见 @media max-width:640px），
+   此处不重复，保持单一真值。 */
+
+/* ============================================
+   导航下拉菜单项（设计升级规范五.1）
+   hover 时左侧浮出 3px 竹青竖指示线，文字转檀木 accent。
+   竖线用 ::before 伪元素，从顶部向下「生长」（scaleY 0→1），
+   比直接出现更顺滑；竹青色用 --color-accent-bamboo（深蓝纳入
+   theme.ts 前用兜底静态值，纳入后自动主题感知）。
+   ============================================ */
+.nav-menu-item {
+  position: relative;
+}
+.nav-menu-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 0 2px 2px 0;
+  background: var(--color-accent-bamboo, var(--text-accent));
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  transition: height var(--duration-fast) var(--ease-out-expo);
+  pointer-events: none;
+}
+.nav-menu-item:hover::before,
+.nav-menu-item:focus-visible::before {
+  height: 60%;
+  transform: translateY(-50%) scaleY(1);
 }
 
 /* Hero decorative gradient */
@@ -267,15 +405,24 @@ html {
   border: 1px solid rgba(139, 94, 60, 0.12);
 }
 
-/* Stat number with decorative treatment */
+/* Stat number with decorative treatment
+   注意：-webkit-text-fill-color: transparent 一旦渐变失效（CSS 变量缺失/
+   clip 不支持），文字会完全不可见。改为：默认纯色（AA 对比度可控），
+   仅在支持 background-clip: text 时叠加渐变。 */
 .stat-number {
   font-size: 2.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--text-accent), var(--color-accent-gold));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-accent);
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .stat-number {
+    background: linear-gradient(135deg, var(--text-accent), var(--color-accent-gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
 }
 
 /* Section heading */
@@ -313,6 +460,91 @@ html {
   border-color: var(--text-accent);
   color: var(--text-accent);
   background: var(--hover-bg);
+}
+
+/* ============================================
+   导航加载骨架（src/app/loading.tsx）
+   基色始终可见；脉冲只在 1 ↔ 0.55 间呼吸，
+   prefers-reduced-motion 下被上方全局规则冻结在基色，不会消失。
+   ============================================ */
+.skeleton {
+  background-color: var(--border-light);
+  animation: skeleton-pulse 1.8s var(--ease-spring) infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* ============================================
+   View Transitions —— 原生页面切换过渡（渐进增强）
+
+   一行 CSS 实现 MPA 级平滑切换，Chrome 126+ / Edge / Safari 18+
+   生效；不支持的浏览器自动降级为瞬时切换，无任何 JS 成本。
+   prefers-reduced-motion 用户禁用（WCAG 2.3.3）。
+   ============================================ */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* ============================================
+   原文内嵌名句标记（对标古诗文网）
+   数据来自 quotes.json，章节页构建期注入（PassageView 的 quote-mark）。
+   视觉（2026-08-24 视觉复审重设计）：金箔下划线（笔触感）取代整块底色——
+   底色块易被误认为「文本被选中」，下划线则是明确的「批注」语言；
+   hover 才浮现软底色提示可点击。与逐字注的虚线下划线形成层级区分
+   （名句=实线金线，注词=虚线）。
+   ============================================ */
+.quote-mark {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-color: color-mix(in srgb, var(--color-accent-gold) 80%, transparent);
+  text-decoration-thickness: 0.085em;
+  text-underline-offset: 0.26em;
+  border-radius: 4px;
+  padding: 0.08em 0.15em;
+  margin: 0 -0.05em;
+  cursor: pointer;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background var(--duration-fast) var(--ease-out-expo);
+}
+
+.quote-mark:hover {
+  background: var(--hover-bg);
+  text-decoration-color: var(--color-accent-gold);
+}
+
+/* 夜读等深色主题：金线提亮 */
+.dark .quote-mark {
+  text-decoration-color: color-mix(in srgb, var(--color-accent-gold) 90%, transparent);
+}
+
+.dark .quote-mark:hover {
+  background: var(--hover-bg);
+}
+
+/* 名句区间内的逐字注词条：金箔下划线（名句信号）叠加按钮自带的虚线
+ * 底边（注词信号），双信号并存、无底色块。
+ * 不可点击跳转 —— 按钮内不能嵌 <a>，跳转由名句纯文本部分承担。 */
+.quote-halo {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-color: color-mix(in srgb, var(--color-accent-gold) 60%, transparent);
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.26em;
+}
+
+.dark .quote-halo {
+  text-decoration-color: color-mix(in srgb, var(--color-accent-gold) 75%, transparent);
 }
 
 /* ============================================
@@ -373,6 +605,17 @@ html {
   animation: fadeIn var(--duration-normal) var(--ease-out-expo) both;
 }
 
+/* Hero 禅圆呼吸微光：ensō 断笔圆 + 巨字「遊」缓慢缩放（8s 循环） */
+@keyframes hero-breathe {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.03; }
+}
+
+.hero-breathe {
+  animation: hero-breathe 8s var(--ease-out-expo) infinite;
+  transform-origin: center;
+}
+
 /* Staggered children */
 .stagger-children > * {
   opacity: 0;
@@ -388,6 +631,49 @@ html {
 .stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
 .stagger-children > *:nth-child(8) { animation-delay: 0.40s; }
 .stagger-children > *:nth-child(9) { animation-delay: 0.45s; }
+
+/* ============================================
+   Reduced Motion (WCAG 2.3.3 / prefers-reduced-motion)
+
+   本站首页用 .stagger-children 做入场动画、卡片有 translateY 位移、
+   html 开了 scroll-behavior: smooth。对前庭功能障碍用户，这些都可能
+   引发不适；此前没有任何降级处理。
+   关键点：入场动画必须**保留终态可见**（opacity:1），
+   直接 animation:none 会让 .stagger-children 的子元素永久停在 opacity:0。
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* 保证动画元素停在可见终态，而不是初始的 opacity:0 */
+  .stagger-children > *,
+  .animate-fade-in-up,
+  .animate-fade-in {
+    opacity: 1 !important;
+    transform: none !important;
+    animation-delay: 0ms !important;
+  }
+
+  /* 取消悬停位移 */
+  .card:hover {
+    transform: none;
+  }
+
+  /* 呼吸光晕冻结在初始态 */
+  .hero-breathe {
+    animation: none;
+  }
+}
 
 /* ============================================
    Vertical Reading Mode
@@ -495,9 +781,17 @@ html {
   /* Smaller headings on mobile */
   h1 { font-size: 2rem !important; }
 
-  /* Better tap targets */
-  button, a {
-    min-height: 36px;
+  /* Better tap targets — WCAG 2.5.8 最小 24px，Apple/Material 建议 44px。
+     原值 36px 低于两家平台建议；图标按钮多为 p-1.5 + w-3.5 图标（约 26px），
+     在长文工具条上密集排布时极易误触。 */
+  button, a[role="button"], [role="radio"], summary {
+    min-height: 44px;
+  }
+
+  /* 正文内联链接不应被撑高，否则行距被破坏 */
+  .reading-prose a,
+  p a {
+    min-height: 0;
   }
 
   /* Reading progress thinner */
@@ -517,6 +811,40 @@ html {
 }
 
 /* ============================================
+   iOS 输入框自动放大规避
+
+   Safari on iOS 在聚焦 font-size < 16px 的输入框时会强制放大整个页面，
+   放大后不会自动还原，用户被迫手动缩回 —— 对搜索框、问庄子输入框、
+   批注框都会发生。全站输入控件在触屏窄屏下统一提到 16px。
+   ============================================ */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* ============================================
+   刘海屏安全区 + 移动端视口高度
+
+   1. 固定定位的聊天球、返回顶部按钮原本贴 bottom-4，
+      在带 home indicator 的机型上会与系统手势区重叠。
+   2. 竖排阅读区用 80vh：移动浏览器地址栏收起/展开时 vh 会跳变，
+      导致阅读区高度抖动。dvh 跟随可视视口，无此问题。
+   ============================================ */
+.chat-fab {
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  right: calc(1rem + env(safe-area-inset-right, 0px));
+}
+
+@supports (height: 100dvh) {
+  .vertical-mode .vertical-content {
+    height: 80dvh;
+  }
+}
+
+/* ============================================
    Pinyin / Ruby Annotation
    ============================================ */
 .pinyin-annotated {
@@ -531,4 +859,346 @@ html {
   letter-spacing: 0;
   font-family: var(--font-sans);
   user-select: none;
+}
+
+/* ============================================
+   阅读设置（ReadingSettings 写入 --reading-* CSS 变量）
+   ============================================
+   默认值与既有样式对齐（原文 text-lg / sm:text-xl、leading-loose、
+   版心 max-w-3xl），用户设置后以行内样式覆盖 :root 变量生效。 */
+:root {
+  --reading-fontSize: 1.125rem;
+  --reading-lineHeight: 1.9;
+  --reading-readingWidth: 48rem;
+}
+@media (min-width: 640px) {
+  :root {
+    --reading-fontSize: 1.25rem;
+  }
+}
+.reading-prose {
+  font-size: var(--reading-fontSize);
+  line-height: var(--reading-lineHeight);
+}
+/* 版心宽度作用于章节正文容器（原 max-w-3xl） */
+.vertical-content {
+  max-width: var(--reading-readingWidth);
+}
+
+/* ============================================
+   段落交互类切换（章节页减重 v2）
+   ============================================
+   分栏/拼音/批注的显示状态由 PassageToolbar 在 [data-passage-root]
+   上切换 CSS 类实现 —— 正文保持纯 server 直出，不经过 client 祖先，
+   静态导出时不会被序列化第二遍进 RSC 载荷。 */
+
+/* 工具条：hover / 键盘聚焦显示（原 JS showTools 状态等价；触屏常驻规则见上方） */
+.passage-toolbar {
+  opacity: 0;
+  pointer-events: none;
+}
+.group:hover > .passage-toolbar,
+.group:focus-within > .passage-toolbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 分栏对照：默认上下堆叠；split-view 时正文/译文并排两列 */
+.passage-grid {
+  display: block;
+}
+.split-view .passage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+}
+/* 「原文/译文」小标题只在分栏模式显示 */
+.original-label,
+.translation-label {
+  display: none;
+}
+.split-view .original-label,
+.split-view .translation-label {
+  display: block;
+}
+/* 分栏时原文字号与堆叠模式保持一致行高 */
+.split-view .annotated-original .original-text {
+  font-size: 1.125rem; /* text-lg（原实现分栏列用 text-lg） */
+}
+
+/* 拼音切换：注释版原文 ↔ 拼音版原文（PinyinSlot 懒加载挂载） */
+.annotated-original {
+  display: block;
+}
+.pinyin-original {
+  display: none;
+}
+.pinyin-on .annotated-original {
+  display: none;
+}
+.pinyin-on .pinyin-original {
+  display: block;
+}
+
+/* 批注面板：默认隐藏；annotation-on 时显示 */
+.annotation-panel {
+  display: none;
+}
+.annotation-on .annotation-panel {
+  display: block;
+}
+
+/* 沉浸阅读模式：隐藏页头/页脚/进度条/章节目录/聊天球
+   （原为 JS 条件渲染，现由 CSS 完成，状态见 src/lib/immersive.ts） */
+html.immersive-mode header.site-header,
+html.immersive-mode footer.site-footer,
+html.immersive-mode .reading-progress,
+html.immersive-mode .chapter-toc,
+html.immersive-mode .chat-fab {
+  display: none !important;
+}
+
+/* 沉浸模式下段落工具条常驻显示 —— 否则退出入口藏在 hover 工具条里，
+   触屏与键盘用户无法发现（WCAG 2.5.8 / 1.4.13） */
+html.immersive-mode .passage-toolbar {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* 古籍长阅读小字下限：10-11px 元信息统一提到 12px（WCAG 字号建议），
+   覆盖 Tailwind arbitrary 类（本规则未分层，优先级更高） */
+[class~="text-[10px]"],
+[class~="text-[11px]"] {
+  font-size: 0.75rem;
+}
+
+/* ============================================
+   印章字（2026-08-24 视觉复审 / 2026-08-28 朱砂化）：
+   替代散落的系统彩色 emoji。单字入印：朱砂描边方章 + 朱砂字，
+   明暗双模均用 --color-accent-vermilion（#C24438，明底 4.74:1、
+   暗底 3.66:1，装饰图形 AA≥3:1 达标）。用法：<span class="seal-char">夢</span>
+   规范三节：1.5px 朱砂描边、font-serif、rounded 3px。
+   ============================================ */
+.seal-char {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  flex: none;
+  border-radius: 3px;
+  border: 1.5px solid var(--color-accent-vermilion);
+  background: color-mix(in srgb, var(--color-accent-vermilion) 10%, transparent);
+  color: var(--color-accent-vermilion);
+  font-family: var(--font-serif);
+  font-size: 0.85em;
+  line-height: 1;
+  vertical-align: -0.35em;
+  margin-right: 0.45em;
+  user-select: none;
+}
+
+/* 大尺寸装饰印（空状态/页头意象） */
+.seal-char-lg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 3px;
+  border: 1.5px solid var(--color-accent-vermilion);
+  background: color-mix(in srgb, var(--color-accent-vermilion) 8%, transparent);
+  color: var(--color-accent-vermilion);
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* ============================================
+   地图做旧与印章标记（2026-08-24 视觉复审）
+   高德现代路网瓦片与默认蓝针同全站水墨语言冲突：
+   瓦片整体 sepia 做旧；夜读主题再压暗；标记换主题色圆点印章；
+   弹层跟随主题变量。
+   ============================================ */
+.leaflet-tile-pane {
+  filter: sepia(0.32) saturate(0.55) contrast(0.92) brightness(1.02);
+}
+
+.dark .leaflet-tile-pane {
+  filter: sepia(0.3) saturate(0.45) contrast(0.9) brightness(0.72);
+}
+
+/* 印章圆点：外圈主题赭石 + 内芯金箔，白描边从底色中提起 */
+.zz-pin-wrap {
+  background: transparent;
+  border: none;
+}
+
+.zz-pin {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--color-accent-gold) 0 3px,
+    var(--text-accent) 3.5px 100%
+  );
+  border: 2px solid var(--bg-card);
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--text-accent) 55%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.28);
+  transition: transform var(--duration-fast) var(--ease-out-expo);
+}
+
+.zz-pin-wrap:hover .zz-pin,
+.zz-pin-wrap:focus-visible .zz-pin {
+  transform: scale(1.25);
+}
+
+/* 弹层主题化（默认白底蓝字出戏） */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 6px 20px rgba(var(--shadow-rgb), 0.18);
+}
+
+.leaflet-popup-content {
+  font-family: inherit;
+  line-height: 1.7;
+}
+
+.leaflet-popup-content i {
+  color: var(--text-secondary);
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--text-muted);
+}
+
+/* ============================================
+   返回顶部按钮：置于聊天球上方（视觉复审 N5-1）
+   ============================================ */
+.back-to-top {
+  bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* ============================================
+   段落工具条 CSS-only tooltip（视觉复审 N7）
+   ============================================ */
+.passage-toolbar button[aria-label] {
+  position: relative;
+}
+
+.passage-toolbar button[aria-label]::after {
+  content: attr(aria-label);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 14px rgba(var(--shadow-rgb), 0.16);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 60;
+}
+
+.passage-toolbar button[aria-label]:hover::after,
+.passage-toolbar button[aria-label]:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================
+   每日一则 · 线装古籍书页（阿布 · 页面布局与动效）
+   左侧竖排古典提字 + 右侧展开译注 + 朱砂缎带书签
+   ============================================ */
+.daily-passage-book {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 2.25rem 1.75rem 1.75rem;
+  box-shadow: var(--shadow-md);
+}
+
+/* 线装装订线（左侧虚线装订孔） */
+.daily-passage-book::before {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--border-strong) 0 5px,
+    transparent 5px 14px
+  );
+  border-radius: 1px;
+}
+
+/* 朱砂缎带书签 */
+.ribbon-bookmark {
+  position: absolute;
+  top: -0.7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20; /* 防被上方 Stats 卡片的 z-10 遮挡 */
+  background: var(--color-accent-vermilion);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  padding: 0.3rem 1.2rem;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(196, 90, 74, 0.35);
+  white-space: nowrap;
+}
+
+.ribbon-bookmark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 5px solid var(--color-accent-vermilion);
+}
+
+/* 竖排古典提字 */
+.vertical-extract {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 1.05rem;
+  line-height: 2.1;
+  letter-spacing: 0.12em;
+  max-height: 15rem;
+  overflow: hidden;
+  color: var(--text-accent);
+  border-right: 1px solid var(--border-color);
+  padding-right: 0.75rem;
+  user-select: none;
+}
+
+/* 暗色下缎带阴影改用纯黑，避免发灰 */
+.dark .ribbon-bookmark {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
 }

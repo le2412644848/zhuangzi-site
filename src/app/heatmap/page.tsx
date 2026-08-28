@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo,useState } from "react";
+
 import concordanceData from "@/data/concordance.json";
 
 interface Occurrence { chapterId: string; passageId: string; }
@@ -24,6 +25,8 @@ const chapterNames: Record<string, string> = {
   "25-zeyang":"则阳","26-waiwu":"外物","27-yuyan":"寓言","28-rangwang":"让王",
   "29-daozhi":"盗跖","30-shuojian":"说剑","31-yufu":"渔父","32-lieyukou":"列御","33-tianxia":"天下"
 };
+
+const WORD_COUNTS = [10, 20, 30, 50];
 
 export default function ConcordanceHeatmapPage() {
   const [maxWords, setMaxWords] = useState(20);
@@ -52,15 +55,25 @@ export default function ConcordanceHeatmapPage() {
         {(concordanceData as { words: WordEntry[] }).words.length} 个词的篇章分布热图
       </p>
 
-      <div className="mb-6 flex items-center gap-2">
+      {/* 显示前 N 个高频词：分段按钮（视觉复审 V7-1，替换原生 select） */}
+      <div className="mb-6 flex items-center gap-2 flex-wrap">
         <span className="text-xs text-[var(--text-secondary)]">显示前</span>
-        <select value={maxWords} onChange={(e) => setMaxWords(Number(e.target.value))}
-          className="text-xs px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-primary)]">
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={30}>30</option>
-          <option value={50}>50</option>
-        </select>
+        <div className="flex gap-1" role="group" aria-label="显示高频词数量">
+          {WORD_COUNTS.map((n) => (
+            <button
+              key={n}
+              onClick={() => setMaxWords(n)}
+              aria-pressed={maxWords === n}
+              className={`min-w-[36px] px-2 py-1 text-xs rounded transition-colors ${
+                maxWords === n
+                  ? "bg-[var(--text-accent)]/12 text-[var(--text-accent)] font-medium ring-1 ring-[var(--text-accent)]/30"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)]"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
         <span className="text-xs text-[var(--text-secondary)]">个高频词</span>
       </div>
 
@@ -88,7 +101,12 @@ export default function ConcordanceHeatmapPage() {
                   return (
                     <td key={ch}
                       className="text-center py-2 px-1 font-mono"
-                      style={{ backgroundColor: val > 0 ? `rgba(139, 69, 19, ${intensity})` : 'transparent', color: intensity > 0.5 ? '#fff' : undefined }}>
+                      style={{
+                        backgroundColor: val > 0
+                          ? `color-mix(in srgb, var(--text-accent) ${Math.round(intensity * 100)}%, transparent)`
+                          : 'transparent',
+                        color: intensity > 0.5 ? 'var(--bg-primary)' : undefined,
+                      }}>
                       {val > 0 ? val : ''}
                     </td>
                   );

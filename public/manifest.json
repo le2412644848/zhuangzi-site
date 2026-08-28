@@ -1,22 +1,68 @@
 {
+  "id": "/",
   "name": "莊子 · 逍遥游于无何有之乡",
   "short_name": "莊子",
-  "description": "庄子全文解读 — 原文、白话翻译与深度解读",
+  "description": "庄子全文解读 — 内篇七篇、外篇十五篇、杂篇十一篇。原文、白话翻译、逐字注与历代考据。",
+  "lang": "zh-Hans",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#fafaf8",
-  "theme_color": "#8b4513",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
+  "background_color": "#FBF9F5",
+  "theme_color": "#8B5E3C",
+  "categories": ["books", "education", "reference"],
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "篇章总览",
+      "short_name": "篇章",
+      "description": "三十三篇全文入口",
+      "url": "/chapters/"
+    },
+    {
+      "name": "全文搜索",
+      "short_name": "搜索",
+      "description": "检索原文、译文与注疏",
+      "url": "/search/"
+    },
+    {
+      "name": "我的收藏",
+      "short_name": "收藏",
+      "description": "已收藏的段落",
+      "url": "/bookmarks/"
+    },
+    {
+      "name": "核心概念",
+      "short_name": "概念",
+      "description": "庄子哲学概念图谱",
+      "url": "/concepts/"
     }
   ]
 }

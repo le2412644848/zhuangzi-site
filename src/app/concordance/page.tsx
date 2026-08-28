@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useEffect,useMemo, useState } from "react";
+
 import { passageNumber } from "@/data/chapters/metadata";
 
 interface Occurrence {

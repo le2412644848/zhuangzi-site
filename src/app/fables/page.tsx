@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useMemo,useState } from "react";
+
 import fablesData from "@/data/fables.json";
 
 interface Fable {
@@ -50,7 +51,7 @@ export default function FablesPage() {
             onClick={() => setKeyword(k)}
             className={`text-xs px-3 py-1.5 rounded-full transition-all ${
               keyword === k
-                ? "bg-[var(--text-accent)] text-white font-medium"
+                ? "bg-[var(--text-accent)] text-[var(--bg-primary)] font-medium"
                 : "tag text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >

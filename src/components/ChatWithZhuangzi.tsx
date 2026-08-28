@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useEffect, useId,useRef, useState } from "react";
+
 import { chatMultiTurnStream, getApiKey, saveApiKey } from "@/lib/ai";
 import { search } from "@/lib/search";
 
@@ -9,6 +10,19 @@ interface Message {
   content: string;
 }
 
+/**
+ * 「问庄子」浮窗。
+ *
+ * 无障碍修正（原实现的问题）：
+ *  - 展开后是一个普通 <div>：无 role="dialog"、无 aria-modal、无 aria-labelledby，
+ *    读屏软件不知道这是个对话框，也读不到它的名字。
+ *  - 无 Escape 关闭、无焦点管理：打开后焦点仍在页面上，关闭后焦点丢失
+ *    （WCAG 2.4.3 焦点顺序）。
+ *  - 流式回复没有 aria-live：整段回答对读屏用户完全静默（WCAG 4.1.3 状态消息）。
+ *  - 触发按钮、关闭按钮、设置按钮都是纯图标 + title，没有可编程名称
+ *    （title 不是可靠的可访问名称来源）。
+ *  - API Key 输入框用 <div> 当标签，没有 label 关联。
+ */
 export default function ChatWithZhuangzi() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -18,7 +32,16 @@ export default function ChatWithZhuangzi() {
   const [loading, setLoading] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showConfig, setShowConfig] = useState(false);
+  const [keySaved, setKeySaved] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const keyInputRef = useRef<HTMLInputElement>(null);
+
+  const titleId = useId();
+  const keyFieldId = useId();
 
   useEffect(() => {
     const saved = getApiKey();
@@ -29,9 +52,52 @@ export default function ChatWithZhuangzi() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // 打开后把焦点移入输入框；关闭后归还给触发按钮（WCAG 2.4.3）
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+    else fabRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (showConfig) keyInputRef.current?.focus();
+  }, [showConfig]);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  // Escape 关闭；Tab 在浮窗内循环（非模态浮窗不锁死页面，但保证可用）
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        if (showConfig) setShowConfig(false);
+        else close();
+        return;
+      }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusables = panelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, showConfig, close]);
+
   const handleSaveApiKey = () => {
     saveApiKey(apiKey);
     setShowConfig(false);
+    setKeySaved(true);
+    setTimeout(() => setKeySaved(false), 3000);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,13 +171,16 @@ export default function ChatWithZhuangzi() {
   // Collapsed: just a small floating button
   if (!open) {
     return (
-      <div className="fixed bottom-4 right-4 z-50 no-print">
+      <div className="fixed bottom-4 right-4 z-50 no-print chat-fab">
         <button
+          ref={fabRef}
+          type="button"
           onClick={() => setOpen(true)}
-          className="w-10 h-10 rounded-full bg-[var(--text-accent)] text-white shadow-md hover:shadow-lg hover:bg-[var(--color-accent-deep)] transition-all flex items-center justify-center"
-          title="问庄子"
+          aria-label="打开「问庄子」对话"
+          aria-expanded={false}
+          className="w-11 h-11 rounded-full bg-[var(--text-accent)] text-white shadow-md hover:shadow-lg hover:bg-[var(--color-accent-deep)] transition-all flex items-center justify-center"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg aria-hidden="true" focusable="false" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
           </svg>
         </button>
@@ -121,28 +190,37 @@ export default function ChatWithZhuangzi() {
 
   // Expanded: full chat widget
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 sm:w-96 shadow-xl rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] no-print">
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby={titleId}
+      className="fixed bottom-4 right-4 z-50 w-[min(22rem,calc(100vw-2rem))] sm:w-96 shadow-xl rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] no-print chat-fab"
+    >
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-light)]">
-        <span className="text-sm font-medium text-[var(--text-accent)] tracking-wider">
+        <h2 id={titleId} className="text-sm font-medium text-[var(--text-accent)] tracking-wider">
           问庄子
-        </span>
+        </h2>
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={() => setShowConfig(!showConfig)}
-            className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] p-1"
-            title="设置"
+            aria-label="API Key 设置"
+            aria-expanded={showConfig}
+            className="text-[var(--text-secondary)] hover:text-[var(--text-accent)] p-1.5 rounded hover:bg-[var(--hover-bg)]"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg aria-hidden="true" focusable="false" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
           <button
-            onClick={() => setOpen(false)}
-            className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] p-1"
-            title="收起"
+            type="button"
+            onClick={close}
+            aria-label="关闭对话"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-accent)] p-1.5 rounded hover:bg-[var(--hover-bg)]"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg aria-hidden="true" focusable="false" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -151,43 +229,80 @@ export default function ChatWithZhuangzi() {
 
       {showConfig && (
         <div className="px-3 py-2 border-b border-[var(--border-light)] bg-[var(--bg-secondary)]">
-          <div className="text-xs text-[var(--text-secondary)] mb-1">DeepSeek API Key</div>
+          <label htmlFor={keyFieldId} className="block text-xs text-[var(--text-secondary)] mb-1">
+            DeepSeek API Key
+          </label>
           <div className="flex gap-1">
             <input
+              ref={keyInputRef}
+              id={keyFieldId}
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-..."
-              className="flex-1 text-xs px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-primary)]"
+              autoComplete="off"
+              className="flex-1 text-sm px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-primary)]"
             />
-            <button onClick={handleSaveApiKey} className="text-xs px-2 py-1 rounded bg-[var(--text-accent)] text-white">
+            <button
+              type="button"
+              onClick={handleSaveApiKey}
+              className="text-xs px-2 py-1 rounded bg-[var(--text-accent)] text-white"
+            >
               保存
             </button>
           </div>
+          <p className="mt-1 text-[11px] text-[var(--text-secondary)]">
+            密钥仅保存在本机浏览器，不会上传到本站服务器之外。
+          </p>
         </div>
       )}
 
-      <div className="h-64 overflow-y-auto px-3 py-2 space-y-2">
+      {/*
+        role="log" + aria-live="polite"：流式增量回复会被读屏软件持续播报。
+        原实现没有任何 live region，整段回答对读屏用户是静默的。
+      */}
+      <div
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        aria-label="对话记录"
+        className="h-64 overflow-y-auto px-3 py-2 space-y-2"
+      >
         {messages.map((msg, i) => (
           <div key={i} className={`text-xs leading-relaxed ${msg.role === "assistant" ? "text-[var(--text-primary)]" : "text-[var(--text-accent)] text-right"}`}>
+            <span className="sr-only">{msg.role === "assistant" ? "庄子：" : "我："}</span>
             <span className={`inline-block px-2 py-1 rounded-lg max-w-[85%] ${msg.role === "assistant" ? "bg-[var(--bg-secondary)]" : "bg-[var(--text-accent)]/10"}`}>
               {msg.content}
             </span>
           </div>
         ))}
-        {loading && <div className="text-xs text-[var(--text-secondary)] italic">庄子正在思索…</div>}
         <div ref={bottomRef} />
       </div>
 
+      {/* 加载与保存状态单独放 status region，避免打断对话播报 */}
+      <div role="status" aria-live="polite" className="px-3">
+        {loading && <span className="text-xs text-[var(--text-secondary)] italic">庄子正在思索…</span>}
+        {keySaved && <span className="text-xs text-[var(--text-accent)]">API Key 已保存</span>}
+      </div>
+
       <form onSubmit={handleSubmit} className="border-t border-[var(--border-light)] p-2 flex gap-1">
+        <label htmlFor={`${titleId}-input`} className="sr-only">
+          输入你的问题
+        </label>
         <input
+          ref={inputRef}
+          id={`${titleId}-input`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="问庄子一个问题…"
           disabled={loading}
-          className="flex-1 text-xs px-2 py-1.5 rounded border border-[var(--border-color)] bg-transparent text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-[var(--text-accent)]"
+          className="flex-1 text-sm px-2 py-1.5 rounded border border-[var(--border-color)] bg-transparent text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-[var(--text-accent)]"
         />
-        <button type="submit" disabled={loading || !input.trim()} className="px-3 py-1.5 text-xs rounded bg-[var(--text-accent)] text-white disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={loading || !input.trim()}
+          className="px-3 py-1.5 text-xs rounded bg-[var(--text-accent)] text-white disabled:opacity-50"
+        >
           问
         </button>
       </form>

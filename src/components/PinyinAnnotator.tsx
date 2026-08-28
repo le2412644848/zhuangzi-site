@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
 import { pinyin } from "pinyin-pro";
+import { useMemo } from "react";
+
 import { classicalPinyin } from "@/data/classical-pinyin";
 
 interface PinyinAnnotatorProps {

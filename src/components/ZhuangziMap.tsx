@@ -1,15 +1,19 @@
 "use client";
-import { useEffect, useRef } from "react";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+import L from "leaflet";
+import { useEffect, useRef } from "react";
+
 import locations from "@/data/map-locations.json";
 
-// Fix default marker icon paths (Leaflet webpack issue)
-delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+// 自绘「印章」圆点标记（2026-08-24 视觉复审）：默认蓝色大头针与全站
+// 水墨赭石语言冲突，改用主题变量着色的圆点印章（样式见 globals.css 的 .zz-pin）。
+const sealIcon = L.divIcon({
+  className: "zz-pin-wrap",
+  html: '<span class="zz-pin"></span>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+  popupAnchor: [0, -10],
 });
 
 export default function ZhuangziMap() {
@@ -29,7 +33,10 @@ export default function ZhuangziMap() {
     }).addTo(map);
 
     locations.forEach((loc) => {
-      const marker = L.marker([loc.lat, loc.lng] as [number, number]).addTo(map);
+      const marker = L.marker([loc.lat, loc.lng] as [number, number], {
+        icon: sealIcon,
+        title: loc.name,
+      }).addTo(map);
       marker.bindPopup(`<b>${loc.name}</b><br>${loc.desc}<br><i>${loc.event}</i>`);
     });
 

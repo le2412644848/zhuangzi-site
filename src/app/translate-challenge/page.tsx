@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect,useState } from "react";
+
 import { chat as deepseekChat } from "@/lib/ai";
-import type { Passage, Chapter } from "@/lib/chapters";
+import type { Chapter,Passage } from "@/lib/chapters";
 
 function pickRandomPassage(chapters: Chapter[]): { passage: Passage; chapterTitle: string } | null {
   const all: { passage: Passage; chapterTitle: string }[] = [];
@@ -14,7 +15,7 @@ function pickRandomPassage(chapters: Chapter[]): { passage: Passage; chapterTitl
     }
   }
   if (all.length === 0) return null;
-  return all[Math.floor(Math.random() * all.length)];
+  return all[Math.floor(Math.random() * all.length)] ?? null;
 }
 
 export default function TranslateChallengePage() {
@@ -97,8 +98,8 @@ export default function TranslateChallengePage() {
       const feedbackMatch = reply.match(/【评价】\s*(.+)/);
       const refMatch = reply.match(/【参考译文】\s*([\s\S]+)/);
 
-      const s = scoreMatch ? parseInt(scoreMatch[1], 10) : 70;
-      const fb = feedbackMatch ? feedbackMatch[1].trim() : reply;
+      const s = scoreMatch ? parseInt(scoreMatch[1] ?? "70", 10) : 70;
+      const fb = feedbackMatch ? (feedbackMatch[1] ?? reply).trim() : reply;
       const newTotal = totalAttempts + 1;
       const newScore = totalScore + s;
 
@@ -110,7 +111,7 @@ export default function TranslateChallengePage() {
 
       // 保存参考译文供用户对照
       if (refMatch) {
-        setReferenceTranslation(refMatch[1].trim());
+        setReferenceTranslation((refMatch[1] ?? "").trim());
       }
     } catch (err) {
       setFeedback(`出错了：${err instanceof Error ? err.message : "请稍后再试"}`);

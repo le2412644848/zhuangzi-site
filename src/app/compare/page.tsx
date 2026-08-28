@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { chat as deepseekChat } from "@/lib/ai";
 
+import { chat as deepseekChat } from "@/lib/ai";
+import { search } from "@/lib/search";
+
+// 2026-08-24 视觉复审：emoji 换「印章字」（单字入印，随主题换色）
 const TOPICS = [
-  { id: "life-death", label: "生死观", icon: "🌗" },
-  { id: "freedom", label: "自由", icon: "🕊️" },
-  { id: "governance", label: "治国之道", icon: "🏛️" },
-  { id: "human-nature", label: "人性", icon: "🪞" },
-  { id: "knowledge", label: "求知", icon: "📚" },
-  { id: "happiness", label: "幸福", icon: "😊" },
-  { id: "ethics", label: "仁义道德", icon: "⚖️" },
-  { id: "nature", label: "天人关系", icon: "🌿" },
+  { id: "life-death", label: "生死观", icon: "命" },
+  { id: "freedom", label: "自由", icon: "遊" },
+  { id: "governance", label: "治国之道", icon: "治" },
+  { id: "human-nature", label: "人性", icon: "性" },
+  { id: "knowledge", label: "求知", icon: "知" },
+  { id: "happiness", label: "幸福", icon: "樂" },
+  { id: "ethics", label: "仁义道德", icon: "仁" },
+  { id: "nature", label: "天人关系", icon: "天" },
 ];
 
 const SCHOOLS = [
@@ -42,6 +45,24 @@ export default function ComparePage() {
     setLoading(true);
     try {
       const schoolNames = SCHOOLS.filter((s) => selectedSchools.includes(s.id)).map((s) => s.label);
+
+      // 与「问庄子」同款 RAG：检索与话题相关的原文段落注入 system prompt，
+      // 要求庄子一方优先引用原文 —— 否则各家「代表原文」全凭模型记忆，
+      // 容易失真（站内就有精确语料，没有理由不用）。
+      let contextBlock = "";
+      try {
+        const searchResults = await search(topic);
+        if (searchResults.length > 0) {
+          const context = searchResults
+            .slice(0, 3)
+            .map((r) => `《${r.chapterTitle}》：「${r.original.slice(0, 100)}」`)
+            .join("\n");
+          contextBlock = `\n\n以下是与话题相关的《庄子》原文段落，庄子部分请优先从中引用：\n${context}`;
+        }
+      } catch {
+        // 检索失败则退回无上下文对话
+      }
+
       const response = await deepseekChat({
         systemPrompt: `你是中国古代哲学比较研究专家。请并排对比各家思想。
 
@@ -49,7 +70,7 @@ export default function ComparePage() {
 1. 先以一段（50字）总览这个话题在各家思想中的异同
 2. 然后每家单独一段：【学派名】核心观点 + 一句代表原文
 3. 最后一句总结性启示
-4. 整段300字以内，学术但易懂`,
+4. 整段300字以内，学术但易懂${contextBlock}`,
         userMessage: `话题：${topic}。对比学派：${schoolNames.join("、")}。请给出并排对比。`,
         temperature: 0.5,
         maxTokens: 500,
@@ -80,7 +101,10 @@ export default function ComparePage() {
                   ? "bg-[var(--text-accent)] text-white"
                   : "border border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--text-accent)]"
               }`}>
-              {t.icon} {t.label}
+              <span className="seal-char" aria-hidden="true">
+                {t.icon}
+              </span>
+              {t.label}
             </button>
           ))}
         </div>

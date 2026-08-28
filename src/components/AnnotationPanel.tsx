@@ -1,22 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef,useState } from "react";
+
 import { useAnnotation } from "@/lib/annotations";
 
 interface AnnotationPanelProps {
   chapterId: string;
   passageId: string;
-  onClose: () => void;
 }
 
 export default function AnnotationPanel({
   chapterId,
   passageId,
-  onClose,
 }: AnnotationPanelProps) {
   const { annotation, save, remove } = useAnnotation(chapterId, passageId);
   const [text, setText] = useState("");
   const [saved, setSaved] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * 关闭面板 = 移除段落根节点上的 .annotation-on 类（显示状态由 CSS 控制）。
+   * 不接收 onClose 函数 prop —— 函数无法跨 server/client 边界序列化，
+   * 且面板与工具条之间刻意不共享 React 状态（见 PassageView 减重说明）。
+   */
+  const closePanel = () => {
+    panelRef.current?.closest("[data-passage-root]")?.classList.remove("annotation-on");
+  };
 
   // useAnnotation 的 annotation 是异步 set（初始 null），挂载后同步一次，
   // 否则已有批注不预填，用户保存会覆盖原批注
@@ -38,17 +47,17 @@ export default function AnnotationPanel({
   const handleDelete = () => {
     remove();
     setText("");
-    onClose();
+    closePanel();
   };
 
   return (
-    <div className="rounded-lg border border-[var(--border-light)] bg-[var(--bg-secondary)] p-3">
+    <div ref={panelRef} className="rounded-lg border border-[var(--border-light)] bg-[var(--bg-secondary)] p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-[var(--text-secondary)]">
-          ✍️ 批注
+          <span className="seal-char" aria-hidden="true">注</span>批注
         </span>
         <button
-          onClick={onClose}
+          onClick={closePanel}
           className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -76,6 +85,7 @@ export default function AnnotationPanel({
         )}
         <button
           onClick={handleSave}
+          aria-live="polite"
           className={`text-xs px-3 py-1 rounded transition-colors ${
             saved
               ? "bg-green-500/20 text-green-600"

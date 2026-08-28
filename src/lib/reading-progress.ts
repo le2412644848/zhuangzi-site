@@ -32,10 +32,11 @@ export function saveProgress(chapterId: string, chapterTitle: string, passageId:
     timestamp: Date.now(),
   };
   // Keep only last 20 entries to avoid bloat
-  const keys = Object.keys(all).sort((a, b) => all[b].timestamp - all[a].timestamp);
+  const keys = Object.keys(all).sort((a, b) => (all[b]?.timestamp ?? 0) - (all[a]?.timestamp ?? 0));
   const trimmed: Record<string, ProgressEntry> = {};
   for (const k of keys.slice(0, 20)) {
-    trimmed[k] = all[k];
+    const entry = all[k];
+    if (entry) trimmed[k] = entry;
   }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));

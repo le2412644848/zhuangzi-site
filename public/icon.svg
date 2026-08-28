@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="莊子">
+  <!--
+    应用图标（矢量）。
+    现有 icon-192.png / icon-512.png 分别只有 593B / 2.2KB，是近乎空白的占位图；
+    此 SVG 提供一个可用的真实图标，并在 manifest 中作为 any 用途提供。
+    Android 的 maskable 图标仍建议输出 PNG，请用 scripts/gen-icons.mjs 从本文件渲染。
+    安全区：maskable 规范要求主要内容落在中心 80% 圆内，故字形按 0.62 比例内缩。
+  -->
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBF9F5"/>
+      <stop offset="100%" stop-color="#F5EFE5"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#paper)"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#8B5E3C" stroke-width="8" opacity="0.28"/>
+  <text x="256" y="256" text-anchor="middle" dominant-baseline="central"
+        font-family="'Noto Serif SC','Source Han Serif SC','Songti SC','SimSun',serif"
+        font-size="248" font-weight="700" fill="#8B5E3C">莊</text>
+</svg>

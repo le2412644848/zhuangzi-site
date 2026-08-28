@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
 import timelineData from "@/data/timeline.json";
 
 interface TimelineEvent {
@@ -11,10 +12,12 @@ interface TimelineEvent {
   category: string;
 }
 
+// 2026-08-24 视觉复审：原 #3b82f6/#22c55e 高饱和蓝绿跳出全站水墨调色板，
+// 改为降饱和的靛灰（战国）与竹绿（人物），与赭石（生平）成三色系。
 const categoryStyles: Record<string, { border: string; bg: string; dot: string }> = {
   "庄子生平": { border: "var(--text-accent)", bg: "rgba(139,94,60,0.06)", dot: "var(--text-accent)" },
-  "战国事件": { border: "#3b82f6", bg: "rgba(59,130,246,0.06)", dot: "#3b82f6" },
-  "人物": { border: "#22c55e", bg: "rgba(34,197,94,0.06)", dot: "#22c55e" },
+  "战国事件": { border: "#6E7F92", bg: "rgba(110,127,146,0.07)", dot: "#6E7F92" },
+  "人物": { border: "#7C8B6F", bg: "rgba(124,139,111,0.07)", dot: "#7C8B6F" },
 };
 
 export default function Timeline() {
@@ -53,7 +56,9 @@ export default function Timeline() {
         {/* Vertical line */}
         <div className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-0.5 bg-[var(--border-color)] -translate-x-1/2" />
 
-        <div className="space-y-8">
+        {/* 2026-08-24 视觉复审：space-y-8 → 4，交错布局本身已有呼吸感，
+            原行距把 24 条事件拉到 3000+px */}
+        <div className="space-y-4">
           {filtered.map((event, idx) => {
             const isLeft = idx % 2 === 0;
             const isExpanded = expanded === `${event.year}-${event.event}`;

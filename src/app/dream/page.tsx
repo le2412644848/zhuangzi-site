@@ -6,7 +6,7 @@ interface Scene {
   id: string;
   text: string;
   image?: string;
-  choices: { text: string; nextId: string }[];
+  choices: { text: string; nextId: string; seal?: string }[];
 }
 
 const STORY: Record<string, Scene> = {
@@ -14,8 +14,8 @@ const STORY: Record<string, Scene> = {
     id: "start",
     text: "昔者庄周梦为蝴蝶，栩栩然蝴蝶也，自喻适志与！不知周也。\n\n你睁开眼，发现自己变成了一只蝴蝶。阳光透过薄翼，世界以全新的角度展开。你振翅欲飞——",
     choices: [
-      { text: "🦋 飞向花园，感受自由", nextId: "garden" },
-      { text: "🌲 飞向森林，探索未知", nextId: "forest" },
+      { text: "飞向花园，感受自由", nextId: "garden", seal: "園" },
+      { text: "飞向森林，探索未知", nextId: "forest", seal: "林" },
     ],
   },
   garden: {
@@ -38,52 +38,52 @@ const STORY: Record<string, Scene> = {
     id: "beauty",
     text: "\"朝夕之美即是永恒\"——此言既出，花丛中忽然寂静。所有蜜蜂都停下工作看着你。\n\n那老蜂笑道：\"你这个小蝴蝶，竟参透了庄周的道理。天地有大美而不言。\"\n\n忽然，一阵风起——",
     choices: [
-      { text: "🌬️ 随风而去，不问方向", nextId: "awake1" },
+      { text: "随风而去，不问方向", nextId: "awake1", seal: "風" },
     ],
   },
   cherish: {
     id: "cherish",
     text: "\"更该珍惜此刻\"——你话音刚落，花瓣上滴落一滴露珠，倒映着你的蝶影。\n\n你忽然想起什么……好像有什么重要的事被遗忘了。一阵眩晕袭来——",
     choices: [
-      { text: "😵 闭眼，任凭感觉牵引", nextId: "awake1" },
+      { text: "闭眼，任凭感觉牵引", nextId: "awake1", seal: "瞑" },
     ],
   },
   freedom: {
     id: "freedom",
     text: "\"自由在心，不在形\"——螳螂沉默良久，收起镰刀般的双臂。\n\n\"也许你说得对。我困于此林，却从未想过困我者唯我心也。\"\n\n你振翅飞起，阳光穿林而入——",
     choices: [
-      { text: "☀️ 迎光飞去", nextId: "awake2" },
+      { text: "迎光飞去", nextId: "awake2", seal: "光" },
     ],
   },
   flyon: {
     id: "flyon",
     text: "你不答话，只是飞。飞过古藤，飞过青苔，飞过所有问题。\n\n飞本身就是答案。当你停止追问，世界忽然变得澄明——",
     choices: [
-      { text: "✨ 继续飞", nextId: "awake2" },
+      { text: "继续飞", nextId: "awake2", seal: "飛" },
     ],
   },
   awake1: {
     id: "awake1",
     text: "俄然觉，则蘧蘧然周也。\n\n你醒了。你是庄周，不是蝴蝶。\n\n但你分不清：究竟是庄周梦见了蝴蝶，还是蝴蝶梦见了庄周？",
     choices: [
-      { text: "🔁 再梦一次", nextId: "start" },
-      { text: "📖 去读《齐物论》", nextId: "read" },
+      { text: "再梦一次", nextId: "start", seal: "夢" },
+      { text: "去读《齐物论》", nextId: "read", seal: "讀" },
     ],
   },
   awake2: {
     id: "awake2",
     text: "不知周之梦为蝴蝶与，蝴蝶之梦为周与？\n\n你醒了。但这次不同——你不再纠结于谁梦见了谁。\n\n周与蝴蝶，则必有分矣。此之谓物化。",
     choices: [
-      { text: "🔁 再梦一次", nextId: "start" },
-      { text: "📖 去读《齐物论》", nextId: "read" },
+      { text: "再梦一次", nextId: "start", seal: "夢" },
+      { text: "去读《齐物论》", nextId: "read", seal: "讀" },
     ],
   },
   read: {
     id: "read",
     text: "此之谓物化。\n\n庄子在《齐物论》中讲述了这段梦蝶的故事。他借梦境告诉我们：\n现实与虚幻、自我与他者之间的界限，可能并不像我们以为的那样分明。\n\n当你执着于\"我是谁\"时，不妨想想那只蝴蝶。",
     choices: [
-      { text: "🔁 重新开始", nextId: "start" },
-      { text: "📖 阅读《齐物论》原文", nextId: "read" },
+      { text: "重新开始", nextId: "start", seal: "復" },
+      { text: "阅读《齐物论》原文", nextId: "read", seal: "讀" },
     ],
   },
 };
@@ -93,7 +93,7 @@ export default function DreamPage() {
   const [history, setHistory] = useState<string[]>(["start"]);
   const [animating, setAnimating] = useState(false);
 
-  const scene = STORY[sceneId];
+  const scene = STORY[sceneId]!;
 
   const handleChoice = (nextId: string) => {
     setAnimating(true);
@@ -112,7 +112,9 @@ export default function DreamPage() {
           <div className="text-[10px] text-[var(--text-secondary)] tracking-widest mb-1">
             庄周梦蝶 · 交互叙事
           </div>
-          <div className="text-4xl mb-2">🦋</div>
+          <div className="mb-2">
+            <span className="seal-char-lg" aria-hidden="true">夢</span>
+          </div>
         </div>
 
         {/* Story text */}
@@ -131,6 +133,11 @@ export default function DreamPage() {
               disabled={animating}
               className="w-full text-left p-4 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] hover:border-[var(--text-accent)] hover:shadow-sm transition-all text-sm text-[var(--text-primary)] disabled:opacity-50"
             >
+              {choice.seal && (
+                <span className="seal-char" aria-hidden="true">
+                  {choice.seal}
+                </span>
+              )}
               {choice.text}
             </button>
           ))}

@@ -1,17 +1,59 @@
-"use client";
+import Link from "next/link";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic";
 import type { Passage, WordAnnotation } from "@/lib/chapters";
 import { findKaoju, type KaojuEntry } from "@/lib/kaoju-utils";
-import ConceptTag from "./ConceptTag";
-import AnnotationPanel from "./AnnotationPanel";
-import WordTooltip from "./WordTooltip";
-import { useReadingMode } from "./ReadingModeProvider";
-import { toggleBookmark, isBookmarked } from "@/lib/annotations";
-import TranslationCompare from "./TranslationCompare";
+import { renderEmphasis } from "@/lib/markup";
 
-const PinyinAnnotator = dynamic(() => import("./PinyinAnnotator"), { ssr: false });
+import AnnotationPanel from "./AnnotationPanel";
+import ConceptTag from "./ConceptTag";
+import KaojuSection from "./KaojuSection";
+import PassageToolbar from "./PassageToolbar";
+import PinyinSlot from "./PinyinSlot";
+import TranslationCompare from "./TranslationCompare";
+import WordTooltip from "./WordTooltip";
+
+/** 原文内嵌名句标记（数据来自 quotes.json，章节页服务端构建期注入） */
+export interface PassageQuote {
+  id: string;
+  text: string;
+  theme: string;
+  explanation: string;
+}
+
+/**
+ * 名句在原文中的定位：返回应在原文中标记（includes 可命中）的切片。
+ *
+ * 两级匹配：
+ * 1. 去句末标点后直接 includes —— 名句数据以句号收尾、原文常为逗号接续；
+ * 2. 去全部标点的规范化匹配 —— 原文常用『』「」与异体断句
+ *   （如「臣之所好者，道也；」vs 引文「臣之所好者道也，」），
+ *    命中后回映射为原文切片，标记渲染保持原文原貌。
+ * 两级都失败（引文系节述而非原文连续片段）返回 null，该句不做内嵌标记。
+ */
+const PUNCT_ALL = /[。？！，、；：．''""「」『』（）()《》〈〉…—\-\.!\?,;:?\s]/;
+
+export function locateQuoteInOriginal(quoteText: string, original: string): string | null {
+  const trimmed = quoteText.replace(/[。？！，、；：．.!?,;:]+$/u, "");
+  if (trimmed && original.includes(trimmed)) return trimmed;
+
+  const normKey = Array.from(trimmed).filter((c) => !PUNCT_ALL.test(c)).join("");
+  if (!normKey) return null;
+
+  let norm = "";
+  const map: number[] = [];
+  for (let i = 0; i < original.length; i++) {
+    const c = original[i];
+    if (c === undefined || PUNCT_ALL.test(c)) continue;
+    norm += c;
+    map.push(i);
+  }
+  const idx = norm.indexOf(normKey);
+  if (idx < 0) return null;
+  const start = map[idx];
+  const end = map[idx + normKey.length - 1];
+  if (start === undefined || end === undefined) return null;
+  return original.slice(start, end + 1);
+}
 
 interface PassageViewProps {
   passage: Passage;
@@ -25,73 +67,235 @@ interface PassageViewProps {
   passageKaoju?: KaojuEntry[];
   /** 当前 passage 的段落级考据（方勇注，可选） */
   passageKaojuFang?: KaojuEntry[];
+  /** 当前 passage 的名句（仅含 text 能在 original 中定位的条目） */
+  quotes?: PassageQuote[] | undefined;
 }
 
-/** Render original text with annotation tooltips embedded */
-function AnnotatedText({ original, annotations, kaoju }: { original: string; annotations?: WordAnnotation[]; kaoju?: KaojuEntry[] }) {
-  const segments = useMemo(() => {
-    if (!annotations || annotations.length === 0) return [{ text: original, annotated: false }];
-    const sorted = [...annotations].sort((a, b) => b.term.length - a.term.length);
-    const result: { text: string; annotated: boolean; ann?: WordAnnotation }[] = [];
-    let remaining = original;
-    while (remaining.length > 0) {
-      let found = false;
-      for (const ann of sorted) {
-        const idx = remaining.indexOf(ann.term);
-        if (idx >= 0) {
-          if (idx > 0) result.push({ text: remaining.slice(0, idx), annotated: false });
-          result.push({ text: ann.term, annotated: true, ann });
-          remaining = remaining.slice(idx + ann.term.length);
-          found = true;
-          break;
-        }
+/**
+ * 把原文切成「普通文本 / 可加注词」的片段序列，并分离出**无法内联**的注释。
+ *
+ * 背景：原实现只做内联匹配，`original.indexOf(term)` 找不到就直接丢弃。
+ * 实测 1049 条注释中有 29 条属于此类 —— 它们是主题性词条
+ * （庖丁解牛、庄周梦蝶、朝三暮四、游刃有余、浑沌之死…）或与原文标点
+ * 不完全一致的引句，并非错误数据，但在页面上永远不显示，
+ * 等于 2.8% 的人工整理成果被静默丢掉。
+ * 现在把它们回收到段落下方的「要义」区展示。
+ */
+export function splitAnnotations(original: string, annotations?: WordAnnotation[]) {
+  type Segment = { text: string; annotated: boolean; ann?: WordAnnotation };
+  if (!annotations || annotations.length === 0) {
+    return { segments: [{ text: original, annotated: false }] as Segment[], unmatched: [] as WordAnnotation[] };
+  }
+
+  const inlineable = annotations.filter((a) => original.includes(a.term));
+  const unmatched = annotations.filter((a) => !original.includes(a.term));
+
+  const sorted = [...inlineable].sort((a, b) => b.term.length - a.term.length);
+  const segments: Segment[] = [];
+  let remaining = original;
+
+  while (remaining.length > 0) {
+    let bestIdx = -1;
+    let best: WordAnnotation | undefined;
+    // 取「最靠前」的匹配，避免长词优先导致前面的短词被跳过
+    for (const ann of sorted) {
+      const idx = remaining.indexOf(ann.term);
+      if (idx >= 0 && (bestIdx === -1 || idx < bestIdx)) {
+        bestIdx = idx;
+        best = ann;
       }
-      if (!found) { result.push({ text: remaining, annotated: false }); break; }
     }
-    return result;
-  }, [original, annotations]);
+    if (bestIdx === -1 || !best) {
+      segments.push({ text: remaining, annotated: false });
+      break;
+    }
+    if (bestIdx > 0) segments.push({ text: remaining.slice(0, bestIdx), annotated: false });
+    segments.push({ text: best.term, annotated: true, ann: best });
+    remaining = remaining.slice(bestIdx + best.term.length);
+  }
+
+  return { segments, unmatched };
+}
+
+/** 收集段落内全部需要查考据的词：内联注释词 + 注疏「逐字注」里的『…』引词 */
+function collectKaojuTerms(passage: Passage): string[] {
+  const terms = (passage.annotations ?? []).map((a) => a.term);
+  if (passage.commentary) {
+    for (const m of passage.commentary.matchAll(/『([^』]+)』/g)) {
+      const term = m[1];
+      if (term) terms.push(term);
+    }
+  }
+  return terms;
+}
+
+/**
+ * 构建期把「词 → 命中考据条目」查好，只把命中的结果传进客户端岛，
+ * 而不是整篇考据数组（对齐物论这类长篇，数组约 5 MB，命中条目通常只有
+ * 几十条，这是章节页 RSC 载荷减重的关键一步）。
+ */
+function buildKaojuLookup(kaoju: KaojuEntry[] | undefined, terms: string[]): Record<string, KaojuEntry> {
+  const lookup: Record<string, KaojuEntry> = {};
+  if (!kaoju) return lookup;
+  for (const t of terms) {
+    if (lookup[t]) continue;
+    const hit = findKaoju(kaoju, t);
+    if (hit) lookup[t] = hit;
+  }
+  return lookup;
+}
+
+/** 名句区间标记：名句在原文里常含被注释的词（鲲、鹏、冥灵…），
+ * splitAnnotations 会把这些词切成 WordTooltip 片段，名句因此
+ * 不在任何单个普通片段内连续 —— 不能按「片段内 indexOf」匹配。
+ * 正确做法：先算名句在全文中的 [start, end) 区间，再对每个普通片段
+ * 求交集分段标记（被注释词打断的部分自然分成多段，各自可点跳转）。
+ * 不少注释词条本身就是整句名句 —— 这种词条由 WordTooltip 的
+ * quoteHalo 叠加高亮，保证每条可定位名句都有可见标记。
+ */
+const HAN_IN_PART = /[\u4E00-\u9FFF]/;
+
+function quoteRangesOf(original: string, quotes: PassageQuote[] | undefined) {
+  const ranges: { start: number; end: number; quote: PassageQuote }[] = [];
+  if (!quotes) return ranges;
+  for (const q of quotes) {
+    const idx = original.indexOf(q.text);
+    if (idx >= 0) ranges.push({ start: idx, end: idx + q.text.length, quote: q });
+  }
+  return ranges;
+}
+
+/** 把普通片段按名句区间切成「命中 / 未命中」子段 */
+function intersectQuotes(
+  text: string,
+  segStart: number,
+  ranges: { start: number; end: number; quote: PassageQuote }[]
+) {
+  type Part = { text: string; quote?: PassageQuote };
+  const parts: Part[] = [];
+  let pos = 0;
+  while (pos < text.length) {
+    const abs = segStart + pos;
+    const hit = ranges
+      .filter((r) => abs >= r.start && abs < r.end)
+      .sort((a, b) => a.start - b.start)[0];
+    if (hit) {
+      const take = Math.min(hit.end - abs, text.length - pos);
+      parts.push({ text: text.slice(pos, pos + take), quote: hit.quote });
+      pos += take;
+    } else {
+      const nextStart = ranges.find((r) => r.start > abs)?.start ?? text.length + segStart;
+      const take = Math.min(nextStart - abs, text.length - pos);
+      parts.push({ text: text.slice(pos, pos + take) });
+      pos += take;
+    }
+  }
+  return parts;
+}
+
+/** Render original text with annotation tooltips embedded（服务端直出） */
+function AnnotatedText({ original, annotations, chapterId, quotes }: { original: string; annotations?: WordAnnotation[] | undefined; chapterId: string; quotes?: PassageQuote[] | undefined }) {
+  const { segments } = splitAnnotations(original, annotations);
+  const quoteRanges = quoteRangesOf(original, quotes);
+
+  // 各片段在 original 中的起始偏移（splitAnnotations 按序连续切分；
+  // 用 reduce 而非循环内重赋值 —— react-hooks/immutability 禁止渲染后重赋）
+  const segWithOffset = segments.reduce<{ seg: (typeof segments)[number]; start: number }[]>(
+    (acc, seg) => {
+      const prev = acc[acc.length - 1];
+      const start = prev ? prev.start + prev.seg.text.length : 0;
+      acc.push({ seg, start });
+      return acc;
+    },
+    []
+  );
 
   return (
     <>
-      {segments.map((seg, i) =>
-        seg.annotated && seg.ann ? (
-          <WordTooltip key={i} term={seg.ann.term} text={seg.ann.text} kaoju={findKaoju(kaoju, seg.ann.term)}>{seg.text}</WordTooltip>
-        ) : (
-          <span key={i}>{seg.text}</span>
-        )
-      )}
+      {segWithOffset.map(({ seg, start }, i) => {
+        if (seg.annotated && seg.ann) {
+          // 词条与名句区间重叠（含汉字）→ 加光晕底色。
+          // 不少注释词条本身就是整句名句（如「小知不及大知，小年不及大年」），
+          // 若不在此判定，这些名句会因整句被切成 tooltip 而完全无标记。
+          const halo =
+            quoteRanges.length > 0 &&
+            intersectQuotes(seg.text, start, quoteRanges).some((p) => p.quote && HAN_IN_PART.test(p.text));
+          return (
+            <WordTooltip key={i} term={seg.ann.term} text={seg.ann.text} chapterId={chapterId} quoteHalo={halo}>{seg.text}</WordTooltip>
+          );
+        }
+        if (quoteRanges.length === 0) {
+          return <span key={i}>{seg.text}</span>;
+        }
+        return intersectQuotes(seg.text, start, quoteRanges).map((p, j) =>
+          // 名句被逐字注切断后，剩余片段可能只剩标点（如「，」夹在两个
+          // WordTooltip 之间）——纯标点不做标记，否则出现「标点高亮」的怪相
+          p.quote && HAN_IN_PART.test(p.text) ? (
+            <Link
+              key={`${i}-${j}`}
+              href={`/quotes#${p.quote.id}`}
+              className="quote-mark"
+              title={`名句 · ${p.quote.theme}：${p.quote.explanation}`}
+            >
+              {p.text}
+            </Link>
+          ) : (
+            <span key={`${i}-${j}`}>{p.text}</span>
+          )
+        );
+      })}
     </>
   );
 }
 
-/** Format commentary with 逐字注/章旨 split */
-function CommentaryBlock({ commentary, kaoju }: { commentary?: string; kaoju?: KaojuEntry[] }) {
-  const renderHtml = (text: string) => text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+/** 无法内联的主题性词条 —— 以「要义」列表呈现，避免内容被丢弃 */
+function ThematicNotes({ notes }: { notes: WordAnnotation[] }) {
+  if (notes.length === 0) return null;
+  return (
+    <div className="mb-5 rounded-lg border border-[var(--border-light)] bg-[var(--bg-secondary)]/50 p-3">
+      <h3 className="text-xs font-semibold text-[var(--text-accent)] tracking-[0.08em] mb-2">
+        要义
+      </h3>
+      <dl className="space-y-1.5">
+        {notes.map((n, i) => (
+          <div key={i} className="text-xs leading-relaxed">
+            <dt className="inline font-medium text-[var(--text-accent)]">「{n.term}」</dt>
+            <dd className="inline text-[var(--text-primary)]"> {n.text.replace(/\*\*/g, "")}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
 
-  // Hooks 必须无条件调用（不能在早期 return 之后）
-  const parts = useMemo(() => {
-    if (!commentary) return { zhuzi: null as string | null, zhangzhi: null as string | null, rest: null as string | null };
+/** Format commentary with 逐字注/章旨 split（服务端直出） */
+function CommentaryBlock({ commentary, kaojuLookup }: { commentary?: string; kaojuLookup: Record<string, KaojuEntry> }) {
+  // 注疏正文经 renderEmphasis 转义后再还原 **粗体**，不再直接注入原串
+  const renderHtml = renderEmphasis;
+
+  if (!commentary) return null;
+
+  const parts = (() => {
     const zhuzi = commentary.match(/\u3010逐字注\u3011\n\n([\s\S]*?)(?:\n\n\u3010章旨\u3011|$)/);
     const zhangzhi = commentary.match(/\u3010章旨\u3011\n\n([\s\S]*?)$/);
     return {
-      zhuzi: zhuzi ? zhuzi[1].trim() : null,
-      zhangzhi: zhangzhi ? zhangzhi[1].trim() : null,
+      // 正则组在 match 成功时必然存在（`!` 断言）
+      zhuzi: zhuzi ? zhuzi[1]!.trim() : null,
+      zhangzhi: zhangzhi ? zhangzhi[1]!.trim() : null,
       rest: (!zhuzi && !zhangzhi) ? commentary : null,
     };
-  }, [commentary]);
-
-  if (!commentary) return null;
+  })();
 
   return (
     <div className="space-y-4 commentary-text">
       {parts.rest && <p className="reading-prose" dangerouslySetInnerHTML={{ __html: renderHtml(parts.rest) }} />}
       {parts.zhuzi && (
         <div>
-          <h4 className="text-xs font-semibold text-[var(--text-accent)] mb-2 tracking-[0.08em]">逐字注</h4>
+          <h3 className="text-xs font-semibold text-[var(--text-accent)] mb-2 tracking-[0.08em]">逐字注</h3>
           <div className="text-sm text-[var(--text-primary)] leading-relaxed space-y-2">
             {parts.zhuzi.split(/\n\n/).map((block, i) => {
-              const m = block.match(/^『([^』]+)』/);
-              const kj = m ? findKaoju(kaoju, m[1]) : null;
+              const term = block.match(/^『([^』]+)』/)?.[1];
+              const kj = term ? kaojuLookup[term] ?? null : null;
               return (
                 <div key={i}>
                   <p dangerouslySetInnerHTML={{ __html: renderHtml(block) }} />
@@ -113,7 +317,7 @@ function CommentaryBlock({ commentary, kaoju }: { commentary?: string; kaoju?: K
       )}
       {parts.zhangzhi && (
         <div className="mt-3 pt-3 border-t border-[var(--border-light)]">
-          <h4 className="text-xs font-semibold text-[var(--text-accent)] mb-2 tracking-[0.08em]">章旨</h4>
+          <h3 className="text-xs font-semibold text-[var(--text-accent)] mb-2 tracking-[0.08em]">章旨</h3>
           <p className="text-sm text-[var(--text-primary)] leading-relaxed" dangerouslySetInnerHTML={{ __html: renderHtml(parts.zhangzhi) }} />
         </div>
       )}
@@ -121,280 +325,97 @@ function CommentaryBlock({ commentary, kaoju }: { commentary?: string; kaoju?: K
   );
 }
 
-/** 段落级注（折叠区）：陈鼓应注 / 方勇训诂 */
-function KaojuSection({ title, entries }: { title: string; entries: KaojuEntry[] }) {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  const toggle = (seq: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(seq)) next.delete(seq); else next.add(seq);
-      return next;
-    });
-  };
-  if (!entries || entries.length === 0) return null;
+/**
+ * 段落视图 —— 服务端组件（章节页首屏减重 v3）。
+ *
+ * 本组件不持有任何状态、**不经过任何 client 祖先**：原文/译文/注疏
+ * 在服务端直出为 HTML；只有叶子位置的客户端岛（工具条 PassageToolbar、
+ * 逐字注浮层 WordTooltip、拼音槽 PinyinSlot、多译本对照、段落级考据
+ * KaojuSection、批注面板、概念标签）携带各自标量 props。
+ * 译本对照与考据全文由构建脚本拆成按篇 JSON（/data/…），用户展开折叠区
+ * 时才 fetch —— 首屏不再传输这两类大体积内容。
+ * 分栏/拼音/批注的显示切换由工具条在 [data-passage-root] 上切 CSS 类实现。
+ */
+export default function PassageView({ passage, chapterId, chapterTitle, kaoju, passageKaoju, passageKaojuFang, quotes }: PassageViewProps) {
+  // 构建期：把「注释词 → 命中考据」查好，只用于注疏区训诂行的服务端直出
+  // （WordTooltip 的训诂改由客户端按篇懒加载，不再进载荷）
+  const kaojuLookup = buildKaojuLookup(kaoju, collectKaojuTerms(passage));
+
+  // 分离出无法内联到原文的主题性注释，单独在「要义」区展示
+  const thematicNotes = splitAnnotations(passage.original, passage.annotations).unmatched;
+
+  const translationCount = (passage.translations?.length ?? 0) + 1;
+
   return (
-    <details className="mt-4 group/kaoju">
-      <summary className="cursor-pointer select-none inline-flex items-center gap-1.5 text-xs text-[var(--text-accent)] hover:underline">
-        <svg className="w-3.5 h-3.5 transition-transform group-open/kaoju:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-        </svg>
-        {title}（{entries.length} 条）
-      </summary>
-      <div className="mt-2 pl-3 border-l-2 border-[var(--border-light)] space-y-2.5">
-        {entries.map((e) => (
-          <div key={e.seq} className="text-xs leading-relaxed">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-medium text-[var(--text-accent)]">{e.term}</span>
-              {e.explanation && (
-                <span className="text-[var(--text-primary)]">{e.explanation}</span>
-              )}
+    // 附加字面 group 类：globals.css 的 .group:hover > .passage-toolbar
+    // 靠它显示工具条 —— Tailwind 命名分组 group/passage 是另一个 token，
+    // CSS 的 .group 匹配不到它（存量 bug：桌面端 hover 工具条从不出现，
+    // 仅触屏常驻与 focus-within 可救）
+    <section className="group/passage group" data-passage-root>
+      {/* 客户端岛：工具条（只接收标量 props，不包裹正文） */}
+      <PassageToolbar
+        chapterId={chapterId}
+        passageId={passage.id}
+        chapterTitle={chapterTitle}
+      />
+
+      <div className="passage-content">
+        <div className="passage-grid">
+          {/* Original */}
+          <div className="original-block min-w-0">
+            <div className="original-label text-[10px] font-medium text-[var(--text-muted)] tracking-[0.1em] uppercase mb-2">原文</div>
+            <div className="annotated-original">
+              <p className="original-text reading-prose leading-loose tracking-wide text-lg sm:text-xl">
+                <AnnotatedText original={passage.original} annotations={passage.annotations} chapterId={chapterId} quotes={quotes} />
+              </p>
             </div>
-            {e.citations.length > 0 && (
-              <div className="mt-1 space-y-1">
-                {(expanded.has(e.seq) ? e.citations : e.citations.slice(0, 2)).map((c, i) => (
-                  <div key={i} className="text-[11px] text-[var(--text-secondary)] leading-snug">
-                    <span className="text-[var(--text-accent)] font-medium">{c.author}</span>
-                    <span>：</span>
-                    <span>{c.quote.length > 80 ? c.quote.slice(0, 80) + "…" : c.quote}</span>
-                    {c.source && <span className="text-[var(--text-muted)]">（《{c.source}》）</span>}
-                  </div>
-                ))}
-                {e.citations.length > 2 && (
-                  <button
-                    onClick={() => toggle(e.seq)}
-                    className="text-[11px] text-[var(--text-accent)] hover:underline"
-                  >
-                    {expanded.has(e.seq) ? "收起注家" : `查看全部 ${e.citations.length} 家注`}
-                  </button>
-                )}
-              </div>
-            )}
+            {/* 拼音版原文（默认隐藏；切到 pinyin-on 时经 MutationObserver 挂载） */}
+            <PinyinSlot />
           </div>
-        ))}
-      </div>
-    </details>
-  );
-}
-
-export default function PassageView({ passage, chapterId, chapterTitle, kaoju, passageKaoju, passageKaojuFang }: PassageViewProps) {
-  const [showTools, setShowTools] = useState(false);
-  const [showAnnotation, setShowAnnotation] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [showPinyin, setShowPinyin] = useState(false);
-  const [splitView, setSplitView] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const { immersive, toggle: toggleImmersive } = useReadingMode();
-
-  const togglePinyin = () => setShowPinyin(!showPinyin);
-
-  useEffect(() => {
-    // 挂载后读 localStorage 收藏状态（hydration-safe）
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBookmarked(isBookmarked(chapterId, passage.id));
-  }, [chapterId, passage.id]);
-
-  const handleBookmark = useCallback(() => {
-    const added = toggleBookmark(chapterId, passage.id, chapterTitle ?? chapterId, passage.original);
-    setBookmarked(added);
-  }, [chapterId, chapterTitle, passage.id, passage.original]);
-
-  const handleSpeak = useCallback(() => {
-    if (!("speechSynthesis" in window)) return;
-    if (speaking) {
-      speechSynthesis.cancel();
-      setSpeaking(false);
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(passage.original);
-    utterance.lang = "zh-CN";
-    utterance.rate = 0.7;
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    speechSynthesis.speak(utterance);
-    setSpeaking(true);
-  }, [speaking, passage.original]);
-
-  // Cleanup speech on unmount
-  useEffect(() => {
-    return () => {
-      if ("speechSynthesis" in window) speechSynthesis.cancel();
-    };
-  }, []);
-
-  return (
-    <div className="group/passage" onMouseEnter={() => setShowTools(true)} onMouseLeave={() => setShowTools(false)}>
-      {/* Floating toolbar — appears on hover；触屏设备(无 hover)经 CSS 常驻显示 */}
-      <div className={`sticky top-14 z-30 flex justify-end mb-1 transition-opacity duration-200 passage-toolbar ${showTools ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
-        <div className="flex items-center gap-0.5 bg-[var(--bg-card)]/90 backdrop-blur-sm rounded-lg border border-[var(--border-light)] shadow-sm px-1 py-0.5">
-          {/* Bookmark */}
-          <button onClick={handleBookmark}
-            className={`p-1.5 rounded hover:bg-[var(--hover-bg)] transition-colors ${bookmarked ? "text-[var(--text-accent)]" : "text-[var(--text-muted)]"}`}
-            title={bookmarked ? "取消收藏" : "收藏"}
-            aria-label={bookmarked ? "取消收藏" : "收藏"}
-            aria-pressed={bookmarked}>
-            <svg className="w-3.5 h-3.5" fill={bookmarked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-            </svg>
-          </button>
-          {/* Annotate */}
-          <button onClick={() => setShowAnnotation(!showAnnotation)}
-            className="p-1.5 rounded hover:bg-[var(--hover-bg)] text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors" title="批注" aria-label="批注">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
-            </svg>
-          </button>
-          {/* Copy */}
-          <button onClick={() => { navigator.clipboard.writeText(passage.original); }}
-            className="p-1.5 rounded hover:bg-[var(--hover-bg)] text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors" title="复制原文" aria-label="复制原文">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-            </svg>
-          </button>
-          {/* Permalink */}
-          <button onClick={() => {
-            const url = `${window.location.origin}/chapters/${chapterId}#passage-${passage.id}`;
-            navigator.clipboard.writeText(url);
-            setLinkCopied(true);
-            setTimeout(() => setLinkCopied(false), 1500);
-          }}
-            className="p-1.5 rounded hover:bg-[var(--hover-bg)] text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors"
-            title={linkCopied ? "已复制链接" : "复制段落链接"}
-            aria-label={linkCopied ? "已复制链接" : "复制段落链接"}>
-            {linkCopied ? (
-              <svg className="w-3.5 h-3.5 text-[var(--text-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-              </svg>
-            )}
-          </button>
-          {/* Pinyin toggle */}
-          <button onClick={togglePinyin}
-            className={`p-1.5 rounded hover:bg-[var(--hover-bg)] transition-colors ${showPinyin ? "text-[var(--text-accent)]" : "text-[var(--text-muted)]"}`}
-            title={showPinyin ? "隐藏拼音" : "显示拼音"}
-            aria-label={showPinyin ? "隐藏拼音" : "显示拼音"}
-            aria-pressed={showPinyin}>
-            <span className="text-[11px] font-medium tracking-tight">拼</span>
-          </button>
-          {/* Immersive reading toggle */}
-          <button onClick={toggleImmersive}
-            className={`p-1.5 rounded hover:bg-[var(--hover-bg)] transition-colors ${immersive ? "text-[var(--text-accent)]" : "text-[var(--text-muted)]"}`}
-            title={immersive ? "退出沉浸阅读" : "沉浸阅读"}
-            aria-label={immersive ? "退出沉浸阅读" : "沉浸阅读"}
-            aria-pressed={immersive}>
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-            </svg>
-          </button>
-          {/* Split view toggle */}
-          <button onClick={() => setSplitView(!splitView)}
-            className={`p-1.5 rounded hover:bg-[var(--hover-bg)] transition-colors ${splitView ? "text-[var(--text-accent)]" : "text-[var(--text-muted)]"}`}
-            title={splitView ? "上下排列" : "分栏对照"}
-            aria-label={splitView ? "上下排列" : "分栏对照"}
-            aria-pressed={splitView}>
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
-            </svg>
-          </button>
-          {/* TTS — read aloud */}
-          <button onClick={handleSpeak}
-            className={`p-1.5 rounded hover:bg-[var(--hover-bg)] transition-colors ${speaking ? "text-[var(--text-accent)]" : "text-[var(--text-muted)]"}`}
-            title={speaking ? "停止朗读" : "朗读原文"}
-            aria-label={speaking ? "停止朗读" : "朗读原文"}
-            aria-pressed={speaking}>
-            {speaking ? (
-              <svg className="w-3.5 h-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Content — split view or stacked */}
-      {splitView ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-6">
-          {/* Left: Original */}
-          <div className="min-w-0">
-            <div className="text-[10px] font-medium text-[var(--text-muted)] tracking-[0.1em] uppercase mb-2">原文</div>
-            <p className="original-text reading-prose leading-loose tracking-wide text-lg">
-              {showPinyin ? (
-                <PinyinAnnotator text={passage.original} enabled={true} />
-              ) : (
-                <AnnotatedText original={passage.original} annotations={passage.annotations} kaoju={kaoju} />
-              )}
-            </p>
-          </div>
-          {/* Right: Translation */}
-          <div className="min-w-0 border-l-2 border-[var(--border-light)] pl-4 sm:pl-6">
-            <div className="text-[10px] font-medium text-[var(--text-muted)] tracking-[0.1em] uppercase mb-2">译文</div>
+          {/* Translation */}
+          <div className="translation-block min-w-0 border-l-2 border-[var(--border-light)] pl-4 sm:pl-6">
+            <div className="translation-label text-[10px] font-medium text-[var(--text-muted)] tracking-[0.1em] uppercase mb-2">译文</div>
             <p className="translation-text reading-prose">
               {passage.translation}
             </p>
-            <TranslationCompare translations={passage.translations} defaultTranslation={passage.translation} />
+            <TranslationCompare chapterId={chapterId} passageId={passage.id} count={translationCount} />
           </div>
         </div>
-      ) : (
-        <>
-          {/* Original text — stacked */}
-          <div className="mb-6">
-            <p className="original-text reading-prose leading-loose tracking-wide text-lg sm:text-xl">
-              {showPinyin ? (
-                <PinyinAnnotator text={passage.original} enabled={true} />
-              ) : (
-                <AnnotatedText original={passage.original} annotations={passage.annotations} kaoju={kaoju} />
-              )}
-            </p>
-          </div>
-          {/* Translation — stacked */}
-          <div className="mb-5 pl-4 border-l-2 border-[var(--border-light)]">
-            <p className="translation-text reading-prose">
-              {passage.translation}
-            </p>
-            <TranslationCompare translations={passage.translations} defaultTranslation={passage.translation} />
-          </div>
-        </>
-      )}
 
-      {/* Commentary */}
-      {passage.commentary && (
+        {/* Commentary */}
+        {passage.commentary && (
+          <div className="mb-5">
+            <CommentaryBlock commentary={passage.commentary} kaojuLookup={kaojuLookup} />
+          </div>
+        )}
+
+        {/* 无法内联的主题性注释（庖丁解牛、朝三暮四之类） */}
+        <ThematicNotes notes={thematicNotes} />
+
+        {/* 段落级注（陈鼓应 + 方勇，懒加载） */}
         <div className="mb-5">
-          <CommentaryBlock commentary={passage.commentary} kaoju={kaoju} />
+          {passageKaoju && passageKaoju.length > 0 && (
+            <KaojuSection title="陈鼓应注" chapterId={chapterId} passageId={passage.id} count={passageKaoju.length} kind="chen" />
+          )}
+          {passageKaojuFang && passageKaojuFang.length > 0 && (
+            <KaojuSection title="方勇训诂" chapterId={chapterId} passageId={passage.id} count={passageKaojuFang.length} kind="fang" />
+          )}
         </div>
-      )}
 
-      {/* 段落级注（陈鼓应 + 方勇） */}
-      <div className="mb-5">
-        {passageKaoju && passageKaoju.length > 0 && (
-          <KaojuSection title="陈鼓应注" entries={passageKaoju} />
+        {/* Concept tags */}
+        {passage.concepts.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-5">
+            {passage.concepts.map((cid) => (
+              <ConceptTag key={`${passage.id}-${cid}`} conceptId={cid} size="sm" />
+            ))}
+          </div>
         )}
-        {passageKaojuFang && passageKaojuFang.length > 0 && (
-          <KaojuSection title="方勇训诂" entries={passageKaojuFang} />
-        )}
+
+        {/* 批注面板（默认隐藏；切到 annotation-on 时经 CSS 显示） */}
+        <div className="annotation-panel">
+          <AnnotationPanel chapterId={chapterId} passageId={passage.id} />
+        </div>
       </div>
-
-      {/* Concept tags */}
-      {passage.concepts.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-5">
-          {passage.concepts.map((cid) => (
-            <ConceptTag key={`${passage.id}-${cid}`} conceptId={cid} size="sm" />
-          ))}
-        </div>
-      )}
-
-      {/* Annotation panel */}
-      {showAnnotation && (
-        <div className="mb-5">
-          <AnnotationPanel chapterId={chapterId} passageId={passage.id} onClose={() => setShowAnnotation(false)} />
-        </div>
-      )}
-    </div>
+    </section>
   );
 }

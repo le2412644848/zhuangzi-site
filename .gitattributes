@@ -1,0 +1,12 @@
+# 统一行尾：git 内一律 LF（与 .editorconfig 一致，Windows 检出时按 autocrlf 转 CRLF）
+* text=auto
+
+# 二进制文件绝不按文本处理
+*.png binary
+*.woff2 binary
+*.ttf binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary

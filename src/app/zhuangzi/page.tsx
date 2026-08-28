@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+import { buildPageMetadata } from "@/lib/site";
+
+export const metadata: Metadata = buildPageMetadata({
   title: "庄子其人",
-  description: "庄子（约前369—前286），名周，战国宋国蒙人，道家思想集大成者。",
-};
+  description:
+    "庄子（约前369—前286），名周，战国宋国蒙人，道家思想集大成者。生平考述、思想脉络、与惠施的论辩，以及《庄子》一书的成书与流传。",
+  path: "/zhuangzi",
+  type: "article",
+});
 
 const MILESTONES = [
   { year: "约前369年", event: "庄子出生于宋国蒙（今河南商丘附近），家境贫寒" },
@@ -95,7 +100,7 @@ export default function ZhuangziPage() {
           <div className="space-y-3">
             {INFLUENCES.map((item, i) => (
               <div key={i} className="text-sm text-[var(--text-primary)] leading-relaxed">
-                <span className="text-[var(--text-accent)] font-medium">{item.split("—")[0].trim()}</span>
+                <span className="text-[var(--text-accent)] font-medium">{item.split("—")[0]?.trim() ?? ""}</span>
                 <span className="text-[var(--text-secondary)]"> — {item.split("—")[1]?.trim()}</span>
               </div>
             ))}

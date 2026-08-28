@@ -1,19 +1,45 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useCallback,useEffect, useRef } from "react";
+
+import { restoreProgress,saveProgress } from "@/lib/reading-progress";
+
 import { recordReading } from "./ReadingHistory";
-import { saveProgress, restoreProgress } from "@/lib/reading-progress";
 
 interface Props {
   chapterId: string;
   chapterTitle: string;
-  /** Current visible passage ID — pass from parent if you have it */
-  currentPassageId?: string;
 }
 
-export default function RecordReading({ chapterId, chapterTitle, currentPassageId }: Props) {
+/**
+ * 阅读进度记录（章节级历史 + 段落级续读）。
+ *
+ * 像素级滚动恢复一直存在，但 restoreProgress 的「段落锚点优先」分支
+ * 从未生效 —— 旧实现的 currentPassageId 是可选 prop，而章节页从不传，
+ * saveProgress 存进去的 passageId 恒为空串。现在用 IntersectionObserver
+ * 在组件内部跟踪当前可见段落（观察参数与 ChapterTOC 的 scroll spy 一致），
+ * 无需页面传 prop；刷新/重进页面时恢复到段落锚点而非像素位置。
+ */
+export default function RecordReading({ chapterId, chapterTitle }: Props) {
   const restored = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const passageRef = useRef("");
+
+  // 跟踪当前视口内的段落 id（写入 passageRef 供滚动保存使用）
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            passageRef.current = entry.target.id.replace(/^passage-/, "");
+          }
+        }
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
+    );
+    document.querySelectorAll<HTMLElement>('[id^="passage-"]').forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   // Restore scroll position on first mount
   useEffect(() => {
@@ -33,9 +59,9 @@ export default function RecordReading({ chapterId, chapterTitle, currentPassageI
   const handleScroll = useCallback(() => {
     if (timerRef.current !== undefined) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      saveProgress(chapterId, chapterTitle, currentPassageId || "");
+      saveProgress(chapterId, chapterTitle, passageRef.current);
     }, 2000);
-  }, [chapterId, chapterTitle, currentPassageId]);
+  }, [chapterId, chapterTitle]);
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -48,9 +74,9 @@ export default function RecordReading({ chapterId, chapterTitle, currentPassageI
   // Also save on unmount (tab close / navigation)
   useEffect(() => {
     return () => {
-      saveProgress(chapterId, chapterTitle, currentPassageId || "");
+      saveProgress(chapterId, chapterTitle, passageRef.current);
     };
-  }, [chapterId, chapterTitle, currentPassageId]);
+  }, [chapterId, chapterTitle]);
 
   return null;
 }

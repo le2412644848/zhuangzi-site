@@ -1,0 +1,38 @@
+MIT License
+
+Copyright (c) 2026 莊子數位典藏
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+重要排除条款（NOT covered by the license above）：
+
+`src/data/` 目录下的语料与整理数据**不适用**本开源许可。
+该目录包含受著作权保护的现代学术著作内容，包括但不限于：
+
+- 陈鼓应《庄子今注今译》（商务印书馆）的白话翻译、题解、逐字注与考据训诂
+- 方勇《庄子纂要》（学苑出版社）的历代注家辑录
+
+这些内容的权利归原作者及出版方所有，本站仅以学习研究为目的节选使用，
+不得复制、分发或用于商业用途。引用明细见站内「引用与致谢」页
+（/attributions）。
+
+《庄子》原文、清代以前注疏及本站自整理的纯事实性数据（篇目元数据等）
+不在上述排除范围内。

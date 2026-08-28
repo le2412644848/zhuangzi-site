@@ -1,5 +1,4 @@
 import type { Chapter } from "@/lib/chapters";
-import { chaptersMeta, type ChapterMeta } from "./metadata";
 
 // Import all chapter JSON files
 import ch01 from "./01-xiaoyao-you.json";
@@ -35,6 +34,7 @@ import ch30 from "./30-shuojian.json";
 import ch31 from "./31-yufu.json";
 import ch32 from "./32-lieyukou.json";
 import ch33 from "./33-tianxia.json";
+import { type ChapterMeta,chaptersMeta } from "./metadata";
 
 const _chapterMap: Record<string, Chapter> = {
   "01-xiaoyao-you": ch01, "02-qiwu-lun": ch02, "03-yangsheng-zhu": ch03,
@@ -51,11 +51,13 @@ const _chapterMap: Record<string, Chapter> = {
 };
 
 /** Full chapter data — 656KB. Only import this in detail pages or search. */
-export const chapters: Chapter[] = chaptersMeta.map((m) => _chapterMap[m.id]);
+export const chapters: Chapter[] = chaptersMeta
+  .map((m) => _chapterMap[m.id])
+  .filter((c): c is Chapter => Boolean(c));
 
 /** Get a single full chapter by ID. */
 export function getFullChapter(id: string): Chapter | undefined {
   return _chapterMap[id];
 }
 
-export { chaptersMeta, type ChapterMeta };
+export { type ChapterMeta,chaptersMeta };

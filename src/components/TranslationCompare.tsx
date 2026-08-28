@@ -1,66 +1,78 @@
 "use client";
 
 import { useState } from "react";
-import type { TranslationEntry } from "@/lib/chapters";
 
 interface TranslationCompareProps {
-  translations?: TranslationEntry[];
-  defaultTranslation: string;
+  chapterId: string;
+  passageId: string;
+  /** 版本数（含默认白话）—— 服务端算好传入，避免序列化译文全文 */
+  count: number;
 }
 
-export default function TranslationCompare({
-  translations,
-  defaultTranslation,
-}: TranslationCompareProps) {
-  const [showCompare, setShowCompare] = useState(false);
-  const [activeTranslator, setActiveTranslator] = useState(0);
+interface Version {
+  translator: string;
+  text: string;
+}
 
-  if (!translations || translations.length === 0) return null;
+/**
+ * 多译本对照 —— 客户端懒加载（章节页首屏减重 v3）。
+ *
+ * 译本全文（每段 2–4 个版本）由构建脚本拆到
+ * /data/translations/<chapterId>.json，首屏只出现「N 个版本」的摘要；
+ * 用户展开折叠区时才 fetch 该文件并渲染。服务端直出的默认译文不受影响。
+ */
+export default function TranslationCompare({ chapterId, passageId, count }: TranslationCompareProps) {
+  const [versions, setVersions] = useState<Version[] | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const allVersions = [
-    { translator: "白话", text: defaultTranslation },
-    ...translations,
-  ];
+  const handleToggle = async (e: React.SyntheticEvent<HTMLDetailsElement>) => {
+    const open = e.currentTarget.open;
+    if (!open || versions !== null || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/data/translations/${chapterId}.json`);
+      const data = res.ok ? await res.json() : null;
+      const item = data?.[passageId];
+      if (item) {
+        setVersions([{ translator: "白话", text: item.default }, ...(item.versions ?? [])]);
+      } else {
+        setVersions([]);
+      }
+    } catch {
+      setVersions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="mt-3 pt-3 border-t border-[var(--border-light)]">
-      <button
-        onClick={() => setShowCompare(!showCompare)}
-        className="text-xs text-[var(--text-accent)] hover:underline"
-      >
-        {showCompare ? "收起译本对照" : `多译本对照 (${allVersions.length}个版本)`}
-      </button>
-
-      {showCompare && (
-        <div className="mt-2 space-y-0">
-          {/* Translator tabs */}
-          <div className="flex flex-wrap gap-1 mb-2">
-            {allVersions.map((v, i) => (
-              <button
-                key={v.translator}
-                onClick={() => setActiveTranslator(i)}
-                className={`text-xs px-2 py-0.5 rounded transition-colors ${
-                  activeTranslator === i
-                    ? "bg-[var(--text-accent)]/10 text-[var(--text-accent)] border border-[var(--text-accent)]/30"
-                    : "text-[var(--text-secondary)] border border-transparent hover:text-[var(--text-primary)]"
-                }`}
-              >
+    <details onToggle={handleToggle} className="mt-3 pt-3 border-t border-[var(--border-light)] group/compare">
+      <summary className="cursor-pointer inline-flex items-center gap-1.5 text-xs text-[var(--text-accent)] hover:underline">
+        <svg className="w-3 h-3 transition-transform group-open/compare:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+        多译本对照（{count} 个版本）
+      </summary>
+      {loading && (
+        <p className="mt-2 pl-3 text-xs text-[var(--text-muted)]">加载译本…</p>
+      )}
+      {versions && versions.length > 0 && (
+        <div className="mt-2 space-y-3">
+          {versions.map((v) => (
+            <div key={v.translator} className="pl-3 border-l-2 border-[var(--border-color)]">
+              <div className="text-xs text-[var(--text-secondary)] mb-1">
                 {v.translator}
-              </button>
-            ))}
-          </div>
-
-          {/* Active translation */}
-          <div className="pl-3 border-l-2 border-[var(--border-color)]">
-            <div className="text-xs text-[var(--text-secondary)] mb-1">
-              {allVersions[activeTranslator].translator}
+              </div>
+              <p className="text-sm text-[var(--text-primary)] leading-relaxed reading-prose">
+                {v.text}
+              </p>
             </div>
-            <p className="text-sm text-[var(--text-primary)] leading-relaxed reading-prose">
-              {allVersions[activeTranslator].text}
-            </p>
-          </div>
+          ))}
         </div>
       )}
-    </div>
+      {versions && versions.length === 0 && (
+        <p className="mt-2 pl-3 text-xs text-[var(--text-muted)]">暂无其他译本。</p>
+      )}
+    </details>
   );
 }

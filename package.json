@@ -4,20 +4,26 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/bump-sw-version.mjs",
+    "build": "node scripts/validate-data.mjs && node scripts/gen-og-images.mjs && node scripts/gen-lazy-data.mjs && next build && node scripts/fix-rsc-payload-paths.mjs && node scripts/bump-sw-version.mjs",
     "start": "next start",
-    "lint": "eslint",
-    "deploy": "npm run build && npx wrangler pages deploy out --project-name zhuangzi-site",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \"functions/**/*.js\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run lint && node scripts/validate-data.mjs && npm run test",
+    "budget": "node scripts/check-budget.mjs",
+    "check:output": "node scripts/check-output.mjs",
+    "deploy": "npm run build && node scripts/clean-duplicate-payload.mjs && wrangler pages deploy out --project-name zhuangzi-site",
     "clean": "rm -rf .next out"
   },
   "dependencies": {
     "d3": "^7.9.0",
-    "fuse.js": "^7.5.0",
     "leaflet": "^1.9.4",
     "next": "16.2.10",
     "pinyin-pro": "^3.28.2",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -28,7 +34,12 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.42.0",
+    "zod": "^4.4.3"
   }
 }

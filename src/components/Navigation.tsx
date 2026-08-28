@@ -1,44 +1,61 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import ThemeSwitcher from "./ThemeSwitcher";
+import { useEffect,useRef, useState } from "react";
+
+import ReadingSettings from "./ReadingSettings";
 import SimplifiedToggle from "./SimplifiedToggle";
+import { ThemeProvider } from "./ThemeProvider";
+import ThemeSwitcher from "./ThemeSwitcher";
 import VerticalModeToggle from "./VerticalModeToggle";
-import { useState, useRef, useEffect } from "react";
 
 interface NavGroup {
   label: string;
   items: { href: string; label: string }[];
 }
 
+// 信息架构（2026-08 对标升级）：主链接与分组下拉零重复，
+// 全部功能页均有导航入口 —— 此前 /dream、/translate-challenge、
+// /reading-path、/zhuangzi 在站内无任何 UI 入链（仅 sitemap 收录），
+// /ask-zhuangzi、/compare 只藏在页脚。
 const navGroups: NavGroup[] = [
   {
     label: "阅读",
     items: [
-      { href: "/chapters", label: "篇章" },
-      { href: "/concepts", label: "概念" },
-      { href: "/quotes", label: "名句" },
-      { href: "/fables", label: "寓言" },
-      { href: "/reading-routes", label: "主题" },
+      { href: "/concepts", label: "核心概念" },
+      { href: "/quotes", label: "名句精选" },
+      { href: "/fables", label: "寓言故事" },
+      { href: "/reading-routes", label: "主题路线" },
     ],
   },
   {
     label: "探索",
     items: [
-      { href: "/search", label: "搜索" },
       { href: "/timeline", label: "时间线" },
-      { href: "/map", label: "地理" },
-      { href: "/concordance", label: "词语" },
-      { href: "/heatmap", label: "热图" },
+      { href: "/map", label: "庄子地理" },
+      { href: "/concordance", label: "词语索引" },
+      { href: "/heatmap", label: "词频热图" },
+      { href: "/zhuangzi", label: "庄子生平" },
     ],
   },
   {
-    label: "更多",
+    label: "互动",
     items: [
-      { href: "/bookmarks", label: "收藏" },
-      { href: "/report", label: "报告" },
-      { href: "/cards", label: "卡片" },
+      { href: "/ask-zhuangzi", label: "问庄子" },
+      { href: "/compare", label: "诸子对谈" },
+      { href: "/translate-challenge", label: "翻译挑战" },
+      { href: "/recite", label: "名句背诵" },
+      { href: "/dream", label: "庄周梦蝶" },
+      { href: "/reading-path", label: "定制阅读路径" },
+    ],
+  },
+  {
+    label: "工具",
+    items: [
+      { href: "/bookmarks", label: "我的书斋" },
+      { href: "/report", label: "阅读报告" },
+      { href: "/cards", label: "名言卡片" },
     ],
   },
 ];
@@ -46,16 +63,41 @@ const navGroups: NavGroup[] = [
 const primaryLinks = [
   { href: "/", label: "首页" },
   { href: "/chapters", label: "篇章" },
-  { href: "/concepts", label: "概念" },
-  { href: "/quotes", label: "名句" },
   { href: "/search", label: "搜索" },
 ];
 
+/**
+ * 站点导航。
+ *
+ * 主题上下文（ThemeProvider）刻意只包裹导航自身：它曾包裹整页 children，
+ * 而静态导出会把 client 组件的 server children 完整序列化进 RSC 载荷
+ * （章节页 33 万字符重复载荷的根源之一）。主题应用是 document 级副作用，
+ * 不需要包裹正文。
+ * 沉浸模式隐藏由 CSS 完成（html.immersive-mode header.site-header）。
+ */
 export default function Navigation() {
+  return (
+    <ThemeProvider>
+      <NavigationContent />
+    </ThemeProvider>
+  );
+}
+
+function NavigationContent() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 滚动吸顶柔光阴影（设计升级规范五.1）：吸顶静止时透明无影，
+  // 滚动后挂超微柔光阴影，区分导航与正文，不喧宾夺主。
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll(); // 首帧定初值
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Close dropdown on outside click or Escape
   useEffect(() => {
@@ -100,13 +142,52 @@ export default function Navigation() {
     return pathname.startsWith(href);
   };
 
+  /** 菜单内方向键导航（WCAG 2.1.2：aria-haspopup 需配套 role=menu 与键盘操作） */
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    const items = Array.from(
+      (e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('a[role="menuitem"]')
+    );
+    if (items.length === 0) return;
+    const idx = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      items[(idx + 1) % items.length]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(idx - 1 + items.length) % items.length]?.focus();
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      items[0]?.focus();
+    } else if (e.key === "End") {
+      e.preventDefault();
+      items[items.length - 1]?.focus();
+    }
+  };
+
+  /** 触发按钮：ArrowDown/ArrowUp 打开菜单并把焦点送进菜单项 */
+  const handleTriggerKeyDown = (e: React.KeyboardEvent, group: NavGroup) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    setActiveDropdown(group.label);
+    requestAnimationFrame(() => {
+      const btn = e.currentTarget as HTMLElement;
+      const items = btn.nextElementSibling?.querySelectorAll<HTMLElement>('a[role="menuitem"]') ?? [];
+      if (e.key === "ArrowUp") items[items.length - 1]?.focus();
+      else items[0]?.focus();
+    });
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/85 backdrop-blur-md border-b border-[var(--border-light)] no-print">
+    <header
+      className={`site-header sticky top-0 z-50 bg-[var(--bg-primary)]/85 backdrop-blur-md border-b border-[var(--border-light)] no-print transition-shadow duration-300 ${
+        scrolled ? "shadow-[0_4px_20px_rgba(35,28,20,0.03)]" : "shadow-none"
+      }`}
+    >
       <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link
           href="/"
-          className="text-lg font-semibold tracking-[0.08em] text-[var(--text-accent)] font-serif hover:text-[var(--color-accent-deep)] transition-colors"
+          className="shrink-0 whitespace-nowrap text-lg font-semibold tracking-[0.08em] text-[var(--text-accent)] font-serif hover:text-[var(--color-accent-deep)] transition-colors"
         >
           莊子
         </Link>
@@ -140,6 +221,7 @@ export default function Navigation() {
                 onClick={() =>
                   setActiveDropdown(activeDropdown === group.label ? null : group.label)
                 }
+                onKeyDown={(e) => handleTriggerKeyDown(e, group)}
                 aria-haspopup="menu"
                 aria-expanded={activeDropdown === group.label}
                 className={`px-2.5 py-1.5 text-sm tracking-wide rounded-lg transition-all flex items-center gap-1 ${
@@ -163,15 +245,21 @@ export default function Navigation() {
               </button>
 
               {activeDropdown === group.label && (
-                <div className="absolute top-full mt-1 left-0 min-w-[140px] bg-[var(--bg-card)] border border-[var(--border-light)] rounded-xl shadow-lg py-1.5 z-50 animate-fade-in">
+                <div
+                  role="menu"
+                  aria-label={group.label}
+                  onKeyDown={handleMenuKeyDown}
+                  className="absolute top-full mt-1 left-0 min-w-[140px] bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-[0_16px_48px_rgba(35,28,20,0.08)] py-1.5 z-50 animate-fade-in overflow-hidden"
+                >
                   {group.items.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`block px-4 py-2 text-sm transition-colors ${
+                      role="menuitem"
+                      className={`nav-menu-item block relative px-4 py-2 text-sm transition-colors ${
                         isActive(item.href)
                           ? "text-[var(--text-accent)] bg-[var(--hover-bg)] font-medium"
-                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)]"
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-accent)] hover:bg-[var(--hover-bg)]"
                       }`}
                     >
                       {item.label}
@@ -185,6 +273,7 @@ export default function Navigation() {
           {/* Tools */}
           <div className="flex items-center gap-1 ml-3 pl-2 border-l border-[var(--border-light)]">
             <SimplifiedToggle />
+            <ReadingSettings />
             <ThemeSwitcher />
             <VerticalModeToggle />
           </div>
@@ -193,6 +282,7 @@ export default function Navigation() {
         {/* Mobile: tools + hamburger */}
         <div className="flex md:hidden items-center gap-1">
           <SimplifiedToggle />
+          <ReadingSettings />
           <ThemeSwitcher />
           <VerticalModeToggle />
           <button

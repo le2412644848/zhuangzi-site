@@ -1,16 +1,58 @@
-import Link from "next/link";
-import { concepts } from "@/data/concepts";
 import type { Metadata } from "next";
-import ThoughtMapWrapper from "@/components/ThoughtMapWrapper";
-import KnowledgeGraphWrapper from "@/components/KnowledgeGraphWrapper";
+import Link from "next/link";
 
-export const metadata: Metadata = {
+import ThoughtMapWrapper from "@/components/ThoughtMapWrapper";
+import { concepts } from "@/data/concepts";
+import { buildPageMetadata, canonicalUrl, SITE_URL } from "@/lib/site";
+
+export const metadata: Metadata = buildPageMetadata({
   title: "核心概念",
+  description:
+    "《庄子》核心哲学概念图谱 — 道、逍遥、齐物、无待、心斋、坐忘、真人、物化等范畴的释义、出处段落与概念间关联。",
+  path: "/concepts",
+});
+
+/**
+ * 术语集（词汇表）结构化数据。
+ * 概念详情页各自声明 DefinedTerm 并 inDefinedTermSet 指向本页的 @id，
+ * 这里补上术语集本体与成员列表，形成完整的 glossary 结构。
+ */
+const glossaryJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "DefinedTermSet",
+      "@id": `${SITE_URL}/concepts/#termset`,
+      name: "庄子核心概念",
+      description:
+        "《庄子》哲学的核心范畴与术语，含释义、原文出处与概念关联。",
+      inLanguage: "zh-Hans",
+      url: canonicalUrl("/concepts"),
+      hasDefinedTerm: concepts.map((c) => ({
+        "@type": "DefinedTerm",
+        "@id": `${canonicalUrl(`/concepts/${c.id}`)}#term`,
+        name: c.name,
+        description: c.summary,
+        url: canonicalUrl(`/concepts/${c.id}`),
+      })),
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "首页", item: canonicalUrl("/") },
+        { "@type": "ListItem", position: 2, name: "核心概念", item: canonicalUrl("/concepts") },
+      ],
+    },
+  ],
 };
 
 export default function ConceptsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(glossaryJsonLd) }}
+      />
       {/* Header */}
       <div className="max-w-3xl mx-auto text-center mb-14">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-[0.04em] text-[var(--text-primary)] mb-3">
@@ -33,19 +75,6 @@ export default function ConceptsPage() {
           </p>
         </div>
         <ThoughtMapWrapper />
-      </section>
-
-      {/* Knowledge Graph */}
-      <section className="mb-16">
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-semibold tracking-[0.04em] mb-2 text-[var(--text-primary)]">
-            概念图谱
-          </h2>
-          <p className="text-sm text-[var(--text-secondary)]">
-            交互式概念关系可视化
-          </p>
-        </div>
-        <KnowledgeGraphWrapper />
       </section>
 
       {/* Concept Cards Grid */}

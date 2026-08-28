@@ -35,7 +35,7 @@ export default function ReadingProgress() {
   return (
     <>
       {/* Progress bar — sits below sticky nav */}
-      <div className="fixed top-14 left-0 right-0 z-50 no-print">
+      <div className="reading-progress fixed top-14 left-0 right-0 z-50 no-print">
         <div className="h-[2px] bg-[var(--border-light)]">
           <div
             className="h-full bg-gradient-to-r from-[var(--text-accent)] via-[var(--color-accent-gold)] to-[var(--text-accent)] transition-[width] duration-200 ease-out"
@@ -44,10 +44,11 @@ export default function ReadingProgress() {
         </div>
       </div>
 
-      {/* Back to top button */}
+      {/* Back to top button —— 置于聊天球上方（视觉复审 N5-1），
+          bottom 由 .back-to-top 类控制（含安全区），避免与聊天球叠压 */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-24 right-4 z-40 w-11 h-11 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] shadow-md flex items-center justify-center transition-all duration-300 no-print hover:border-[var(--text-accent)] hover:shadow-lg ${
+        className={`back-to-top fixed right-4 z-40 w-11 h-11 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] shadow-md flex items-center justify-center transition-all duration-300 no-print hover:border-[var(--text-accent)] hover:shadow-lg ${
           showBackToTop
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4 pointer-events-none"
