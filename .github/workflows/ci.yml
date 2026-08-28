@@ -1,0 +1,122 @@
+name: CI
+
+# 此前项目没有任何 CI：部署靠本地手动 `npm run deploy`，
+# 类型错误、数据损坏、体积回退全都没有拦截点。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 类型 / 规范 / 数据完整性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: TypeScript
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: 数据完整性 + 对比度 + 简繁映射
+        run: npm test
+      # 可复现产物一致性：重新生成后与提交版本必须逐字节一致，
+      # 防止有人手工改 metadata.json 而生成器不同步（或反过来）。
+      - name: 生成器与提交数据一致
+        run: |
+          node scripts/gen-metadata.mjs
+          git diff --exit-code -- src/data/chapters/metadata.json
+
+  build:
+    name: 构建与体积预算
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # OG 图生成依赖中文字体（sharp/librsvg），Ubuntu 默认无 CJK 字体
+      - name: 安装中文字体
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - run: npm run build
+      # 防止首屏体积悄悄回退（章节页曾达 471KB gzip）
+      - name: 首屏体积预算
+        run: npm run budget
+      - name: 产物自检
+        run: node scripts/check-output.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: out
+          path: out/
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse（性能 / 无障碍 / SEO）
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: out
+          path: out
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 启动静态服务器
+        run: |
+          npx --yes serve out -l 4173 &
+          npx --yes wait-on http://localhost:4173 -t 60000
+      - uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            http://localhost:4173/
+            http://localhost:4173/chapters/
+            http://localhost:4173/chapters/01-xiaoyao-you/
+            http://localhost:4173/concepts/xiaoyao/
+          budgetPath: ./.github/lighthouse-budget.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+  deploy:
+    name: 部署到 Cloudflare Pages
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [verify, build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # OG 图生成依赖中文字体（sharp/librsvg），Ubuntu 默认无 CJK 字体
+      - name: 安装中文字体
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - run: npm run build
+        env:
+          # 绑定自定义域名后在仓库变量里改这一处即可，
+          # canonical / sitemap / robots 全部由它派生
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+      # 部署前清理与 index.txt 逐字节重复的 __next._full.txt（约 3MB 冗余）
+      - name: 清理重复 RSC payload
+        run: node scripts/clean-duplicate-payload.mjs
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name zhuangzi-site
