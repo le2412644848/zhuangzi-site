@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/validate-data.mjs && node scripts/gen-og-images.mjs && node scripts/gen-lazy-data.mjs && next build && node scripts/fix-rsc-payload-paths.mjs && node scripts/bump-sw-version.mjs",
+    "build": "node scripts/validate-data.mjs && node scripts/gen-og-images.mjs && node scripts/gen-lazy-data.mjs && next build && node scripts/fix-rsc-payload-paths.mjs && node scripts/clean-duplicate-payload.mjs && node scripts/bump-sw-version.mjs",
     "start": "next start",
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \"functions/**/*.js\"",
     "typecheck": "tsc --noEmit",

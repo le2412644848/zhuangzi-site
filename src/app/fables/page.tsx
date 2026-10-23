@@ -51,7 +51,7 @@ export default function FablesPage() {
             onClick={() => setKeyword(k)}
             className={`text-xs px-3 py-1.5 rounded-full transition-all ${
               keyword === k
-                ? "bg-[var(--text-accent)] text-[var(--bg-primary)] font-medium"
+                ? "bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] font-medium"
                 : "tag text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
@@ -69,7 +69,11 @@ export default function FablesPage() {
         {fables.map((f) => (
           <Link
             key={f.id}
-            href={`/chapters/${f.chapterId}`}
+            href={
+              f.passageId
+                ? `/chapters/${f.chapterId}#passage-${f.passageId}`
+                : `/chapters/${f.chapterId}`
+            }
             className="card-interactive group p-5 flex flex-col gap-3"
           >
             <h3 className="text-base font-semibold text-[var(--text-accent)] tracking-wide group-hover:text-[var(--color-accent-deep)] transition-colors">

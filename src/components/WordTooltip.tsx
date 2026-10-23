@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId,useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import type { KaojuEntry } from "@/lib/kaoju-utils";
@@ -54,7 +54,7 @@ function loadChapterKaoju(chapterId: string): Promise<KaojuEntry[]> {
 export default function WordTooltip({ term, text, children, chapterId, quoteHalo }: WordTooltipProps) {
   const [show, setShow] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0, below: false });
+  const [position, setPosition] = useState({ top: 0, left: 0, below: false, arrowOffset: 0 });
   const [showAll, setShowAll] = useState(false);
   // undefined = 尚未加载；null = 已加载但无命中
   const [kaoju, setKaoju] = useState<KaojuEntry | null | undefined>(undefined);
@@ -82,25 +82,59 @@ export default function WordTooltip({ term, text, children, chapterId, quoteHalo
     setMounted(true);
   }, []);
 
+  // 激活注词时派发自定义事件，供宽屏左侧「宋刻眉批笺注栏」实时响应联动
+  useEffect(() => {
+    if (!show) return;
+    window.dispatchEvent(
+      new CustomEvent("zhuangzi:focus-term", {
+        detail: { term, explanation: text, chapterId },
+      })
+    );
+  }, [show, term, text, chapterId]);
+
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    // 视口顶部空间不足时向下弹出，避免 tooltip 被截断
-    const below = rect.top < 170;
+    const isVertical = document.documentElement.classList.contains("vertical-mode");
+
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    // 视口空间检查：在竖排模式下文字柱纵贯屏幕，rect.bottom 往往接近视口底部，
+    // 若下方空间不足 220px（或竖排模式下不足 260px）必须强制向上弹出；
+    // 上方空间不足 180px 且下方充足时向下弹出。
+    let below = false;
+    if (spaceBelow < 220 || (isVertical && spaceBelow < 260)) {
+      below = false;
+    } else if (spaceAbove < 180) {
+      below = true;
+    } else {
+      below = false;
+    }
+
     // 浮层宽 288px(w-72) 且以 translateX(-50%) 居中：靠近屏幕左右边缘的注释词
-    // 会把浮层推出视口（375px 宽的手机上尤其明显，原实现会直接被裁掉）。
+    // 会把浮层推出视口（375px 宽的手机上尤其明显）。
     // 这里把中心点夹紧到「半宽 + 8px 边距」的可用区间内。
     const half = Math.min(288, window.innerWidth - 16) / 2;
     const margin = 8;
-    const centre = rect.left + rect.width / 2;
-    const clamped = Math.min(
-      Math.max(centre, half + margin),
+    const centreX = rect.left + rect.width / 2;
+    const clampedLeft = Math.min(
+      Math.max(centreX, half + margin),
       window.innerWidth - half - margin
     );
+
+    // 小三角相对于浮层中心的偏移量：让小三角始终精确指向触发词，不再在屏幕边缘悬空指空
+    const arrowOffset = Math.max(-110, Math.min(110, centreX - clampedLeft));
+
+    // 计算 top 并夹紧在 [12, window.innerHeight - 16] 安全区间内，彻底杜绝弹窗跌出屏幕底缘
+    let top = below ? rect.bottom + 8 : rect.top - 8;
+    top = Math.max(12, Math.min(window.innerHeight - 16, top));
+
     setPosition({
-      top: below ? rect.bottom + 8 : rect.top - 8,
-      left: clamped,
+      top,
+      left: clampedLeft,
       below,
+      arrowOffset,
     });
   }, []);
 
@@ -165,9 +199,10 @@ export default function WordTooltip({ term, text, children, chapterId, quoteHalo
       onMouseLeave={closeSoon}
     >
       <div
-        className={`absolute left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 border-r border-b border-[var(--border-color)] bg-[var(--bg-card)] ${
+        className={`absolute -translate-x-1/2 w-2 h-2 rotate-45 border-r border-b border-[var(--border-color)] bg-[var(--bg-card)] ${
           position.below ? "-top-1 border-t-0 border-l-0" : "top-full -mt-px border-t-0 border-l-0"
         }`}
+        style={{ left: `calc(50% + ${position.arrowOffset}px)` }}
       />
       <div className="font-medium text-[var(--text-accent)] mb-1 text-xs tracking-wide">
         「{term}」

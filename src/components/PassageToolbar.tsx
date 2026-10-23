@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useCallback, useEffect,useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { chaptersMeta, passageNumber } from "@/data/chapters/metadata";
 import { isBookmarked,toggleBookmark } from "@/lib/annotations";
@@ -61,6 +61,7 @@ export default function PassageToolbar({ chapterId, passageId, chapterTitle }: P
   const [linkCopied, setLinkCopied] = useState(false);
   const [copyMenuOpen, setCopyMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const isSpeakingRef = useRef(false);
   const immersive = useImmersive();
   const pinyinOn = usePassageClassState(passageId, "pinyin-on");
   const splitOn = usePassageClassState(passageId, "split-view");
@@ -110,30 +111,97 @@ export default function PassageToolbar({ chapterId, passageId, chapterTitle }: P
     if (root) root.classList.toggle(cls);
   };
 
+  const getPassageRoot = useCallback(() => {
+    const anchor = document.getElementById(`passage-${passageId}`);
+    return anchor?.querySelector<HTMLElement>("[data-passage-root]") ?? null;
+  }, [passageId]);
+
+  const cleanupSpeech = useCallback(() => {
+    isSpeakingRef.current = false;
+    if ("speechSynthesis" in window) {
+      speechSynthesis.cancel();
+    }
+    const root = getPassageRoot();
+    if (root) {
+      root.classList.remove("speech-active-passage");
+      root.querySelectorAll(".trans-sent.sent-speaking-active").forEach((el) => {
+        el.classList.remove("sent-speaking-active");
+      });
+    }
+    setSpeaking(false);
+  }, [getPassageRoot]);
+
+  // 监听全局朗读事件：若其他段落触发朗读，立即重置本段朗读波浪动画与高亮
+  useEffect(() => {
+    const handleSpeechStart = (e: Event) => {
+      const customEvent = e as CustomEvent<{ passageId?: string }>;
+      if (customEvent.detail?.passageId !== passageId) {
+        cleanupSpeech();
+      }
+    };
+    window.addEventListener("zhuangzi:speech-start", handleSpeechStart);
+    return () => {
+      window.removeEventListener("zhuangzi:speech-start", handleSpeechStart);
+      cleanupSpeech();
+    };
+  }, [passageId, cleanupSpeech]);
+
   const handleSpeak = useCallback((e: React.MouseEvent<HTMLElement>) => {
     if (!("speechSynthesis" in window)) return;
     if (speaking) {
-      speechSynthesis.cancel();
-      setSpeaking(false);
+      cleanupSpeech();
       return;
     }
     const original = getOriginalFromDom(e.currentTarget);
     if (!original) return;
-    const utterance = new SpeechSynthesisUtterance(original);
-    utterance.lang = "zh-CN";
-    utterance.rate = 0.7;
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    speechSynthesis.speak(utterance);
-    setSpeaking(true);
-  }, [speaking]);
+    const root = getPassageRoot();
+    if (!root) return;
 
-  // Cleanup speech on unmount
-  useEffect(() => {
-    return () => {
-      if ("speechSynthesis" in window) speechSynthesis.cancel();
+    cleanupSpeech();
+    window.dispatchEvent(new CustomEvent("zhuangzi:speech-start", { detail: { passageId } }));
+
+    root.classList.add("speech-active-passage");
+    isSpeakingRef.current = true;
+    setSpeaking(true);
+
+    // 将段落原文按句末标点切分为句子队列
+    const sents = original.match(/[^。！？；]+[。！？；”’』」]?/g) || [original];
+    const transSents = Array.from(root.querySelectorAll<HTMLElement>(".translation-text .trans-sent"));
+
+    const playSentence = (index: number) => {
+      if (!isSpeakingRef.current || index >= sents.length) {
+        cleanupSpeech();
+        return;
+      }
+
+      // 「字随声动」：同步高亮右侧译文中对应的句子
+      if (transSents.length > 0) {
+        transSents.forEach((el) => el.classList.remove("sent-speaking-active"));
+        let target: HTMLElement | null | undefined = root.querySelector<HTMLElement>(`.translation-text .trans-sent[data-sent-idx="${index}"]`);
+        if (!target) {
+          const mappedIdx = Math.min(transSents.length - 1, Math.floor((index / sents.length) * transSents.length));
+          target = transSents[mappedIdx];
+        }
+        if (target) {
+          target.classList.add("sent-speaking-active");
+        }
+      }
+
+      const utterance = new SpeechSynthesisUtterance(sents[index]);
+      utterance.lang = "zh-CN";
+      utterance.rate = 0.7;
+      utterance.onend = () => {
+        if (!isSpeakingRef.current) return;
+        playSentence(index + 1);
+      };
+      utterance.onerror = () => {
+        cleanupSpeech();
+      };
+      speechSynthesis.speak(utterance);
     };
-  }, []);
+
+    playSentence(0);
+  }, [cleanupSpeech, getPassageRoot, passageId, speaking]);
 
   return (
     <div className="sticky top-14 z-30 flex justify-end mb-1 transition-opacity duration-200 passage-toolbar">

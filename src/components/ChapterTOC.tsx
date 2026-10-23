@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 interface TocItem {
   id: string;
@@ -54,15 +54,20 @@ export default function ChapterTOC({ items }: ChapterTOCProps) {
     <div className={`chapter-toc hidden lg:block fixed right-4 top-24 z-30 transition-all ${collapsed ? "w-8" : "w-48"}`}>
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]/95 backdrop-blur-sm shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-light)] cursor-pointer"
-          onClick={() => setCollapsed(!collapsed)}>
+        <button
+          type="button"
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "展开章节目录" : "折叠章节目录"}
+          className="w-full flex items-center justify-between px-3 py-2 border-b border-[var(--border-light)] cursor-pointer text-left bg-transparent"
+          onClick={() => setCollapsed(!collapsed)}
+        >
           {!collapsed && (
             <span className="text-xs font-medium text-[var(--text-accent)] tracking-wider">目录</span>
           )}
-          <span className="text-[10px] text-[var(--text-secondary)]">
+          <span className="text-[10px] text-[var(--text-secondary)] ml-auto">
             {collapsed ? "☰" : "−"}
           </span>
-        </div>
+        </button>
 
         {/* TOC items */}
         {!collapsed && (
@@ -74,6 +79,7 @@ export default function ChapterTOC({ items }: ChapterTOCProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById(`passage-${p.id}`)?.scrollIntoView({ behavior: "smooth" });
+                  history.replaceState(null, "", `#passage-${p.id}`);
                 }}
                 className={`block px-3 py-1.5 text-xs transition-colors border-l-2 ${
                   activeId === `passage-${p.id}`

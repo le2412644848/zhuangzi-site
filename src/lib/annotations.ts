@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface Annotation {
   passageId: string;
@@ -202,5 +202,190 @@ export function importUserData(json: string): { annotations: number; bookmarks: 
     return { annotations, bookmarks };
   } catch {
     return { annotations: 0, bookmarks: 0 };
+  }
+}
+
+/**
+ * 导出带 YAML Frontmatter 的 Obsidian 兼容 Markdown 札记
+ */
+export function exportObsidianMarkdown(
+  chapterTitleLookup: (id: string) => string
+): string {
+  const bookmarks = getBookmarks();
+  const annotations = getAnnotations();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const chapterIds = Array.from(
+    new Set([
+      ...bookmarks.map((b) => b.chapterId),
+      ...Object.values(annotations).map((a) => a.chapterId),
+    ])
+  );
+
+  let md = `---
+title: 《南华全书》研读札记
+date: ${today}
+tags:
+  - 庄子
+  - 南华真经
+  - 读书笔记
+---
+
+# 《南华全书》研读札记与藏修朱批
+
+> 「乘天地之正，而御六气之辩，以游无穷者，彼且恶乎待哉！」
+> 本札记由「《庄子》数字典藏 · 我的书斋」自动汇纂导出，兼容 Obsidian / Notion / Logseq 格式。
+
+`;
+
+  if (chapterIds.length === 0) {
+    md += `*书斋暂无收藏或批注记录。*\n`;
+    return md;
+  }
+
+  for (const chId of chapterIds) {
+    const title = chapterTitleLookup(chId);
+    const chBookmarks = bookmarks.filter((b) => b.chapterId === chId);
+    const chAnnotations = Object.values(annotations).filter((a) => a.chapterId === chId);
+
+    md += `\n## 《${title}》\n\n`;
+
+    if (chBookmarks.length > 0) {
+      md += `### 📌 妙句摘藏（${chBookmarks.length} 条）\n\n`;
+      chBookmarks.forEach((b) => {
+        const dateStr = new Date(b.createdAt).toLocaleDateString("zh-CN");
+        md += `> ${b.preview}……\n\n`;
+        md += `- 收藏于 ${dateStr} · [查阅原典段落](/chapters/${b.chapterId}#passage-${b.passageId})\n\n`;
+      });
+    }
+
+    if (chAnnotations.length > 0) {
+      md += `### ✍️ 朱笔眉批（${chAnnotations.length} 条）\n\n`;
+      chAnnotations.forEach((a) => {
+        const dateStr = new Date(a.createdAt).toLocaleDateString("zh-CN");
+        md += `- **节次批注**（${dateStr}） · [定位原典](/chapters/${a.chapterId}#passage-${a.passageId})：\n`;
+        md += `  > ${a.text}\n\n`;
+      });
+    }
+  }
+
+  return md;
+}
+
+/** 跨端同步码前缀 */
+export const SYNC_CODE_PREFIX = "ZZSYNC1:";
+
+function utf8ToBase64(str: string): string {
+  return btoa(
+    encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) =>
+      String.fromCharCode(parseInt(p1, 16))
+    )
+  );
+}
+
+function base64ToUtf8(b64: string): string {
+  return decodeURIComponent(
+    Array.prototype.map
+      .call(atob(b64), (c: string) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+      .join("")
+  );
+}
+
+/**
+ * 将 bookmarks、annotations 以及 reading history 打包为零后端跨端同步码
+ */
+export function encodeSyncCode(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const bookmarks = getBookmarks();
+    const annotations = getAnnotations();
+    let history: unknown = null;
+    try {
+      const raw =
+        localStorage.getItem("zhuangzi-reading-history") ||
+        localStorage.getItem("reading_history");
+      if (raw) history = JSON.parse(raw);
+    } catch {}
+
+    const payload = {
+      v: 1,
+      t: Date.now(),
+      bm: bookmarks,
+      an: annotations,
+      hi: history,
+    };
+    const json = JSON.stringify(payload);
+    return `${SYNC_CODE_PREFIX}${utf8ToBase64(json)}`;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * 解码并合并跨端同步码，自动合入 bookmarks、annotations 与 reading history
+ */
+export function decodeAndImportSyncCode(
+  code: string
+): { bookmarks: number; annotations: number; chaptersRead: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    let cleanCode = code.trim();
+    if (cleanCode.startsWith(SYNC_CODE_PREFIX)) {
+      cleanCode = cleanCode.slice(SYNC_CODE_PREFIX.length);
+    }
+    const json = base64ToUtf8(cleanCode);
+    const data = JSON.parse(json);
+
+    let bookmarksCount = 0;
+    let annotationsCount = 0;
+
+    if (data.bm) {
+      bookmarksCount = importBookmarks(JSON.stringify(data.bm));
+    }
+    if (data.an) {
+      annotationsCount = importAnnotations(JSON.stringify(data.an));
+    }
+
+    // 合并阅读印谱/历史
+    let chaptersReadCount = 0;
+    if (data.hi && Array.isArray(data.hi)) {
+      try {
+        const curRaw =
+          localStorage.getItem("zhuangzi-reading-history") ||
+          localStorage.getItem("reading_history");
+        const curList: Array<{ chapterId: string; [key: string]: unknown }> = curRaw
+          ? JSON.parse(curRaw)
+          : [];
+        const seen = new Set(curList.map((item) => item.chapterId));
+
+        for (const item of data.hi) {
+          if (item && item.chapterId && !seen.has(item.chapterId)) {
+            curList.push(item);
+            seen.add(item.chapterId);
+          }
+        }
+        localStorage.setItem("zhuangzi-reading-history", JSON.stringify(curList));
+        localStorage.setItem("reading_history", JSON.stringify(curList));
+        chaptersReadCount = seen.size;
+      } catch {}
+    } else {
+      try {
+        const curRaw =
+          localStorage.getItem("zhuangzi-reading-history") ||
+          localStorage.getItem("reading_history");
+        if (curRaw) {
+          const list = JSON.parse(curRaw);
+          if (Array.isArray(list)) chaptersReadCount = list.length;
+        }
+      } catch {}
+    }
+
+    return {
+      bookmarks: bookmarksCount,
+      annotations: annotationsCount,
+      chaptersRead: chaptersReadCount,
+    };
+  } catch {
+    return null;
   }
 }

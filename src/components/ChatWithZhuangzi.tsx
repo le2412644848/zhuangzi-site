@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId,useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { chatMultiTurnStream, getApiKey, saveApiKey } from "@/lib/ai";
 import { search } from "@/lib/search";
@@ -10,20 +10,27 @@ interface Message {
   content: string;
 }
 
+export interface ChatWithZhuangziProps {
+  initialQuestion?: string | undefined;
+  forceOpen?: boolean | undefined;
+  onOpenChange?: ((open: boolean) => void) | undefined;
+}
+
 /**
  * 「问庄子」浮窗。
  *
- * 无障碍修正（原实现的问题）：
- *  - 展开后是一个普通 <div>：无 role="dialog"、无 aria-modal、无 aria-labelledby，
- *    读屏软件不知道这是个对话框，也读不到它的名字。
- *  - 无 Escape 关闭、无焦点管理：打开后焦点仍在页面上，关闭后焦点丢失
- *    （WCAG 2.4.3 焦点顺序）。
- *  - 流式回复没有 aria-live：整段回答对读屏用户完全静默（WCAG 4.1.3 状态消息）。
- *  - 触发按钮、关闭按钮、设置按钮都是纯图标 + title，没有可编程名称
- *    （title 不是可靠的可访问名称来源）。
- *  - API Key 输入框用 <div> 当标签，没有 label 关联。
+ * 无障碍修正：
+ *  - 展开后 role="dialog"、aria-modal、aria-labelledby
+ *  - Escape 关闭、焦点管理
+ *  - 流式回复 aria-live="polite"
+ *  - 具备可访问名称
+ *  - 对接全局划词「问庄子」自定义事件 (zhuangzi:ask-selection)
  */
-export default function ChatWithZhuangzi() {
+export default function ChatWithZhuangzi({
+  initialQuestion,
+  forceOpen,
+  onOpenChange,
+}: ChatWithZhuangziProps = {}) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "子有何问？吾将应之。" },
@@ -62,7 +69,55 @@ export default function ChatWithZhuangzi() {
     if (showConfig) keyInputRef.current?.focus();
   }, [showConfig]);
 
-  const close = useCallback(() => setOpen(false), []);
+  const handleOpen = useCallback(() => {
+    setOpen(true);
+    onOpenChange?.(true);
+  }, [onOpenChange]);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    onOpenChange?.(false);
+  }, [onOpenChange]);
+
+  // 处理外部传入的 initialQuestion 与 forceOpen
+  useEffect(() => {
+    if (forceOpen) {
+      setOpen(true);
+    }
+  }, [forceOpen]);
+
+  useEffect(() => {
+    if (initialQuestion) {
+      setInput(initialQuestion);
+      setOpen(true);
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }
+  }, [initialQuestion]);
+
+  // 监听划词提问全局事件
+  useEffect(() => {
+    const handleAskSelection = (e: Event) => {
+      const customEvent = e as CustomEvent<{ text: string; chapterTitle: string }>;
+      if (customEvent.detail?.text) {
+        const { text, chapterTitle } = customEvent.detail;
+        const q = chapterTitle
+          ? `请结合《庄子·${chapterTitle}》的语境，为我深入解读这句原文的微言大义：「${text}」`
+          : `请结合《庄子》的语境，为我深入解读这句原文的微言大义：「${text}」`;
+        setInput(q);
+        setOpen(true);
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+        });
+      }
+    };
+
+    window.addEventListener("zhuangzi:ask-selection", handleAskSelection);
+    return () => {
+      window.removeEventListener("zhuangzi:ask-selection", handleAskSelection);
+    };
+  }, []);
 
   // Escape 关闭；Tab 在浮窗内循环（非模态浮窗不锁死页面，但保证可用）
   useEffect(() => {
@@ -79,12 +134,12 @@ export default function ChatWithZhuangzi() {
         'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
       );
       if (focusables.length === 0) return;
-      const first = focusables[0]!;
-      const last = focusables[focusables.length - 1]!;
-      if (!e.shiftKey && document.activeElement === last) {
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (first && !e.shiftKey && document.activeElement === last) {
         e.preventDefault();
         first.focus();
-      } else if (e.shiftKey && document.activeElement === first) {
+      } else if (last && e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
       }
@@ -175,10 +230,10 @@ export default function ChatWithZhuangzi() {
         <button
           ref={fabRef}
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={handleOpen}
           aria-label="打开「问庄子」对话"
           aria-expanded={false}
-          className="w-11 h-11 rounded-full bg-[var(--text-accent)] text-white shadow-md hover:shadow-lg hover:bg-[var(--color-accent-deep)] transition-all flex items-center justify-center"
+          className="w-11 h-11 rounded-full bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] shadow-md hover:shadow-lg hover:opacity-90 transition-all flex items-center justify-center cursor-pointer"
         >
           <svg aria-hidden="true" focusable="false" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
@@ -198,7 +253,7 @@ export default function ChatWithZhuangzi() {
       className="fixed bottom-4 right-4 z-50 w-[min(22rem,calc(100vw-2rem))] sm:w-96 shadow-xl rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] no-print chat-fab"
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-light)]">
-        <h2 id={titleId} className="text-sm font-medium text-[var(--text-accent)] tracking-wider">
+        <h2 id={titleId} className="text-sm font-medium text-[var(--text-accent)] tracking-wider font-serif">
           问庄子
         </h2>
         <div className="flex items-center gap-1">
@@ -246,7 +301,7 @@ export default function ChatWithZhuangzi() {
             <button
               type="button"
               onClick={handleSaveApiKey}
-              className="text-xs px-2 py-1 rounded bg-[var(--text-accent)] text-white"
+              className="text-xs px-2 py-1 rounded bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)]"
             >
               保存
             </button>
@@ -257,10 +312,7 @@ export default function ChatWithZhuangzi() {
         </div>
       )}
 
-      {/*
-        role="log" + aria-live="polite"：流式增量回复会被读屏软件持续播报。
-        原实现没有任何 live region，整段回答对读屏用户是静默的。
-      */}
+      {/* role="log" + aria-live="polite" */}
       <div
         role="log"
         aria-live="polite"
@@ -279,7 +331,7 @@ export default function ChatWithZhuangzi() {
         <div ref={bottomRef} />
       </div>
 
-      {/* 加载与保存状态单独放 status region，避免打断对话播报 */}
+      {/* 加载与保存状态单独放 status region */}
       <div role="status" aria-live="polite" className="px-3">
         {loading && <span className="text-xs text-[var(--text-secondary)] italic">庄子正在思索…</span>}
         {keySaved && <span className="text-xs text-[var(--text-accent)]">API Key 已保存</span>}
@@ -301,7 +353,7 @@ export default function ChatWithZhuangzi() {
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="px-3 py-1.5 text-xs rounded bg-[var(--text-accent)] text-white disabled:opacity-50"
+          className="px-3 py-1.5 text-xs rounded bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] font-medium disabled:opacity-50 cursor-pointer"
         >
           问
         </button>

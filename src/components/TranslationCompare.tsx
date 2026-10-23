@@ -14,6 +14,29 @@ interface Version {
   text: string;
 }
 
+interface TranslationChapterData {
+  [passageId: string]:
+    | {
+        default: string;
+        versions?: Version[];
+      }
+    | undefined;
+}
+
+/** 篇级多译本模块级缓存：每个篇章只 fetch 一次网络请求，后续段落直接复用 Promise */
+const translationCache = new Map<string, Promise<TranslationChapterData | null>>();
+
+function loadChapterTranslations(chapterId: string): Promise<TranslationChapterData | null> {
+  let p = translationCache.get(chapterId);
+  if (!p) {
+    p = fetch(`/data/translations/${chapterId}.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<TranslationChapterData>) : null))
+      .catch(() => null);
+    translationCache.set(chapterId, p);
+  }
+  return p;
+}
+
 /**
  * 多译本对照 —— 客户端懒加载（章节页首屏减重 v3）。
  *
@@ -30,8 +53,7 @@ export default function TranslationCompare({ chapterId, passageId, count }: Tran
     if (!open || versions !== null || loading) return;
     setLoading(true);
     try {
-      const res = await fetch(`/data/translations/${chapterId}.json`);
-      const data = res.ok ? await res.json() : null;
+      const data = await loadChapterTranslations(chapterId);
       const item = data?.[passageId];
       if (item) {
         setVersions([{ translator: "白话", text: item.default }, ...(item.versions ?? [])]);

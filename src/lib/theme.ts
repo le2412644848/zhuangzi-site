@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 主题系统 —— 单一数据源 (single source of truth)
  *
  * 背景：调色板此前存在三份手工同步的副本
@@ -35,6 +35,10 @@ export interface ThemeColors {
   accentBamboo: string;
   /** 危险/错误语义色（v1.0 补充）：错误提示、删除操作。必须对 bgPrimary 满足 AA ≥4.5:1 */
   danger: string;
+  /** 朱砂色（用于印章、眉批、校勘朱记）。必须对 bgPrimary 与 bgCard 满足 AA ≥4.5:1 */
+  accentVermilion: string;
+  /** 主按钮文字色（用于 bg-[var(--text-accent)] 按钮）。必须对 textAccent 满足 AA ≥4.5:1 */
+  btnAccentText: string;
   borderColor: string;
   borderLight: string;
   borderStrong: string;
@@ -77,6 +81,8 @@ export const themes: Record<ThemeName, ThemeDefinition> = {
       accentGold: "#BFA05E",
       accentBamboo: "#416353",
       danger: "#C24438",
+      accentVermilion: "#B83B2E",
+      btnAccentText: "#FFFFFF",
       borderColor: "#E8DFCF",
       borderLight: "#F2ECE1",
       borderStrong: "#D5C7B0",
@@ -106,6 +112,8 @@ export const themes: Record<ThemeName, ThemeDefinition> = {
       // 竹简主题：竹青偏正绿
       accentBamboo: "#47705A",
       danger: "#A4452E",
+      accentVermilion: "#AD362B",
+      btnAccentText: "#FFFFFF",
       borderColor: "#D8D0B0",
       borderLight: "#E8E2C8",
       borderStrong: "#C4B994",
@@ -135,6 +143,8 @@ export const themes: Record<ThemeName, ThemeDefinition> = {
       // 墨韵主题：低饱和灰绿
       accentBamboo: "#55655C",
       danger: "#C0392B",
+      accentVermilion: "#B0382C",
+      btnAccentText: "#FFFFFF",
       borderColor: "#D5D5D5",
       borderLight: "#E5E5E5",
       borderStrong: "#BDBDBD",
@@ -164,6 +174,8 @@ export const themes: Record<ThemeName, ThemeDefinition> = {
       // 青花主题：竹青偏青绿
       accentBamboo: "#2F7A6D",
       danger: "#C24438",
+      accentVermilion: "#B0382C",
+      btnAccentText: "#FFFFFF",
       borderColor: "#D0DDE8",
       borderLight: "#E0EAF3",
       borderStrong: "#B4C7D8",
@@ -198,6 +210,8 @@ export const themes: Record<ThemeName, ThemeDefinition> = {
       // 夜读主题：暗夜竹青
       accentBamboo: "#689781",
       danger: "#E06050",
+      accentVermilion: "#E56B5B",
+      btnAccentText: "#161412",
       borderColor: "#38322A",
       borderLight: "#2C2822",
       borderStrong: "#443E36",
@@ -226,6 +240,8 @@ export const CSS_VAR_BY_KEY: Record<keyof ThemeColors, string> = {
   accentGold: "--color-accent-gold",
   accentBamboo: "--color-accent-bamboo",
   danger: "--color-danger",
+  accentVermilion: "--color-accent-vermilion",
+  btnAccentText: "--btn-accent-text",
   borderColor: "--border-color",
   borderLight: "--border-light",
   borderStrong: "--border-strong",

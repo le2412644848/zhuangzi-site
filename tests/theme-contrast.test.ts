@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { themes, themeNames, CSS_VAR_BY_KEY, buildInlineThemeScript } from "@/lib/theme";
+import { buildInlineThemeScript,CSS_VAR_BY_KEY, themeNames, themes } from "@/lib/theme";
 
 /** sRGB 相对亮度（WCAG 2.x 定义） */
 function relativeLuminance(hex: string): number {
@@ -53,6 +53,26 @@ describe("主题对比度（WCAG 2.1 AA）", () => {
           ).toBeGreaterThanOrEqual(AA_NORMAL);
         });
       }
+
+      for (const key of ["accentBamboo", "danger", "accentVermilion"] as const) {
+        it(`${key} 在 bgPrimary 与 bgCard 上均 ≥ ${AA_NORMAL}:1`, () => {
+          const onBg = contrastRatio(c[key], c.bgPrimary);
+          const onCard = contrastRatio(c[key], c.bgCard);
+          const worst = Math.min(onBg, onCard);
+          expect(
+            worst,
+            `${name}.${key}=${c[key]} → bg ${onBg.toFixed(2)}:1 / card ${onCard.toFixed(2)}:1`
+          ).toBeGreaterThanOrEqual(AA_NORMAL);
+        });
+      }
+
+      it(`btnAccentText 与 textAccent 对比度 ≥ ${AA_NORMAL}:1（主按钮高对比文字）`, () => {
+        const ratio = contrastRatio(c.btnAccentText, c.textAccent);
+        expect(
+          ratio,
+          `${name}.btnAccentText=${c.btnAccentText} on textAccent=${c.textAccent} → ${ratio.toFixed(2)}:1`
+        ).toBeGreaterThanOrEqual(AA_NORMAL);
+      });
 
       it(`textAccent ≥ ${AA_NORMAL}:1（用于正文链接与标题）`, () => {
         const worst = Math.min(

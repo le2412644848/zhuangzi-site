@@ -136,7 +136,7 @@ export default function AskZhuangziPage() {
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-..." className="flex-1 text-xs px-3 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)]" />
             <button onClick={() => { saveApiKey(apiKey); setShowSetup(false); }}
-              className="px-4 py-2 text-xs rounded-lg bg-[var(--text-accent)] text-white">保存</button>
+              className="px-4 py-2 text-xs rounded-lg bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] font-medium">保存</button>
           </div>
         </div>
       )}
@@ -186,7 +186,7 @@ export default function AskZhuangziPage() {
             disabled={loading}
             className="flex-1 text-sm px-3 py-2 rounded-lg border border-[var(--border-color)] bg-transparent text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--text-accent)]/30" />
           <button type="submit" disabled={loading || !input.trim()}
-            className="px-5 py-2 text-sm rounded-lg bg-[var(--text-accent)] text-white disabled:opacity-50 transition-opacity">
+            className="px-5 py-2 text-sm rounded-lg bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] font-medium disabled:opacity-50 transition-opacity">
             问
           </button>
         </form>

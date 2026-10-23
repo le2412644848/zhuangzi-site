@@ -51,7 +51,7 @@ export default function QuotesPage() {
             onClick={() => setTheme(t)}
             className={`text-xs px-3 py-1.5 rounded-full transition-all ${
               theme === t
-                ? "bg-[var(--text-accent)] text-[var(--bg-primary)] border-[var(--text-accent)] font-medium"
+                ? "bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] border-[var(--text-accent)] font-medium"
                 : "tag text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
@@ -74,7 +74,11 @@ export default function QuotesPage() {
           >
             <div className="flex items-center justify-between mb-3">
               <Link
-                href={`/chapters/${q.chapterId}`}
+                href={
+                  q.passageId
+                    ? `/chapters/${q.chapterId}#passage-${q.passageId}`
+                    : `/chapters/${q.chapterId}`
+                }
                 className="text-xs font-medium text-[var(--text-accent)] tracking-[0.06em] inline-block hover:text-[var(--color-accent-deep)] transition-colors"
               >
                 {q.chapter}

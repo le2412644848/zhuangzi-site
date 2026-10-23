@@ -47,17 +47,7 @@ export default function SearchBar({ compact = false, initialValue = "" }: { comp
   const dataRequested = useRef(false);
   const listId = "search-suggestions";
 
-  // Keyboard shortcut: Ctrl+K or Cmd+K
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
+
 
   // URL 参数变化时同步输入框（视觉复审 N3）
   useEffect(() => {
@@ -203,9 +193,15 @@ export default function SearchBar({ compact = false, initialValue = "" }: { comp
         />
 
         {/* Cmd+K badge */}
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-muted)]">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent("zhuangzi:open-command-palette"))}
+          aria-label="打开万能命令台 (⌘K)"
+          title="打开万能命令台 (⌘K)"
+          className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-accent)] hover:border-[var(--text-accent)]/40 hover:bg-[var(--hover-bg)] transition-colors cursor-pointer"
+        >
           ⌘K
-        </kbd>
+        </button>
       </div>
 
       {/* Suggestions dropdown */}

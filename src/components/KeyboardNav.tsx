@@ -69,19 +69,45 @@ export default function KeyboardNav({ prevUrl, nextUrl }: KeyboardNavProps) {
         return;
       }
       if (e.key === "/") {
+        e.preventDefault();
         const search = document.querySelector<HTMLInputElement>(
           'input[type="search"], input[type="text"]'
         );
         if (search) {
-          e.preventDefault();
           search.focus();
+        } else {
+          router.push("/search");
         }
         return;
       }
       if (e.key === "b") {
-        const star = document.querySelector<HTMLElement>('button[aria-label*="收藏"]');
+        e.preventDefault();
+        let targetPassage: HTMLElement | null = null;
+        // 优先查找当前鼠标悬停段落
+        const hovered = document.querySelector<HTMLElement>('[id^="passage-"]:hover');
+        if (hovered) {
+          targetPassage = hovered;
+        } else {
+          // 次选当前视口上方 1/3 处（window.innerHeight * 0.35）最接近的段落容器
+          const passages = Array.from(document.querySelectorAll<HTMLElement>('[id^="passage-"]'));
+          const targetY = window.innerHeight * 0.35;
+          let minDistance = Infinity;
+          for (const p of passages) {
+            const rect = p.getBoundingClientRect();
+            const dist =
+              rect.top <= targetY && rect.bottom >= targetY
+                ? 0
+                : Math.min(Math.abs(rect.top - targetY), Math.abs(rect.bottom - targetY));
+            if (dist < minDistance) {
+              minDistance = dist;
+              targetPassage = p;
+            }
+          }
+        }
+        const star =
+          targetPassage?.querySelector<HTMLElement>('button[aria-label*="收藏"]') ??
+          document.querySelector<HTMLElement>('button[aria-label*="收藏"]');
         if (star) {
-          e.preventDefault();
           star.click();
         }
         return;

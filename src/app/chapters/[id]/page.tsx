@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -8,6 +8,9 @@ import KeyboardNav from "@/components/KeyboardNav";
 import PassageView, { locateQuoteInOriginal, type PassageQuote } from "@/components/PassageView";
 import RecordReading from "@/components/RecordReading";
 import RelatedReadings from "@/components/RelatedReadings";
+import ScholarMarginNotes from "@/components/ScholarMarginNotes";
+import SelectionPopover from "@/components/SelectionPopover";
+import SentenceSyncController from "@/components/SentenceSyncController";
 import { chapters } from "@/data/chapters";
 import { concepts as conceptsData } from "@/data/concepts";
 import quotesData from "@/data/quotes.json";
@@ -20,6 +23,21 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "@/lib/site";
+
+/** 题解区智能按句号截取导读摘要（140~240 字符内寻完整句末，避免半句腰斩） */
+function getConclusionSummary(text: string): string {
+  if (text.length <= 220) return text;
+  const slice = text.slice(0, 240);
+  const lastPeriod = slice.lastIndexOf("。");
+  if (lastPeriod >= 130) {
+    return slice.slice(0, lastPeriod + 1);
+  }
+  const lastPunct = Math.max(slice.lastIndexOf("；"), slice.lastIndexOf("！"));
+  if (lastPunct >= 130) {
+    return slice.slice(0, lastPunct + 1);
+  }
+  return text.slice(0, 200) + "…";
+}
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -172,9 +190,16 @@ export default async function ChapterPage({ params }: Props) {
         }}
       />
       <ChapterTOC items={tocItems} />
+      <ScholarMarginNotes
+        chapterId={chapter.id}
+        chapterTitle={chapter.title}
+        passageCount={passageCount}
+      />
       <RecordReading chapterId={chapter.id} chapterTitle={chapter.title} />
+      <SelectionPopover chapterId={chapter.id} chapterTitle={chapter.title} />
+      <SentenceSyncController />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+      <div className="chapter-content-container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 pb-24 sm:pb-14">
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-4">
             <Link href="/chapters" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors">
@@ -236,7 +261,15 @@ export default async function ChapterPage({ params }: Props) {
             )}
             {chapter.conclusion && (
               <div className="pt-2 mt-2 border-t border-[var(--border-light)]">
-                <p>{chapter.conclusion.slice(0, 200)}{chapter.conclusion.length > 200 ? "…" : ""}</p>
+                <p>
+                  {getConclusionSummary(chapter.conclusion)}
+                  <a
+                    href="#chapter-conclusion"
+                    className="ml-2 inline-flex items-center text-xs text-[var(--text-accent)] hover:underline"
+                  >
+                    阅览篇末总结 ↓
+                  </a>
+                </p>
               </div>
             )}
           </div>
@@ -260,7 +293,7 @@ export default async function ChapterPage({ params }: Props) {
         <div className="vertical-content">
           {chapter.passages.map((passage, idx) => (
             <div key={passage.id} id={`passage-${passage.id}`}>
-              <div className="flex items-center gap-3 mb-3 mt-8 first:mt-0">
+              <div className={`flex items-center gap-3 mb-3 ${idx === 0 ? "mt-0" : "mt-10"}`}>
                 <span className="text-xs font-medium text-[var(--text-muted)] tracking-[0.08em]">
                   第{idx + 1}节
                 </span>
@@ -283,7 +316,7 @@ export default async function ChapterPage({ params }: Props) {
 
         {/* 本篇总结 */}
         {chapter.conclusion && (
-          <section className="mt-16 pt-8 border-t border-[var(--border-light)]">
+          <section id="chapter-conclusion" className="scroll-mt-24 mt-16 pt-8 border-t border-[var(--border-light)]">
             <h2 className="text-lg font-semibold text-[var(--text-accent)] tracking-[0.06em] mb-5">
               本篇总结
             </h2>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect,useRef, useState } from "react";
 
+import CommandPalette from "./CommandPalette";
 import ReadingSettings from "./ReadingSettings";
 import SimplifiedToggle from "./SimplifiedToggle";
 import { ThemeProvider } from "./ThemeProvider";
@@ -272,6 +273,20 @@ function NavigationContent() {
 
           {/* Tools */}
           <div className="flex items-center gap-1 ml-3 pl-2 border-l border-[var(--border-light)]">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent("zhuangzi:open-command-palette"))}
+              className="min-h-[32px] px-2 py-1 rounded border border-[var(--border-color)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-accent)]/40 hover:bg-[var(--hover-bg)] transition-all flex items-center gap-1.5"
+              aria-label="打开万能命令台 (⌘K)"
+              title="命令台 (⌘K)"
+            >
+              <svg className="w-3.5 h-3.5 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <kbd className="text-[10px] font-mono px-1 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)]">
+                ⌘K
+              </kbd>
+            </button>
             <SimplifiedToggle />
             <ReadingSettings />
             <ThemeSwitcher />
@@ -281,6 +296,17 @@ function NavigationContent() {
 
         {/* Mobile: tools + hamburger */}
         <div className="flex md:hidden items-center gap-1">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("zhuangzi:open-command-palette"))}
+            className="w-8 h-8 flex items-center justify-center rounded border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] transition-colors"
+            aria-label="打开万能命令台"
+            title="命令台"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </button>
           <SimplifiedToggle />
           <ReadingSettings />
           <ThemeSwitcher />
@@ -361,6 +387,7 @@ function NavigationContent() {
           </div>
         </div>
       )}
+      <CommandPalette />
     </header>
   );
 }

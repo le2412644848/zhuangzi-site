@@ -676,42 +676,113 @@ html {
 }
 
 /* ============================================
-   Vertical Reading Mode
+   Vertical Reading Mode（宋刻善本卷轴长卷，ISSUE-V01）
    ============================================ */
 .vertical-mode .vertical-content {
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  height: 80vh;
+  height: min(82vh, 760px);
+  height: min(82dvh, 760px);
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 2rem 0;
+  scroll-behavior: smooth;
   line-height: 2.4;
   font-size: 1.08rem;
+  /* 宋刻善本卷轴版框：外粗内细双边墨线与天头地脚留白 */
+  border: 2px solid var(--border-strong);
+  outline: 1px solid var(--border-color);
+  outline-offset: -5px;
+  border-radius: 6px;
+  background-color: var(--bg-card);
+  padding: 2rem 1.75rem;
+  /* 柔和乌丝栏纵向界格背景纹理 */
+  background-image: repeating-linear-gradient(
+    to left,
+    transparent,
+    transparent calc(2.4rem - 1px),
+    rgba(var(--shadow-rgb), 0.04) calc(2.4rem - 1px),
+    rgba(var(--shadow-rgb), 0.04) 2.4rem
+  );
+  box-shadow: 0 4px 24px rgba(var(--shadow-rgb), 0.07);
+}
+
+/* 竖排模式下各段落自适应横向延展，防止纵向被截断腰斩 */
+.vertical-mode .vertical-content > div[id^="passage-"] {
+  display: inline-block;
+  vertical-align: top;
+  max-height: 100%;
+  overflow: visible;
+  margin-left: 2rem;
+}
+
+.vertical-mode .vertical-content .card,
+.vertical-mode .vertical-content .passage-card {
+  max-height: 100%;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
 .vertical-mode .vertical-content .original-text {
   writing-mode: vertical-rl;
-  font-size: 1.08rem;
+  font-size: 1.12rem;
+  letter-spacing: 0.08em;
 }
 
 .vertical-mode .vertical-content .translation-text {
   writing-mode: vertical-rl;
-  font-size: 0.95rem;
+  font-size: 0.96rem;
+  letter-spacing: 0.04em;
 }
 
 .vertical-mode .vertical-content .commentary-text {
   writing-mode: vertical-rl;
   border-left: none;
-  border-top: 3px solid var(--text-accent);
+  border-top: none;
+  border-right: 1.5px solid var(--border-strong);
   padding-left: 0;
-  padding-top: 1.25rem;
-  margin: 0 1rem;
-  background: linear-gradient(
-    to bottom,
-    rgba(139, 94, 60, 0.04),
-    transparent 40%
-  );
-  border-radius: 4px 4px 0 0;
+  padding-top: 0;
+  padding-right: 1rem;
+  margin: 0 0.75rem;
+  max-height: 100%;
+  overflow: visible;
+  background: transparent;
+  border-radius: 0;
+}
+
+/* 修复折叠按钮与工具条在竖排下的尺寸与内边距 */
+.vertical-mode .vertical-content details {
+  max-height: 100%;
+  overflow: visible;
+}
+
+.vertical-mode .vertical-content summary {
+  cursor: pointer;
+  padding: 0.35rem 0.2rem;
+  list-style: none;
+}
+
+.vertical-mode .vertical-content summary::-webkit-details-marker {
+  display: none;
+}
+
+.vertical-mode .vertical-content .passage-toolbar {
+  writing-mode: horizontal-tb;
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+/* 隐藏在竖排模式下易变形的横向冗余分割线 */
+.vertical-mode .vertical-content .h-px,
+.vertical-mode .vertical-content hr {
+  display: none !important;
+}
+
+/* 竖排模式下隐藏左侧眉批笺注栏，避免遮挡卷轴 */
+.vertical-mode .scholar-margin-notes {
+  display: none !important;
 }
 
 .vertical-mode .sticky {
@@ -798,6 +869,51 @@ html {
   .reading-progress-bar {
     height: 1px;
   }
+
+  /* 移动端右下角悬浮按钮收巧与避让（ISSUE-V02） */
+  .chat-fab,
+  .back-to-top {
+    right: calc(0.625rem + env(safe-area-inset-right, 0px)) !important;
+  }
+
+  .chat-fab {
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .back-to-top {
+    bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .chat-fab button,
+  .back-to-top {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    min-height: 2.25rem !important;
+    opacity: 0.78;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .chat-fab button:hover,
+  .chat-fab button:focus-visible,
+  .back-to-top:hover,
+  .back-to-top:focus-visible {
+    opacity: 1 !important;
+  }
+
+  .chat-fab button svg,
+  .back-to-top svg {
+    width: 1.1rem !important;
+    height: 1.1rem !important;
+  }
+
+  /* 移动端章节页正文增加底部安全边距，避免最后几行与右下角悬浮按钮冲突 */
+  .reading-prose,
+  .vertical-content,
+  .chapter-content-container {
+    padding-bottom: 5rem;
+  }
 }
 
 /* ============================================
@@ -840,8 +956,15 @@ html {
 
 @supports (height: 100dvh) {
   .vertical-mode .vertical-content {
-    height: 80dvh;
+    height: min(82dvh, 760px);
   }
+}
+
+/* 主按钮文本色对齐 --btn-accent-text（夜读高对比度保障） */
+.btn-accent,
+button.bg-\[var\(--text-accent\)\],
+.chat-fab button {
+  color: var(--btn-accent-text, #ffffff) !important;
 }
 
 /* ============================================
@@ -1201,4 +1324,78 @@ html.immersive-mode .passage-toolbar {
 /* 暗色下缎带阴影改用纯黑，避免发灰 */
 .dark .ribbon-bookmark {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+/* ============================================
+   阅读器核心增强（Core 阅读器引擎 v4.0）
+   1. 原文-译文句级呼吸对齐（.sent-sync-active）
+   2. 字随声动句级跟读高亮（.sent-speaking-active, .speech-active-passage）
+   3. 宋刻双行夹注投影（html.jiazhu-mode .jiazhu-inline）
+   ============================================ */
+
+/* 译文句子与原文对应条目的柔光对齐 */
+.trans-sent {
+  display: inline;
+  transition: background-color 0.2s ease;
+  border-radius: 3px;
+}
+
+.sent-sync-active {
+  background: color-mix(in srgb, var(--color-accent-gold) 18%, transparent) !important;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+/* 朗读中句子跟读高亮 */
+.sent-speaking-active {
+  background: color-mix(in srgb, var(--color-accent-vermilion) 14%, transparent) !important;
+  border-bottom: 2px solid var(--color-accent-vermilion);
+  border-radius: 2px;
+  transition: all 0.25s ease;
+}
+
+/* 朗读中段落左侧朱砂呼吸边线 */
+.speech-active-passage .original-block {
+  border-left: 3px solid var(--color-accent-vermilion);
+  padding-left: 0.75rem;
+  transition: border-color 0.3s ease, padding-left 0.3s ease;
+  animation: passage-vermilion-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes passage-vermilion-breathe {
+  0%, 100% {
+    border-left-color: var(--color-accent-vermilion);
+  }
+  50% {
+    border-left-color: color-mix(in srgb, var(--color-accent-vermilion) 35%, transparent);
+  }
+}
+
+/* 宋刻双行夹注样式 */
+.jiazhu-inline {
+  display: none;
+}
+
+html.jiazhu-mode .jiazhu-inline {
+  display: inline-block;
+  vertical-align: baseline;
+  font-size: 0.65em;
+  line-height: 1.25;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin: 0 3px;
+  max-width: 18em;
+  white-space: normal;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html.jiazhu-mode .vertical-mode .jiazhu-inline {
+  max-width: none;
+  max-height: 16em;
+  margin: 3px 0;
+  padding: 5px 1px;
 }

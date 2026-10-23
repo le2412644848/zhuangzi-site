@@ -14,12 +14,30 @@ interface KaojuSectionProps {
   kind: "chen" | "fang";
 }
 
+interface ChapterKaojuData {
+  passages?: Record<string, Record<"chen" | "fang", KaojuEntry[] | undefined> | undefined>;
+}
+
+/** 篇级考据数据模块级缓存：每个篇章只 fetch 一次网络请求，后续段落直接复用 Promise */
+const kaojuDataCache = new Map<string, Promise<ChapterKaojuData | null>>();
+
+function loadChapterKaojuData(chapterId: string): Promise<ChapterKaojuData | null> {
+  let p = kaojuDataCache.get(chapterId);
+  if (!p) {
+    p = fetch(`/data/kaoju/${chapterId}.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<ChapterKaojuData>) : null))
+      .catch(() => null);
+    kaojuDataCache.set(chapterId, p);
+  }
+  return p;
+}
+
 /**
  * 段落级注（折叠区）：陈鼓应注 / 方勇训诂 —— 客户端懒加载。
  *
  * 考据全文由构建脚本拆到 /data/kaoju/<chapterId>.json（篇级一次性下载、
  * 所有段落共享），首屏只出现「N 条」的摘要；展开折叠区时才 fetch。
- * 折叠交互用原生 <details>。
+ * 模块级 Promise 缓存保证同篇章内仅请求一次。折叠交互用原生 <details>。
  */
 export default function KaojuSection({ title, chapterId, passageId, count, kind }: KaojuSectionProps) {
   const [entries, setEntries] = useState<KaojuEntry[] | null>(null);
@@ -30,9 +48,9 @@ export default function KaojuSection({ title, chapterId, passageId, count, kind 
     if (!open || entries !== null || loading) return;
     setLoading(true);
     try {
-      const res = await fetch(`/data/kaoju/${chapterId}.json`);
-      const data = res.ok ? await res.json() : null;
-      setEntries(data?.passages?.[passageId]?.[kind] ?? []);
+      const data = await loadChapterKaojuData(chapterId);
+      const list = data?.passages?.[passageId]?.[kind];
+      setEntries(list ?? []);
     } catch {
       setEntries([]);
     } finally {

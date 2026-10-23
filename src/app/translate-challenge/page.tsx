@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect,useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { chat as deepseekChat } from "@/lib/ai";
-import type { Chapter,Passage } from "@/lib/chapters";
+import type { Chapter, Passage } from "@/lib/chapters";
 
-function pickRandomPassage(chapters: Chapter[]): { passage: Passage; chapterTitle: string } | null {
+function pickRandomPassage(
+  chapters: Chapter[]
+): { passage: Passage; chapterTitle: string } | null {
   const all: { passage: Passage; chapterTitle: string }[] = [];
   for (const ch of chapters) {
     for (const p of ch.passages) {
@@ -19,17 +21,20 @@ function pickRandomPassage(chapters: Chapter[]): { passage: Passage; chapterTitl
 }
 
 export default function TranslateChallengePage() {
-  // 初始为 null，挂载后在客户端随机选题：避免 SSR/CSR 各随机一次导致 hydration mismatch
-  const [current, setCurrent] = useState<{ passage: Passage; chapterTitle: string } | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [current, setCurrent] = useState<{
+    passage: Passage;
+    chapterTitle: string;
+  } | null>(null);
   const [userTranslation, setUserTranslation] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
-  // 参考译文：提交后 AI 返回，展示给用户对照（原 showReference 只 set 不读，功能残缺）
-  const [referenceTranslation, setReferenceTranslation] = useState<string | null>(null);
-  // 全文数据按需加载，加载一次后缓存供 handleNext 复用
+  const [referenceTranslation, setReferenceTranslation] = useState<
+    string | null
+  >(null);
   const [chaptersData, setChaptersData] = useState<Chapter[] | null>(null);
 
   // 客户端挂载后动态加载全文并选题（消除 SSR/CSR 不一致 + 避免全文阻塞首屏）
@@ -39,33 +44,39 @@ export default function TranslateChallengePage() {
       if (cancelled) return;
       setChaptersData(chapters);
       setCurrent(pickRandomPassage(chapters));
+      setDataLoading(false);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Load stats from localStorage
+  // 从 localStorage 读取统计
   useEffect(() => {
     try {
       const saved = localStorage.getItem("translate_stats");
       if (saved) {
         const s = JSON.parse(saved);
-        // 挂载后读 localStorage 初始化（hydration-safe）
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setTotalAttempts(s.attempts || 0);
+         
         setTotalScore(s.score || 0);
       }
     } catch {}
   }, []);
 
-  const saveStats = (attempts: number, score: number) => {
+  const saveStats = (attempts: number, scoreVal: number) => {
     try {
-      localStorage.setItem("translate_stats", JSON.stringify({ attempts, score }));
+      localStorage.setItem(
+        "translate_stats",
+        JSON.stringify({ attempts, score: scoreVal })
+      );
     } catch {}
   };
 
   const handleSubmit = useCallback(async () => {
-    if (!userTranslation.trim() || loading || !current) return;
-    setLoading(true);
+    if (!userTranslation.trim() || submitting || !current) return;
+    setSubmitting(true);
     setScore(null);
     setFeedback(null);
 
@@ -93,7 +104,7 @@ export default function TranslateChallengePage() {
         maxTokens: 400,
       });
 
-      // Parse score from reply
+      // 解析 AI 回复中的分数、评价与参考译文
       const scoreMatch = reply.match(/【评分】\s*(\d+)/);
       const feedbackMatch = reply.match(/【评价】\s*(.+)/);
       const refMatch = reply.match(/【参考译文】\s*([\s\S]+)/);
@@ -109,16 +120,17 @@ export default function TranslateChallengePage() {
       setTotalScore(newScore);
       saveStats(newTotal, newScore);
 
-      // 保存参考译文供用户对照
       if (refMatch) {
         setReferenceTranslation((refMatch[1] ?? "").trim());
       }
     } catch (err) {
-      setFeedback(`出错了：${err instanceof Error ? err.message : "请稍后再试"}`);
+      setFeedback(
+        `出错了：${err instanceof Error ? err.message : "请稍后再试"}`
+      );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
-  }, [userTranslation, current, loading, totalAttempts, totalScore]);
+  }, [userTranslation, current, submitting, totalAttempts, totalScore]);
 
   const handleNext = () => {
     if (chaptersData) setCurrent(pickRandomPassage(chaptersData));
@@ -128,10 +140,32 @@ export default function TranslateChallengePage() {
     setReferenceTranslation(null);
   };
 
+  // 数据加载中的古风骨架屏（消除假报错闪现）
+  if (dataLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center animate-pulse">
+        <div className="inline-flex items-center gap-2 mb-3">
+          <span className="seal-char-lg" aria-hidden="true">卷</span>
+        </div>
+        <h2 className="text-lg font-serif font-medium text-[var(--text-primary)] mb-1.5">
+          正在展卷摘选《庄子》名段…
+        </h2>
+        <p className="text-xs text-[var(--text-muted)] font-serif">
+          研墨提笔，稍候片刻
+        </p>
+        <div className="mt-8 p-6 rounded-2xl border border-[var(--border-light)] bg-[var(--bg-card)] max-w-lg mx-auto space-y-3 shadow-xs">
+          <div className="h-4 bg-[var(--border-light)] rounded w-1/3 mx-auto" />
+          <div className="h-5 bg-[var(--border-light)] rounded w-4/5 mx-auto" />
+          <div className="h-5 bg-[var(--border-light)] rounded w-2/3 mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
   if (!current) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-[var(--text-secondary)]">暂无可用的挑战段落</p>
+        <p className="text-[var(--text-secondary)] font-serif">暂无可用的挑战段落</p>
       </div>
     );
   }
@@ -140,79 +174,101 @@ export default function TranslateChallengePage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-wide">古文今译</h1>
+          <div className="flex items-center gap-2">
+            <span className="seal-char-lg" aria-hidden="true">譯</span>
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-wide">
+              古文今译
+            </h1>
+          </div>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            试译庄子原文，AI 为你评分
+            试译庄子原文，AI 为你点评传神度
           </p>
         </div>
         {totalAttempts > 0 && (
           <div className="text-right">
-            <div className="text-2xl font-bold text-[var(--text-accent)]">
+            <div className="text-2xl font-bold font-serif text-[var(--text-accent)]">
               {Math.round(totalScore / totalAttempts)}
             </div>
-            <div className="text-[10px] text-[var(--text-secondary)]">
-              均分 · {totalAttempts}次挑战
+            <div className="text-[10px] text-[var(--text-secondary)] font-serif">
+              均分 · {totalAttempts} 次挑战
             </div>
           </div>
         )}
       </div>
 
-      {/* Original text card */}
-      <div className="p-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] mb-4">
-        <div className="text-[10px] text-[var(--text-secondary)] mb-2 tracking-wider">
+      {/* 原文卡片 */}
+      <div className="p-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] mb-4 shadow-xs">
+        <div className="text-[10px] font-serif text-[var(--text-secondary)] mb-2 tracking-wider">
           原文 · 《{current.chapterTitle}》
         </div>
-        <p className="text-lg text-[var(--text-primary)] leading-loose tracking-wide">
+        <p className="text-lg font-serif text-[var(--text-primary)] leading-loose tracking-wide">
           {current.passage.original}
         </p>
       </div>
 
-      {/* User translation input */}
+      {/* 用户译文输入框 */}
       <textarea
         value={userTranslation}
         onChange={(e) => setUserTranslation(e.target.value)}
         placeholder="在此输入你的白话译文…"
         disabled={score !== null}
         rows={4}
-        className="w-full px-4 py-3 text-sm rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--text-accent)]/30 resize-none mb-3"
+        className="w-full px-4 py-3 text-sm rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--text-accent)]/30 resize-none mb-3 shadow-xs"
       />
 
-      {/* Action buttons */}
+      {/* 操作按钮 */}
       <div className="flex gap-2 mb-4">
         {score === null ? (
-          <button onClick={handleSubmit} disabled={loading || !userTranslation.trim()}
-            className="flex-1 py-2.5 text-sm rounded-xl bg-[var(--text-accent)] text-white disabled:opacity-50 transition-opacity">
-            {loading ? "评分中…" : "提交译文"}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting || !userTranslation.trim()}
+            className="flex-1 py-2.5 text-sm rounded-xl bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] font-medium disabled:opacity-50 transition-all shadow-xs"
+          >
+            {submitting ? "正在研读推敲评分中…" : "提交译文"}
           </button>
         ) : (
-          <button onClick={handleNext}
-            className="flex-1 py-2.5 text-sm rounded-xl border border-[var(--text-accent)] text-[var(--text-accent)] hover:bg-[var(--text-accent)] hover:text-white transition-colors">
+          <button
+            type="button"
+            onClick={handleNext}
+            className="flex-1 py-2.5 text-sm rounded-xl border border-[var(--text-accent)] text-[var(--text-accent)] hover:bg-[var(--text-accent)] hover:text-[var(--btn-accent-text,#ffffff)] font-medium transition-all shadow-xs"
+          >
             下一题 →
           </button>
         )}
       </div>
 
-      {/* Score & Feedback */}
+      {/* 评分与反馈 */}
       {score !== null && (
-        <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] space-y-3 animate-in">
+        <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] space-y-3 animate-in shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="text-3xl font-bold text-[var(--text-accent)]">{score}</div>
-            <div className="text-xs text-[var(--text-secondary)]">/100 分</div>
+            <div className="text-3xl font-bold font-serif text-[var(--text-accent)]">
+              {score}
+            </div>
+            <div className="text-xs text-[var(--text-secondary)]">/ 100 分</div>
             <div className="flex-1 h-2 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-              <div className="h-full rounded-full bg-[var(--text-accent)] transition-all duration-700"
-                style={{ width: `${score}%` }} />
+              <div
+                className="h-full rounded-full bg-[var(--text-accent)] transition-all duration-700"
+                style={{ width: `${score}%` }}
+              />
             </div>
           </div>
           {feedback && (
-            <p className="text-sm text-[var(--text-primary)] leading-relaxed">{feedback}</p>
+            <p className="text-sm text-[var(--text-primary)] leading-relaxed">
+              {feedback}
+            </p>
           )}
           {referenceTranslation && (
             <div className="pt-3 border-t border-[var(--border-light)]">
-              <div className="text-xs font-medium text-[var(--text-accent)] mb-1.5">参考译文</div>
-              <p className="text-sm text-[var(--text-primary)] leading-relaxed">{referenceTranslation}</p>
+              <div className="text-xs font-serif font-medium text-[var(--text-accent)] mb-1.5">
+                参考译文
+              </div>
+              <p className="text-sm text-[var(--text-primary)] leading-relaxed">
+                {referenceTranslation}
+              </p>
             </div>
           )}
-          <div className="text-xs text-[var(--text-secondary)]">
+          <div className="text-xs text-[var(--text-secondary)] font-serif">
             出自《{current.chapterTitle}》
           </div>
         </div>

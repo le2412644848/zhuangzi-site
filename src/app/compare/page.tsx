@@ -98,7 +98,7 @@ export default function ComparePage() {
             <button key={t.id} onClick={() => setTopic(t.label)}
               className={`px-4 py-2 rounded-full text-sm transition-all ${
                 topic === t.label
-                  ? "bg-[var(--text-accent)] text-white"
+                  ? "bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] font-medium shadow-xs"
                   : "border border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--text-accent)]"
               }`}>
               <span className="seal-char" aria-hidden="true">
@@ -118,7 +118,7 @@ export default function ComparePage() {
             <button key={s.id} onClick={() => toggleSchool(s.id)}
               className={`px-4 py-2 rounded-full text-sm transition-all ${
                 selectedSchools.includes(s.id)
-                  ? "bg-[var(--text-accent)]/10 text-[var(--text-accent)] border border-[var(--text-accent)]/30"
+                  ? "border-[var(--text-accent)] bg-[var(--text-accent)]/15 text-[var(--text-accent)] font-semibold ring-1 ring-[var(--text-accent)]/30"
                   : "border border-[var(--border-light)] text-[var(--text-secondary)]"
               }`}>
               {s.label}
@@ -129,7 +129,7 @@ export default function ComparePage() {
 
       {/* Compare button */}
       <button onClick={handleCompare} disabled={!topic || selectedSchools.length < 2 || loading}
-        className="w-full py-3 rounded-xl bg-[var(--text-accent)] text-white text-sm font-medium disabled:opacity-50 transition-opacity mb-6">
+        className="w-full py-3 rounded-xl bg-[var(--text-accent)] text-[var(--btn-accent-text,#ffffff)] text-sm font-medium disabled:opacity-50 transition-opacity mb-6">
         {loading ? "诸子正在辩论…" : "开始对比"}
       </button>
 

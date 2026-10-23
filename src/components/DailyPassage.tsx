@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
-import { chaptersMeta } from "@/data/chapters/metadata";
+import { chaptersMeta, passageNumber } from "@/data/chapters/metadata";
 import type { Chapter, Passage } from "@/lib/chapters";
 
 // 显式按章映射，避免模板字符串动态 import（会让 Turbopack 把 33 章全文
@@ -99,6 +99,8 @@ export default function DailyPassage() {
 
   if (!daily) return null;
 
+  const pNum = passageNumber(daily.chapterId, daily.passage.id);
+
   return (
     <section
       className="px-4 sm:px-6 lg:px-8 mb-20 animate-fade-in-up"
@@ -111,10 +113,30 @@ export default function DailyPassage() {
             每日一庄
           </span>
 
-          {/* 页眉：篇名 + 日期 */}
-          <div className="flex items-center justify-between mb-5">
+          {/* 移动端精致横向线装书签头（篇名 + 节号 + 日期 + 装饰虚线分割） */}
+          <div className="sm:hidden flex items-center justify-between pb-3 mb-4 border-b border-dashed border-[var(--border-color)]">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-[var(--text-accent)] tracking-[0.12em]">
+                {daily.chapterTitle}
+              </span>
+              {pNum && (
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-[var(--hover-bg)] text-[var(--text-muted)] font-serif">
+                  第{pNum}节
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] text-[var(--text-muted)]">
+              {new Date().toLocaleDateString("zh-CN", {
+                month: "long",
+                day: "numeric",
+              })}
+            </span>
+          </div>
+
+          {/* 桌面端页眉：篇名 + 日期 */}
+          <div className="hidden sm:flex items-center justify-between mb-5">
             <span className="text-xs font-semibold text-[var(--text-accent)] tracking-[0.12em]">
-              {daily.chapterTitle}
+              {daily.chapterTitle}{pNum ? ` · 第${pNum}节` : ""}
             </span>
             <span className="text-[11px] text-[var(--text-muted)]">
               {new Date().toLocaleDateString("zh-CN", {
@@ -124,9 +146,10 @@ export default function DailyPassage() {
             </span>
           </div>
 
-          {/* 书页主体：左竖排提字 + 右展开译注 */}
-          <div className="flex gap-5 sm:gap-7">
-            <div className="vertical-extract flex-none" aria-hidden="true">
+          {/* 书页主体：移动端纵向全宽，桌面端左竖排古典提字 + 右展开正文 */}
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-7">
+            {/* 桌面端左竖排古典提字 */}
+            <div className="hidden sm:block vertical-extract flex-none" aria-hidden="true">
               <p className="font-serif">
                 {(() => {
                   // 竖排取 4 的倍数（列高 6 字 × 4 列 = 24 字），避免末列孤字悬挂
@@ -143,7 +166,7 @@ export default function DailyPassage() {
               </blockquote>
 
               {showTranslation && (
-                <div className="mt-4 p-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-light)]">
+                <div className="mt-4 p-3.5 sm:p-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-light)]">
                   <p className="text-xs sm:text-sm text-[var(--text-secondary)] italic leading-relaxed">
                     {daily.passage.translation.slice(0, 140)}
                     {daily.passage.translation.length > 140 ? "…" : ""}
@@ -151,7 +174,8 @@ export default function DailyPassage() {
                 </div>
               )}
 
-              <div className="mt-4 flex items-center justify-between">
+              {/* 底部操作栏：响应式换行排布 */}
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                 <button
                   onClick={() => setShowTranslation(!showTranslation)}
                   className="text-xs font-medium text-[var(--text-accent)] hover:text-[var(--color-accent-deep)] transition-colors"
@@ -160,9 +184,9 @@ export default function DailyPassage() {
                 </button>
                 <Link
                   href={`/chapters/${daily.chapterId}`}
-                  className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors flex items-center gap-1"
+                  className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors flex items-center gap-1 shrink-0"
                 >
-                  {daily.chapterTitle} · 阅读全文
+                  <span>{daily.chapterTitle}{pNum ? ` · 第${pNum}节` : ""} · 阅读全文</span>
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>

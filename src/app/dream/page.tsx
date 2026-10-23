@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface Scene {
@@ -83,12 +84,13 @@ const STORY: Record<string, Scene> = {
     text: "此之谓物化。\n\n庄子在《齐物论》中讲述了这段梦蝶的故事。他借梦境告诉我们：\n现实与虚幻、自我与他者之间的界限，可能并不像我们以为的那样分明。\n\n当你执着于\"我是谁\"时，不妨想想那只蝴蝶。",
     choices: [
       { text: "重新开始", nextId: "start", seal: "復" },
-      { text: "阅读《齐物论》原文", nextId: "read", seal: "讀" },
+      { text: "阅读《齐物论》原文", nextId: "goto-qiwu", seal: "讀" },
     ],
   },
 };
 
 export default function DreamPage() {
+  const router = useRouter();
   const [sceneId, setSceneId] = useState("start");
   const [history, setHistory] = useState<string[]>(["start"]);
   const [animating, setAnimating] = useState(false);
@@ -96,6 +98,10 @@ export default function DreamPage() {
   const scene = STORY[sceneId]!;
 
   const handleChoice = (nextId: string) => {
+    if (nextId === "goto-qiwu") {
+      router.push("/chapters/02-qiwu-lun");
+      return;
+    }
     setAnimating(true);
     setTimeout(() => {
       setSceneId(nextId);
