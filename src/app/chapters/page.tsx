@@ -100,7 +100,7 @@ export default function ChaptersPage() {
           const catChapters = chaptersMeta.filter((c) => c.category === cat);
           const info = categoryInfo[cat];
           return (
-            <section key={cat}>
+            <section key={cat} className={cat === "内篇" ? "" : "cv-auto"}>
               <div className="mb-6">
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl font-semibold text-[var(--text-accent)] tracking-[0.06em]">
@@ -118,6 +118,7 @@ export default function ChaptersPage() {
                   <Link
                     key={ch.id}
                     href={`/chapters/${ch.id}`}
+                    prefetch={false}
                     className="card-interactive group flex items-start gap-4 sm:gap-6 p-4 sm:p-5"
                   >
                     {/* Order number */}
@@ -133,7 +134,7 @@ export default function ChaptersPage() {
                         </h3>
                         <span className="tag flex-shrink-0">{cat}</span>
                         {STARTER_CHAPTER_IDS.has(ch.id) && (
-                          <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-accent-gold)]/12 text-[var(--color-accent-gold)] border border-[var(--color-accent-gold)]/25">
+                          <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-accent-gold)]/15 text-[var(--text-accent)] border border-[var(--color-accent-gold)]/35">
                             ★ 入门首选
                           </span>
                         )}

@@ -30,12 +30,10 @@ const MAX_ENTRIES = {
 // 离线回退永远命中不了。这里两者都预缓存，回退时按顺序尝试。
 const OFFLINE_FALLBACKS = ["/404/", "/404.html"];
 
+// 首屏与安装期仅预缓存轻量离线兜底资产；各路由 HTML 由下方
+// Network-First 策略在用户实际访问时增量写入 CACHE_PAGES，
+// 避免首次访问即在后台并发拉取多份大体积 HTML 抢占弱网带宽。
 const PRECACHE_URLS = [
-  "/",
-  "/chapters/",
-  "/concepts/",
-  "/quotes/",
-  "/fables/",
   "/manifest.json",
   ...OFFLINE_FALLBACKS,
 ];

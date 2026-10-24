@@ -92,8 +92,12 @@ interface PaletteActionItem {
   perform: () => void;
 }
 
-export default function CommandPalette() {
-  const [open, setOpen] = useState(false);
+export default function CommandPalette({
+  initialOpen = false,
+}: {
+  initialOpen?: boolean | undefined;
+} = {}) {
+  const [open, setOpen] = useState(initialOpen);
   const [query, setQuery] = useState("");
   const [corpus, setCorpus] = useState<LazyData | null>(cachedData);
   const [activeIndex, setActiveIndex] = useState(0);

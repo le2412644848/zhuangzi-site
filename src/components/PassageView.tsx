@@ -60,6 +60,8 @@ interface PassageViewProps {
   chapterId: string;
   /** 篇名（收藏列表展示用；缺省回退 chapterId） */
   chapterTitle?: string;
+  /** 段落序号（从 1 开始） */
+  passageNum?: number | undefined;
   defaultExpanded?: boolean;
   /** 本篇陈鼓应考据数据（可选） */
   kaoju?: KaojuEntry[];
@@ -234,6 +236,7 @@ function AnnotatedText({ original, annotations, chapterId, quotes }: { original:
             <Link
               key={`${i}-${j}`}
               href={`/quotes#${p.quote.id}`}
+              prefetch={false}
               className="quote-mark"
               title={`名句 · ${p.quote.theme}：${p.quote.explanation}`}
             >
@@ -336,7 +339,7 @@ function CommentaryBlock({ commentary, kaojuLookup }: { commentary?: string; kao
  * 时才 fetch —— 首屏不再传输这两类大体积内容。
  * 分栏/拼音/批注的显示切换由工具条在 [data-passage-root] 上切 CSS 类实现。
  */
-export default function PassageView({ passage, chapterId, chapterTitle, kaoju, passageKaoju, passageKaojuFang, quotes }: PassageViewProps) {
+export default function PassageView({ passage, chapterId, chapterTitle, passageNum, kaoju, passageKaoju, passageKaojuFang, quotes }: PassageViewProps) {
   // 构建期：把「注释词 → 命中考据」查好，只用于注疏区训诂行的服务端直出
   // （WordTooltip 的训诂改由客户端按篇懒加载，不再进载荷）
   const kaojuLookup = buildKaojuLookup(kaoju, collectKaojuTerms(passage));
@@ -357,6 +360,7 @@ export default function PassageView({ passage, chapterId, chapterTitle, kaoju, p
         chapterId={chapterId}
         passageId={passage.id}
         chapterTitle={chapterTitle}
+        passageNum={passageNum}
       />
 
       <div className="passage-content">

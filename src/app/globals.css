@@ -1,21 +1,6 @@
 @import "tailwindcss";
 
 /* ============================================
-   自托管子集宋体（TODO 3.1）
-   生成：python scripts/subset-font.py（Noto Serif SC / OFL，按全站用字子集）
-   font-display: swap —— 首帧系统回退、加载后无缝替换；
-   可变字体，字重 400–900 由 wght 轴提供。
-   ============================================ */
-@font-face {
-  font-family: "Zhuangzi Serif";
-  src: url("/fonts/zhuangzi-serif.woff2") format("woff2");
-  font-weight: 400 900;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+4E00-9FFF, U+3000-303F, U+FF00-FFEF, U+2000-206F, U+00A0-00FF, U+2010-2027;
-}
-
-/* ============================================
    莊子數位典藏 · Design System v2.0
    设计方向: 温暖诗意 × 编辑级排版 × 画廊式留白
    Inspired by: Editorial Poetic Min + Soft Blur Art Gallery
@@ -55,11 +40,12 @@
   --color-dm-border: #38322A;      /* 暗夜边框 */
 
   /* ── Typography ──
-     自托管子集宋体（TODO 3.1）：public/fonts/zhuangzi-serif.woff2 由
-     python scripts/subset-font.py 按全站用字生成（Noto Serif SC / OFL）。
-     font-display: swap 保证首帧用系统回退、加载后平滑换字；
-     1.56MB 子集含全站正文+考据引文 4570 字。 */
-  --font-serif: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+     自托管按需分片古籍宋体（TODO 3.1）：public/fonts/slices/*.woff2 由
+     python scripts/subset-font.py 生成（Noto Serif SC / OFL，精确不重叠 unicode-range）。
+     古籍原文、标题、篆印优先启用 --font-classical；现代白话与界面优先用系统字库，
+     遇到系统缺字的古籍生僻字自动回退至 Zhuangzi Serif 分片按需拉取。 */
+  --font-serif: "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", "Zhuangzi Serif", serif;
+  --font-classical: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
   --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 
@@ -105,7 +91,8 @@
    Font Variables (system stack — no network fetch)
    ============================================ */
 :root {
-  --font-serif: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --font-serif: "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", "Zhuangzi Serif", serif;
+  --font-classical: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
   --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 }
@@ -151,6 +138,10 @@ body {
               color var(--duration-normal) var(--ease-out-expo);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, .section-heading, .original-text, blockquote, .seal-char, .seal-char-lg, .vertical-extract, .vertical-prose, .jiazhu-note {
+  font-family: var(--font-classical);
 }
 
 ::selection {
@@ -579,15 +570,31 @@ html {
 }
 
 /* ============================================
+   离屏内容按需排版（Core Web Vitals 优化）
+   长列表与长章节折叠线以下区块跳过初始布局与字体切片匹配，
+   滚动接近视口或页内锚点跳转时由浏览器原生瞬时激活；
+   竖排长卷模式下改为横向展开，自动恢复完整渲染。
+   ============================================ */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
+html.vertical-mode .cv-auto {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+}
+
+/* ============================================
    Animation Utilities
+   注：fadeInUp 保持首帧可见（opacity: 1），仅做轻柔丝卷上浮位移，
+   避免 opacity: 0 在弱网/降频下推迟浏览器 LCP（最大内容绘制）计时。
    ============================================ */
 @keyframes fadeInUp {
   from {
-    opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(10px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -618,8 +625,7 @@ html {
 
 /* Staggered children */
 .stagger-children > * {
-  opacity: 0;
-  animation: fadeInUp var(--duration-slow) var(--ease-out-expo) forwards;
+  animation: fadeInUp var(--duration-slow) var(--ease-out-expo) both;
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }

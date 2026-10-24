@@ -27,7 +27,6 @@ const categories = [
     key: "外篇",
     seal: "外",
     description: "庄子后学，演绎发挥",
-    // 松石青语义 → 竹青变量（原 teal-700 暂代，竹青落地后切换）
     gradient: "bg-gradient-to-br from-[var(--color-accent-bamboo)]/12 via-transparent to-transparent",
   },
   {
@@ -155,10 +154,7 @@ export default function Home() {
       {/* ============================================
           Featured Chapters — Highlights
           ============================================ */}
-      <section
-        className="px-4 sm:px-6 lg:px-8 mb-20 animate-fade-in-up"
-        style={{ animationDelay: "0.2s" }}
-      >
+      <section className="cv-auto px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-3xl mx-auto text-center mb-10">
           <h2 className="section-heading mb-3">名篇精粹</h2>
           <p className="section-subheading">逍遥物外 · 齐一万物 · 大宗师法</p>
@@ -170,6 +166,7 @@ export default function Home() {
             <Link
               key={ch.id}
               href={`/chapters/${ch.id}`}
+              prefetch={false}
               className="card-interactive group p-5 flex flex-col items-center text-center gap-3"
             >
               <span className="chapter-badge">
@@ -192,10 +189,7 @@ export default function Home() {
       {/* ============================================
           All Chapters — Category Tabs
           ============================================ */}
-      <section
-        className="px-4 sm:px-6 lg:px-8 mb-20 animate-fade-in-up"
-        style={{ animationDelay: "0.3s" }}
-      >
+      <section className="cv-auto px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-3xl mx-auto text-center mb-10">
           <h2 className="section-heading mb-3">篇章总览</h2>
           <p className="section-subheading">三十三篇，千古文章</p>
@@ -224,6 +218,7 @@ export default function Home() {
                     <Link
                       key={ch.id}
                       href={`/chapters/${ch.id}`}
+                      prefetch={false}
                       className="card-interactive group relative p-4 overflow-hidden"
                     >
                       <div
@@ -237,7 +232,7 @@ export default function Home() {
                           </span>
                           <div className="flex items-center gap-1.5">
                             {STARTER_CHAPTER_IDS.has(ch.id) && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-accent-gold)]/12 text-[var(--color-accent-gold)] border border-[var(--color-accent-gold)]/25">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-accent-gold)]/15 text-[var(--text-accent)] border border-[var(--color-accent-gold)]/35">
                                 ★ 入门首选
                               </span>
                             )}
@@ -272,10 +267,7 @@ export default function Home() {
       {/* ============================================
           Quick Links — Navigation Hub
           ============================================ */}
-      <section
-        className="px-4 sm:px-6 lg:px-8 mb-20 animate-fade-in-up"
-        style={{ animationDelay: "0.4s" }}
-      >
+      <section className="cv-auto px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-3xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
@@ -291,6 +283,7 @@ export default function Home() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className="card-interactive group p-4 flex flex-col items-center text-center gap-1.5"
               >
                 <span className="text-sm font-medium text-[var(--text-primary)] tracking-wide group-hover:text-[var(--text-accent)] transition-colors">
@@ -308,10 +301,7 @@ export default function Home() {
       {/* ============================================
           Interactive Features — AI 与沉浸体验
           ============================================ */}
-      <section
-        className="px-4 sm:px-6 lg:px-8 mb-20 animate-fade-in-up"
-        style={{ animationDelay: "0.5s" }}
-      >
+      <section className="cv-auto px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-3xl mx-auto text-center mb-10">
           <h2 className="section-heading mb-3">深度互动</h2>
           <p className="section-subheading">与庄子对话 · 同诸子辩论 · 为你指路</p>
@@ -372,6 +362,7 @@ export default function Home() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className="card-interactive group p-5 flex items-start gap-4"
             >
               <span className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[var(--hover-bg)] text-[var(--text-accent)] group-hover:bg-[var(--hover-bg-strong)] transition-colors">
@@ -395,10 +386,7 @@ export default function Home() {
       {/* ============================================
           About Zhuangzi
           ============================================ */}
-      <section
-        className="px-4 sm:px-6 lg:px-8 mb-20 animate-fade-in-up"
-        style={{ animationDelay: "0.6s" }}
-      >
+      <section className="cv-auto px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="section-heading mb-3">关于庄子</h2>
@@ -422,6 +410,7 @@ export default function Home() {
             <div className="pt-3">
               <Link
                 href="/zhuangzi"
+                prefetch={false}
                 className="inline-flex items-center gap-1.5 text-sm text-[var(--text-accent)] hover:text-[var(--color-accent-deep)] transition-colors font-medium"
               >
                 了解更多关于庄子

@@ -10,9 +10,9 @@
  *   NEXT_PUBLIC_SITE_URL=https://zhuangzi.example.com npm run build
  */
 
-/** 站点根 URL，无尾斜杠 */
+/** 站点根 URL，无尾斜杠（兼容 CI 未配置 vars.SITE_URL 时传入空串 "" 的情形） */
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://zhuangzi-site.pages.dev"
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://zhuangzi-site.pages.dev"
 ).replace(/\/+$/, "");
 
 export const SITE_NAME = "莊子數位典藏";

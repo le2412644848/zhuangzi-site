@@ -11,6 +11,7 @@ interface Message {
 }
 
 export interface ChatWithZhuangziProps {
+  defaultOpen?: boolean | undefined;
   initialQuestion?: string | undefined;
   forceOpen?: boolean | undefined;
   onOpenChange?: ((open: boolean) => void) | undefined;
@@ -27,11 +28,12 @@ export interface ChatWithZhuangziProps {
  *  - 对接全局划词「问庄子」自定义事件 (zhuangzi:ask-selection)
  */
 export default function ChatWithZhuangzi({
+  defaultOpen = false,
   initialQuestion,
   forceOpen,
   onOpenChange,
 }: ChatWithZhuangziProps = {}) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "子有何问？吾将应之。" },
   ]);

@@ -76,14 +76,25 @@ export default function ScholarMarginNotes({
   const [quoteExcerpts, setQuoteExcerpts] = useState<{ text: string; theme: string }[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("meipi");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isWideDesktop, setIsWideDesktop] = useState(false);
   const [relatedPassages, setRelatedPassages] = useState<RelatedPassage[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
-  // 1. 懒加载本篇考据 JSON
+  // 检测是否处于 >=1536px（2xl）宽屏常驻天头眉批视口；窄屏在未拉开抽屉前不抢占首屏请求
   useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1536px)");
+    const sync = () => setIsWideDesktop(mql.matches);
+    sync();
+    mql.addEventListener("change", sync);
+    return () => mql.removeEventListener("change", sync);
+  }, []);
+
+  // 1. 懒加载本篇考据 JSON（仅在宽屏侧栏可见、抽屉打开或用户聚焦某注词时请求）
+  useEffect(() => {
+    if (!isWideDesktop && !drawerOpen && !focusedTerm) return;
     let cancelled = false;
     fetchChapterKaoju(chapterId).then((data) => {
       if (!cancelled && data) {
@@ -93,7 +104,7 @@ export default function ScholarMarginNotes({
     return () => {
       cancelled = true;
     };
-  }, [chapterId]);
+  }, [chapterId, isWideDesktop, drawerOpen, focusedTerm]);
 
   // 2. 视口交叉观察：跟踪读者阅读到的段落位置并提取本节名句
   useEffect(() => {
@@ -169,8 +180,9 @@ export default function ScholarMarginNotes({
     };
   }, []);
 
-  // 4. 懒加载跨篇互证数据（严格排除 chapterId 本身）
+  // 4. 懒加载跨篇互证数据（仅在用户切换到「互证」标签且面板可见时动态拉取 ~200KB 语料）
   useEffect(() => {
+    if (activeTab !== "huzheng" || (!isWideDesktop && !drawerOpen)) return;
     let cancelled = false;
     loadRelatedData().then((conceptMap) => {
       if (cancelled) return;
@@ -198,7 +210,7 @@ export default function ScholarMarginNotes({
     return () => {
       cancelled = true;
     };
-  }, [chapterId]);
+  }, [chapterId, activeTab, isWideDesktop, drawerOpen]);
 
   // 抽屉 Escape 关闭
   useEffect(() => {

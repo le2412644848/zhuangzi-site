@@ -1,15 +1,21 @@
-﻿"use client";
+"use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect,useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import CommandPalette from "./CommandPalette";
 import ReadingSettings from "./ReadingSettings";
 import SimplifiedToggle from "./SimplifiedToggle";
 import { ThemeProvider } from "./ThemeProvider";
 import ThemeSwitcher from "./ThemeSwitcher";
 import VerticalModeToggle from "./VerticalModeToggle";
+
+// 命令台按需挂载：首次按下 ⌘K / Ctrl+K 或点击导航栏 ⌘K 按钮前不拉取弹层 chunk
+const CommandPalette = dynamic(() => import("./CommandPalette"), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface NavGroup {
   label: string;
@@ -89,7 +95,34 @@ function NavigationContent() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [paletteMounted, setPaletteMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const openCommandPalette = () => {
+    if (!paletteMounted) {
+      setPaletteMounted(true);
+    } else {
+      window.dispatchEvent(new CustomEvent("zhuangzi:open-command-palette"));
+    }
+  };
+
+  // 首次唤起前由轻量监听接管 ⌘K / 自定义事件，触发后挂载 CommandPalette 并交权
+  useEffect(() => {
+    if (paletteMounted) return;
+    const onBootstrapKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteMounted(true);
+      }
+    };
+    const onBootstrapEvent = () => setPaletteMounted(true);
+    window.addEventListener("keydown", onBootstrapKey);
+    window.addEventListener("zhuangzi:open-command-palette", onBootstrapEvent);
+    return () => {
+      window.removeEventListener("keydown", onBootstrapKey);
+      window.removeEventListener("zhuangzi:open-command-palette", onBootstrapEvent);
+    };
+  }, [paletteMounted]);
 
   // 滚动吸顶柔光阴影（设计升级规范五.1）：吸顶静止时透明无影，
   // 滚动后挂超微柔光阴影，区分导航与正文，不喧宾夺主。
@@ -188,6 +221,7 @@ function NavigationContent() {
         {/* Logo */}
         <Link
           href="/"
+          prefetch={false}
           className="shrink-0 whitespace-nowrap text-lg font-semibold tracking-[0.08em] text-[var(--text-accent)] font-serif hover:text-[var(--color-accent-deep)] transition-colors"
         >
           莊子
@@ -201,6 +235,7 @@ function NavigationContent() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={false}
                 className={`relative px-3 py-1.5 text-sm tracking-wide rounded-lg transition-all ${
                   isActive(link.href)
                     ? "text-[var(--text-accent)] font-medium bg-[var(--hover-bg)]"
@@ -256,6 +291,7 @@ function NavigationContent() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={false}
                       role="menuitem"
                       className={`nav-menu-item block relative px-4 py-2 text-sm transition-colors ${
                         isActive(item.href)
@@ -275,7 +311,7 @@ function NavigationContent() {
           <div className="flex items-center gap-1 ml-3 pl-2 border-l border-[var(--border-light)]">
             <button
               type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent("zhuangzi:open-command-palette"))}
+              onClick={openCommandPalette}
               className="min-h-[32px] px-2 py-1 rounded border border-[var(--border-color)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-accent)]/40 hover:bg-[var(--hover-bg)] transition-all flex items-center gap-1.5"
               aria-label="打开万能命令台 (⌘K)"
               title="命令台 (⌘K)"
@@ -298,7 +334,7 @@ function NavigationContent() {
         <div className="flex md:hidden items-center gap-1">
           <button
             type="button"
-            onClick={() => window.dispatchEvent(new CustomEvent("zhuangzi:open-command-palette"))}
+            onClick={openCommandPalette}
             className="w-8 h-8 flex items-center justify-center rounded border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] transition-colors"
             aria-label="打开万能命令台"
             title="命令台"
@@ -373,6 +409,7 @@ function NavigationContent() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive(item.href)
                         ? "text-[var(--text-accent)] bg-[var(--hover-bg)] font-medium"
@@ -387,7 +424,7 @@ function NavigationContent() {
           </div>
         </div>
       )}
-      <CommandPalette />
+      {paletteMounted && <CommandPalette initialOpen />}
     </header>
   );
 }

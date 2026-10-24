@@ -111,6 +111,7 @@ export default async function ConceptPage({ params }: Props) {
         <div className="mb-10">
           <Link
             href="/concepts"
+            prefetch={false}
             className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors"
           >
             ← 全部概念
@@ -167,13 +168,14 @@ export default async function ConceptPage({ params }: Props) {
             </p>
           ) : (
             <div className="space-y-6">
-              {relatedPassages.map(({ chapter, passage }) => (
+              {relatedPassages.map(({ chapter, passage }, idx) => (
                 <div
                   key={`${chapter.id}-${passage.id}`}
-                  className="p-4 sm:p-5 rounded-lg border border-[var(--border-light)] bg-[var(--bg-card)]"
+                  className={`p-4 sm:p-5 rounded-lg border border-[var(--border-light)] bg-[var(--bg-card)] ${idx >= 2 ? "cv-auto" : ""}`}
                 >
                   <Link
                     href={`/chapters/${chapter.id}#passage-${passage.id}`}
+                    prefetch={false}
                     className="text-sm font-medium text-[var(--text-accent)] hover:underline"
                   >
                     {chapter.title} · 第 {passageNumber(chapter.id, passage.id) ?? "?"} 节
@@ -195,7 +197,7 @@ export default async function ConceptPage({ params }: Props) {
         </section>
 
         {/* In which chapters */}
-        <section className="mt-12">
+        <section className="mt-12 cv-auto">
           <h2 className="text-lg font-medium mb-4 tracking-wide">
             出现篇章
           </h2>
@@ -207,6 +209,7 @@ export default async function ConceptPage({ params }: Props) {
                 <Link
                   key={chId}
                   href={`/chapters/${chId}`}
+                  prefetch={false}
                   className="px-3 py-1.5 rounded border border-[var(--border-color)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-accent)] hover:border-[var(--text-accent)] transition-colors"
                 >
                   {ch.title}

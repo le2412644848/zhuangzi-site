@@ -8,8 +8,9 @@ import Navigation from "@/components/Navigation";
 import ReadingProgress from "@/components/ReadingProgress";
 import ShortcutsHelp from "@/components/ShortcutsHelp";
 import SWRegister from "@/components/SWRegister";
-import { canonicalUrl,OG_IMAGE, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
-import { buildInlineThemeScript, DEFAULT_THEME,themes } from "@/lib/theme";
+import { FONT_FACE_CSS } from "@/lib/font-faces";
+import { canonicalUrl, OG_IMAGE, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { buildInlineThemeScript, DEFAULT_THEME, themes } from "@/lib/theme";
 
 // 字体改用系统字体栈（见 globals.css 的 :root 定义）。
 // 原因：next/font/google 会在构建时联网拉取 Google Fonts，在受限网络/CI 中
@@ -153,6 +154,9 @@ export default function RootLayout({
       <head>
         {/* Cloudflare Web Analytics — replace token to enable */}
         {/* <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN"}'></script> */}
+
+        {/* 自托管按字频分片宋体 @font-face（内联于 head，消除样式表二次往返并保持外置 CSS <= 20KB 预算） */}
+        <style dangerouslySetInnerHTML={{ __html: FONT_FACE_CSS }} />
 
         {/* 防闪烁主题脚本：内容由 @/lib/theme 的调色板生成，不再手抄字面量 */}
         <script dangerouslySetInnerHTML={{ __html: buildInlineThemeScript() }} />

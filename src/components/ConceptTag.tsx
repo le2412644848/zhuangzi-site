@@ -19,6 +19,7 @@ export default function ConceptTag({ conceptId, name, size = "sm" }: ConceptTagP
   return (
     <Link
       href={`/concepts/${conceptId}`}
+      prefetch={false}
       className={`tag ${sizeClasses} font-serif tracking-wide cursor-pointer`}
     >
       {displayName}

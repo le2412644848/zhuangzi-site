@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { chaptersMeta, passageNumber } from "@/data/chapters/metadata";
-import { isBookmarked,toggleBookmark } from "@/lib/annotations";
+import { isBookmarked, toggleBookmark } from "@/lib/annotations";
 import { toggleImmersive, useImmersive } from "@/lib/immersive";
 
 interface PassageToolbarProps {
@@ -11,6 +10,8 @@ interface PassageToolbarProps {
   passageId: string;
   /** 篇名（收藏列表展示用；缺省回退 chapterId） */
   chapterTitle?: string | undefined;
+  /** 段落序号（从 1 开始；复制带出处引用时用） */
+  passageNum?: number | undefined;
 }
 
 /**
@@ -55,7 +56,7 @@ function usePassageClassState(passageId: string, cls: string) {
  * 实现（globals.css 中对应规则），正文区域用 MutationObserver / CSS
  * 感知，不与本岛共享 React 状态 —— 避免重新引入 client 祖先。
  */
-export default function PassageToolbar({ chapterId, passageId, chapterTitle }: PassageToolbarProps) {
+export default function PassageToolbar({ chapterId, passageId, chapterTitle, passageNum }: PassageToolbarProps) {
   const [bookmarked, setBookmarked] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -88,10 +89,9 @@ export default function PassageToolbar({ chapterId, passageId, chapterTitle }: P
     if (!original) return;
     let text = original;
     if (mode === "cite") {
-      const num = passageNumber(chapterId, passageId);
       const url = `${window.location.origin}/chapters/${chapterId}#passage-${passageId}`;
-      const title = chapterTitle ?? chaptersMeta.find((c) => c.id === chapterId)?.title ?? chapterId;
-      text = `${original}\n\n——《庄子·${title}${num ? ` · 第${num}节` : ""}\n${url}`;
+      const title = chapterTitle ?? chapterId;
+      text = `${original}\n\n——《庄子·${title}》${passageNum ? ` · 第${passageNum}节` : ""}\n${url}`;
     }
     navigator.clipboard.writeText(text);
     setCopyMenuOpen(false);

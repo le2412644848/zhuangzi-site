@@ -42,9 +42,12 @@ function registerSW() {
 
   window.addEventListener("load", () => {
     pageLoaded = true;
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Silently fail — SW is progressive enhancement
-    });
+    // 延迟至首屏彻底空闲后再注册 SW，避免安装线程与首屏渲染争抢网络/主线程
+    window.setTimeout(() => {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // Silently fail — SW is progressive enhancement
+      });
+    }, 4000);
   });
 }
 

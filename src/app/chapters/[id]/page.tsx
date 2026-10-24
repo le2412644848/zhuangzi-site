@@ -15,7 +15,7 @@ import { chapters } from "@/data/chapters";
 import { concepts as conceptsData } from "@/data/concepts";
 import quotesData from "@/data/quotes.json";
 import { getAdjacentChapters } from "@/lib/chapters";
-import { getKaojuByChapter, getKaojuFangByChapter, getPassageKaojuFangMap,getPassageKaojuMap } from "@/lib/kaoju";
+import { getKaojuByChapter, getKaojuFangByChapter, getPassageKaojuFangMap, getPassageKaojuMap } from "@/lib/kaoju";
 import {
   canonicalUrl,
   CONTENT_LAST_MODIFIED,
@@ -202,7 +202,7 @@ export default async function ChapterPage({ params }: Props) {
       <div className="chapter-content-container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 pb-24 sm:pb-14">
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-4">
-            <Link href="/chapters" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors">
+            <Link href="/chapters" prefetch={false} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors">
               ← 篇章
             </Link>
             <span className="text-[10px] text-[var(--text-muted)]">/</span>
@@ -281,7 +281,7 @@ export default async function ChapterPage({ params }: Props) {
                 <ConceptTag key={cid} conceptId={cid} size="sm" />
               ))}
               {allConcepts.length > 8 && (
-                <Link href="/concepts" className="text-[11px] text-[var(--text-accent)] hover:underline self-center ml-1">
+                <Link href="/concepts" prefetch={false} className="text-[11px] text-[var(--text-accent)] hover:underline self-center ml-1">
                   +{allConcepts.length - 8} 个
                 </Link>
               )}
@@ -292,7 +292,7 @@ export default async function ChapterPage({ params }: Props) {
         {/* Passages */}
         <div className="vertical-content">
           {chapter.passages.map((passage, idx) => (
-            <div key={passage.id} id={`passage-${passage.id}`}>
+            <div key={passage.id} id={`passage-${passage.id}`} className={idx >= 1 ? "cv-auto" : ""}>
               <div className={`flex items-center gap-3 mb-3 ${idx === 0 ? "mt-0" : "mt-10"}`}>
                 <span className="text-xs font-medium text-[var(--text-muted)] tracking-[0.08em]">
                   第{idx + 1}节
@@ -304,6 +304,7 @@ export default async function ChapterPage({ params }: Props) {
                 passage={passage}
                 chapterId={chapter.id}
                 chapterTitle={chapter.title}
+                passageNum={idx + 1}
                 defaultExpanded={true}
                 kaoju={kaoju}
                 quotes={quotesByPassage.get(passage.id)}
@@ -316,7 +317,7 @@ export default async function ChapterPage({ params }: Props) {
 
         {/* 本篇总结 */}
         {chapter.conclusion && (
-          <section id="chapter-conclusion" className="scroll-mt-24 mt-16 pt-8 border-t border-[var(--border-light)]">
+          <section id="chapter-conclusion" className="cv-auto scroll-mt-24 mt-16 pt-8 border-t border-[var(--border-light)]">
             <h2 className="text-lg font-semibold text-[var(--text-accent)] tracking-[0.06em] mb-5">
               本篇总结
             </h2>
@@ -328,11 +329,13 @@ export default async function ChapterPage({ params }: Props) {
           </section>
         )}
 
-        <RelatedReadings chapterId={chapter.id} concepts={allConcepts} />
+        <div className="cv-auto">
+          <RelatedReadings chapterId={chapter.id} concepts={allConcepts} />
+        </div>
 
-        <nav className="mt-14 pt-6 border-t border-[var(--border-light)] flex items-center justify-between">
+        <nav className="cv-auto mt-14 pt-6 border-t border-[var(--border-light)] flex items-center justify-between">
           {prev ? (
-            <Link href={`/chapters/${prev.id}`} className="group flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors">
+            <Link href={`/chapters/${prev.id}`} prefetch={false} className="group flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors">
               <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
@@ -342,7 +345,7 @@ export default async function ChapterPage({ params }: Props) {
           ) : <div />}
 
           {next ? (
-            <Link href={`/chapters/${next.id}`} className="group flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors">
+            <Link href={`/chapters/${next.id}`} prefetch={false} className="group flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors">
               <span className="font-medium">{next.title}</span>
               <span className="hidden sm:inline">：下一篇</span>
               <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

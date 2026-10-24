@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { chaptersMeta, passageNumber } from "@/data/chapters/metadata";
 import type { Chapter, Passage } from "@/lib/chapters";
 
 // 显式按章映射，避免模板字符串动态 import（会让 Turbopack 把 33 章全文
@@ -63,8 +62,10 @@ function todaySeed(): number {
   return Math.abs(seed);
 }
 
+const chapterIds = Object.keys(chapterLoaders);
+
 export default function DailyPassage() {
-  const [daily, setDaily] = useState<{ chapterTitle: string; chapterId: string; passage: Passage } | null>(null);
+  const [daily, setDaily] = useState<{ chapterTitle: string; chapterId: string; passage: Passage; passageNum: number } | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
 
   useEffect(() => {
@@ -74,8 +75,8 @@ export default function DailyPassage() {
       const rng = seededRandom(todaySeed());
 
       // Pick chapter deterministically, then a passage within it
-      const chapterMeta = chaptersMeta[Math.floor(rng() * chaptersMeta.length)]!;
-      const loader = chapterLoaders[chapterMeta.id];
+      const chapterId = chapterIds[Math.floor(rng() * chapterIds.length)]!;
+      const loader = chapterLoaders[chapterId];
       if (!loader) return;
 
       // 只按需加载命中章节（JSON 动态 import 返回 { default: ... }）
@@ -84,12 +85,14 @@ export default function DailyPassage() {
 
       if (cancelled) return;
 
-      const passage = fullChapter.passages[Math.floor(rng() * fullChapter.passages.length)]!;
+      const pIdx = Math.floor(rng() * fullChapter.passages.length);
+      const passage = fullChapter.passages[pIdx]!;
 
       setDaily({
         chapterTitle: fullChapter.title,
         chapterId: fullChapter.id,
         passage,
+        passageNum: pIdx + 1,
       });
     }
 
@@ -99,7 +102,7 @@ export default function DailyPassage() {
 
   if (!daily) return null;
 
-  const pNum = passageNumber(daily.chapterId, daily.passage.id);
+  const pNum = daily.passageNum;
 
   return (
     <section
@@ -184,6 +187,7 @@ export default function DailyPassage() {
                 </button>
                 <Link
                   href={`/chapters/${daily.chapterId}`}
+                  prefetch={false}
                   className="text-xs text-[var(--text-muted)] hover:text-[var(--text-accent)] transition-colors flex items-center gap-1 shrink-0"
                 >
                   <span>{daily.chapterTitle}{pNum ? ` · 第${pNum}节` : ""} · 阅读全文</span>
