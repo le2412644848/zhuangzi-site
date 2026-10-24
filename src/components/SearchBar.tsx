@@ -55,7 +55,6 @@ export default function SearchBar({ compact = false, initialValue = "" }: { comp
   useEffect(() => {
     if (prevInitRef.current !== initialValue) {
       prevInitRef.current = initialValue;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery(initialValue);
     }
   }, [initialValue]);

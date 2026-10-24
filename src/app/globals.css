@@ -618,9 +618,11 @@ html.vertical-mode .cv-auto {
   50% { scale: 1.03; }
 }
 
-.hero-breathe {
-  animation: hero-breathe 8s var(--ease-out-expo) 4.5s infinite;
-  transform-origin: center;
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .hero-breathe {
+    animation: hero-breathe 8s var(--ease-out-expo) 4.5s infinite;
+    transform-origin: center;
+  }
 }
 
 /* Staggered children */

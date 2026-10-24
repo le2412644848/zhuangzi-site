@@ -11,8 +11,11 @@ export interface DailySnippet {
   translation: string;
 }
 
-function todaySeed(): number {
-  const today = new Date().toISOString().slice(0, 10);
+function todaySeed(now: Date): number {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const today = `${y}-${m}-${d}`;
   let seed = 0;
   for (let i = 0; i < today.length; i++) {
     seed = ((seed << 5) - seed) + today.charCodeAt(i);
@@ -28,17 +31,14 @@ export default function DailyPassage({ pool }: { pool: DailySnippet[] }) {
 
   useEffect(() => {
     if (pool.length === 0) return;
-    // 延迟至首屏交互就绪后切换当日轮换段落，避免水合期同步触发二次布局计算
-    const timer = window.setTimeout(() => {
-      setIdx(todaySeed() % pool.length);
-      setDateLabel(
-        new Date().toLocaleDateString("zh-CN", {
-          month: "long",
-          day: "numeric",
-        })
-      );
-    }, 3500);
-    return () => window.clearTimeout(timer);
+    // 水合后下一帧即切入当日段落，拆分长任务的同时避免晚更新重置 LCP，
+    // 并以纯算术拼接替代 toLocaleDateString 规避首屏冷加载 ICU 本地化表开销
+    const raf = window.requestAnimationFrame(() => {
+      const now = new Date();
+      setIdx(todaySeed(now) % pool.length);
+      setDateLabel(`${now.getMonth() + 1}月${now.getDate()}日`);
+    });
+    return () => window.cancelAnimationFrame(raf);
   }, [pool.length]);
 
   const daily = pool[idx] ?? pool[0];
@@ -47,7 +47,7 @@ export default function DailyPassage({ pool }: { pool: DailySnippet[] }) {
   const pNum = daily.passageNum;
 
   return (
-    <section className="cv-auto px-4 sm:px-6 lg:px-8 mb-20">
+    <section className="px-4 sm:px-6 lg:px-8 mb-20">
       <div className="max-w-2xl mx-auto">
         <div className="daily-passage-book">
           {/* 缎带书签 */}
