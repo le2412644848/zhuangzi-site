@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 interface HistoryItem {
   chapterId: string;
@@ -25,7 +25,6 @@ export function recordReading(chapterId: string, chapterTitle: string) {
       progress: 100,
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered.slice(0, MAX_ITEMS)));
-    // 通知已挂载的 ReadingHistoryWidget 刷新（此前监听器是死代码）
     window.dispatchEvent(new Event("reading-recorded"));
   } catch {}
 }
@@ -43,9 +42,11 @@ export default function ReadingHistoryWidget() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
-    // 挂载后读 localStorage 阅读历史（hydration-safe）
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHistory(getReadingHistory());
+    const initial = getReadingHistory();
+    if (initial.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHistory(initial);
+    }
     const handler = () => setHistory(getReadingHistory());
     window.addEventListener("reading-recorded", handler);
     return () => window.removeEventListener("reading-recorded", handler);
@@ -76,6 +77,7 @@ export default function ReadingHistoryWidget() {
             <Link
               key={`${item.chapterId}-${item.timestamp}`}
               href={`/chapters/${item.chapterId}`}
+              prefetch={false}
               className="tag hover:border-[var(--text-accent)] hover:text-[var(--text-accent)] hover:bg-[var(--hover-bg)] transition-all cursor-pointer py-1.5 px-3 text-xs"
             >
               {item.chapterTitle}

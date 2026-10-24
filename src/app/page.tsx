@@ -62,12 +62,9 @@ export default function Home() {
       {/* ============================================
           Hero Section — Ink Wash Gradient
           ============================================ */}
-      <section className="hero-gradient relative overflow-hidden px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-28">
-        {/* Decorative background elements */}
+      <section className="hero-gradient relative overflow-hidden px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
+        {/* Decorative background elements（移除高开销高斯模糊层 blur-3xl，改由 .hero-gradient 径向渐变承担） */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/4 left-[10%] w-64 h-64 rounded-full bg-[var(--text-accent)]/3 blur-3xl" />
-          <div className="absolute bottom-1/4 right-[10%] w-48 h-48 rounded-full bg-[var(--color-accent-gold)]/4 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] rounded-full bg-gradient-to-b from-transparent via-[var(--text-accent)]/[0.015] to-transparent" />
           {/* 水墨视觉锚（2026-08-24 视觉复审）：
               巨字「遊」水印 + 断笔禅圆（ensō），约 5% 不透明度，
               宽屏为首屏提供画面感与典籍气，不参与阅读、不进无障碍树 */}
@@ -96,7 +93,7 @@ export default function Home() {
           </span>
         </div>
 
-        <div className="relative z-10 stagger-children text-center max-w-3xl mx-auto">
+        <div className="relative z-10 text-center max-w-3xl mx-auto">
           {/* Kicker */}
           <p className="text-xs font-medium tracking-[0.2em] text-[var(--text-muted)] uppercase mb-6">
             戰國 · 宋國蒙人
@@ -133,10 +130,7 @@ export default function Home() {
       {/* ============================================
           Stats Row
           ============================================ */}
-      <section
-        className="px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 animate-fade-in-up mb-12 sm:mb-14"
-        style={{ animationDelay: "0.1s" }}
-      >
+      <section className="px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 mb-12 sm:mb-14">
         <div className="max-w-lg mx-auto">
           <div className="card p-6 sm:p-8 flex items-center justify-around">
             {[

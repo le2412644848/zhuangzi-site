@@ -619,7 +619,7 @@ html.vertical-mode .cv-auto {
 }
 
 .hero-breathe {
-  animation: hero-breathe 8s var(--ease-out-expo) infinite;
+  animation: hero-breathe 8s var(--ease-out-expo) 4.5s infinite;
   transform-origin: center;
 }
 

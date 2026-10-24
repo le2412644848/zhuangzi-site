@@ -49,10 +49,15 @@ export default function SearchBar({ compact = false, initialValue = "" }: { comp
 
 
 
-  // URL 参数变化时同步输入框（视觉复审 N3）
+  const prevInitRef = useRef(initialValue);
+
+  // URL 参数变化时同步输入框（首帧初值已一致，不重复 setState）
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setQuery(initialValue);
+    if (prevInitRef.current !== initialValue) {
+      prevInitRef.current = initialValue;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuery(initialValue);
+    }
   }, [initialValue]);
 
   /** 首次聚焦/输入时才拉取联想数据（异步 chunk，不进首屏包） */

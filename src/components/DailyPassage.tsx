@@ -28,14 +28,17 @@ export default function DailyPassage({ pool }: { pool: DailySnippet[] }) {
 
   useEffect(() => {
     if (pool.length === 0) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIdx(todaySeed() % pool.length);
-    setDateLabel(
-      new Date().toLocaleDateString("zh-CN", {
-        month: "long",
-        day: "numeric",
-      })
-    );
+    // 延迟至首屏交互就绪后切换当日轮换段落，避免水合期同步触发二次布局计算
+    const timer = window.setTimeout(() => {
+      setIdx(todaySeed() % pool.length);
+      setDateLabel(
+        new Date().toLocaleDateString("zh-CN", {
+          month: "long",
+          day: "numeric",
+        })
+      );
+    }, 3500);
+    return () => window.clearTimeout(timer);
   }, [pool.length]);
 
   const daily = pool[idx] ?? pool[0];
