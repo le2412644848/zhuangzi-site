@@ -42,11 +42,11 @@
   /* ── Typography ──
      自托管按需分片古籍宋体（TODO 3.1）：public/fonts/slices/*.woff2 由
      python scripts/subset-font.py 生成（Noto Serif SC / OFL，精确不重叠 unicode-range）。
-     古籍原文、标题、篆印优先启用 --font-classical；现代白话与界面优先用系统字库，
-     遇到系统缺字的古籍生僻字自动回退至 Zhuangzi Serif 分片按需拉取。 */
-  --font-serif: "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", "Zhuangzi Serif", serif;
-  --font-classical: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
-  --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+     古籍原文、大标题、篆印启用 --font-classical（Zhuangzi Serif）；
+     现代白话与界面启用系统字库 + 超纲生僻字专用回退（Zhuangzi Rare）。 */
+  --font-serif: "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", "Droid Sans Fallback", "Zhuangzi Rare", serif;
+  --font-classical: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", "WenQuanYi Micro Hei", serif;
+  --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 
   /* ── Spacing Scale (8px base) ── */
@@ -91,9 +91,9 @@
    Font Variables (system stack — no network fetch)
    ============================================ */
 :root {
-  --font-serif: "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", "Zhuangzi Serif", serif;
-  --font-classical: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
-  --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-serif: "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", "Droid Sans Fallback", "Zhuangzi Rare", serif;
+  --font-classical: "Zhuangzi Serif", "LXGW WenKai", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", "WenQuanYi Micro Hei", serif;
+  --font-sans: "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 }
 
@@ -140,7 +140,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, .section-heading, .original-text, blockquote, .seal-char, .seal-char-lg, .vertical-extract, .vertical-prose, .jiazhu-note {
+h1, h2, .section-heading, .original-text, .seal-char, .seal-char-lg, .vertical-extract, .vertical-prose, .jiazhu-note, .font-classical {
   font-family: var(--font-classical);
 }
 

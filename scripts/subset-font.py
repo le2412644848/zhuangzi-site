@@ -1,13 +1,14 @@
 """
-古籍宋体按需精确分片（TODO 3.1 v4 — 零重叠精确 unicode-range + 古籍原文/标题/生僻字分级分片）：
+古籍宋体双族按需精确分片（TODO 3.1 v5 — Zhuangzi Serif 古籍正文标题族 + Zhuangzi Rare 生僻字回退族）：
 
 设计目标：
 1. 彻底消除单一 1.64MB zhuangzi-serif.woff2 在 Slow 4G 下阻塞首屏 9s+ 与总体积超标问题；
-2. 消除宽泛连续区间（如 U+00A9-5241）与常用字重叠导致的连带全量下载；
-3. 遵循中华书局古典排印与现代数字人文分层规范：
-   - 古籍原文（.original-text）、各级标题（h1/h2/h3）、篆印、引文、双行夹注默认优先使用 Zhuangzi Serif；
-   - 现代白话导读与界面控件优先走系统高清字库，遇到系统缺字的古籍生僻字（GB2312 之外的异体/僻字）自动回退至 Zhuangzi Serif 分片按需拉取；
-4. 所有分片均使用严格不重叠的精确 unicode-range，内联 CSS 仅约 4KB gzip，保持外部 stylesheet 稳定在 ~16.4KB（预算 <=20KB）。
+2. 解决无本地微软雅黑/思源宋体的 Linux/Ubuntu 环境（如 WenQuanYi Micro Hei）因现代白话正文
+   穿透回退到 Zhuangzi Serif 而连带拉取 800KB+ 字体分片的问题：
+   - "Zhuangzi Serif"：专供 h1/h2、古籍原文（.original-text）、篆印、双行夹注、竖排提字；
+   - "Zhuangzi Rare"：仅包含 GB2312 之外的古籍异体/生僻字，挂载于 --font-serif 末尾，
+     常规现代白话在任何系统均零网络请求，仅在遇到超纲生僻字时按需拉取单片；
+3. 所有分片均使用严格不重叠的精确 unicode-range，内联 CSS 仅约 5KB gzip，外部 stylesheet <= 20KB。
 
 用法：
   python scripts/subset-font.py
@@ -48,7 +49,7 @@ def in_allowed_range(ch: str) -> bool:
 
 
 def is_non_gb2312(ch: str) -> bool:
-    if not in_allowed_range(ch):
+    if not (0x4E00 <= ord(ch) <= 0x9FFF):
         return False
     try:
         ch.encode("gb2312")
@@ -68,45 +69,46 @@ def walk_strings(obj, out: list[str]):
             walk_strings(v, out)
 
 
-def collect_tiered_chars() -> list[list[str]]:
-    seen: set[str] = set()
+def collect_dual_families() -> tuple[list[list[str]], list[list[str]], set[str]]:
+    seen_classical: set[str] = set()
 
-    def add_chars(text: str, bucket: list[str]):
+    def add_cls(text: str, bucket: list[str]):
         for ch in text:
-            if in_allowed_range(ch) and ch not in seen:
-                seen.add(ch)
+            if in_allowed_range(ch) and ch not in seen_classical:
+                seen_classical.add(ch)
                 bucket.append(ch)
 
-    # Tier 0: 首页/篇章目录/章节页/概念页核心标题、33 篇篇名与核心标点（约 145 字，单片 ~43KB）
+    # Tier 0: 首页/篇章目录/章节页/概念页 h1/h2 大标题、篆印、33 篇篇名与核心标点
     tier0: list[str] = []
-    add_chars("，。、；：！？「」『』（）《》〈〉·—…“”‘’〔〕　", tier0)
-    add_chars("莊子庄子戰國宋蒙人内外杂篇名精粹章总览深度互动关于逍遥物齐一万大宗师法三十千古文章每日一庄核心概念相关段落出现篇章本篇总结题解逐字注旨要义延伸阅读", tier0)
+    add_cls("，。、；：！？「」『』（）《》〈〉·—…“”‘’〔〕　", tier0)
+    add_cls("莊子庄子戰國宋蒙人内外杂篇名精粹章总览深度互动关于逍遥物齐一万大宗师法三十千古文章核心概念相关段落出现篇章本篇总结题解延伸阅读", tier0)
 
     meta_path = os.path.join(DATA, "chapters", "metadata.json")
     with open(meta_path, encoding="utf-8") as f:
         for ch in json.load(f):
-            add_chars(ch.get("title", "") + ch.get("category", ""), tier0)
+            add_cls(ch.get("title", "") + ch.get("category", ""), tier0)
 
-    # Tier 1: 《逍遥游》全文古籍原文（约 200 字，拆为 2 片各 ~32KB）
+    # Tier 1: 《逍遥游》全文古籍原文
     tier1: list[str] = []
     ch01_path = os.path.join(DATA, "chapters", "01-xiaoyao-you.json")
     with open(ch01_path, encoding="utf-8") as f:
         ch01 = json.load(f)
         for pas in ch01.get("passages", []):
-            add_chars(pas.get("original", ""), tier1)
+            add_cls(pas.get("original", ""), tier1)
 
-    # Tier 2: 其余页面静态标题、核心概念名、其余 32 篇古籍原文 + 名句 + 寓言篇题
+    # Tier 2: 其余页面 h1/h2、概念名、其余 32 篇古籍原文 + 名句 + 寓言篇题
     tier2: list[str] = []
     concepts_path = os.path.join(DATA, "concepts", "index.json")
     with open(concepts_path, encoding="utf-8") as f:
         for c in json.load(f).get("concepts", []):
-            add_chars(c.get("name", ""), tier2)
+            add_cls(c.get("name", ""), tier2)
 
     for path in sorted(glob.glob(os.path.join(ROOT, "src", "app", "**", "*.tsx"), recursive=True)):
         with open(path, encoding="utf-8") as f:
             src = f.read()
-        for m in re.finditer(r"<h[1-3][^>]*>(.*?)</h[1-3]>", src, flags=re.S):
-            add_chars(re.sub(r"<[^>]+>|\{[^}]+\}", "", m.group(1)), tier2)
+        for m in re.finditer(r"<h[1-2][^>]*>(.*?)</h[1-2]>", src, flags=re.S):
+            add_cls(re.sub(r"<[^>]+>|\{[^}]+\}", "", m.group(1)), tier2)
+
     chapter_files = sorted(glob.glob(os.path.join(DATA, "chapters", "[0-9][0-9]-*.json")))
     for cpath in chapter_files:
         if os.path.basename(cpath).startswith("01-"):
@@ -114,22 +116,39 @@ def collect_tiered_chars() -> list[list[str]]:
         with open(cpath, encoding="utf-8") as f:
             ch_data = json.load(f)
             for pas in ch_data.get("passages", []):
-                add_chars(pas.get("original", ""), tier2)
+                add_cls(pas.get("original", ""), tier2)
 
     quotes_path = os.path.join(DATA, "quotes.json")
     if os.path.exists(quotes_path):
         with open(quotes_path, encoding="utf-8") as f:
             for q in json.load(f).get("quotes", []):
-                add_chars(q.get("text", ""), tier2)
+                add_cls(q.get("text", ""), tier2)
 
     fables_path = os.path.join(DATA, "fables.json")
     if os.path.exists(fables_path):
         with open(fables_path, encoding="utf-8") as f:
             for fab in json.load(f).get("fables", []):
-                add_chars(fab.get("name", ""), tier2)
+                add_cls(fab.get("name", ""), tier2)
 
-    # Tier 3: 全站考据训诂、简繁映射及代码库中所有超纲生僻字/异体字（GB2312 以外）兜底
-    tier3: list[str] = []
+    classical_slices: list[list[str]] = []
+    for i in range(0, len(tier0), SLICE_SIZE):
+        classical_slices.append(tier0[i : i + SLICE_SIZE])
+    for i in range(0, len(tier1), SLICE_SIZE):
+        classical_slices.append(tier1[i : i + SLICE_SIZE])
+    for i in range(0, len(tier2), SLICE_SIZE):
+        classical_slices.append(tier2[i : i + SLICE_SIZE])
+
+    # Family 2 ("Zhuangzi Rare"): 全站所有 GB2312 以外的超纲异体/生僻汉字（供白话/注疏缺字兜底）
+    seen_rare: set[str] = set()
+    rare_ch01: list[str] = []
+    ch01_strs: list[str] = []
+    walk_strings(ch01, ch01_strs)
+    for s in ch01_strs:
+        for ch in s:
+            if is_non_gb2312(ch) and ch not in seen_rare:
+                seen_rare.add(ch)
+                rare_ch01.append(ch)
+
     all_strs: list[str] = []
     for jpath in sorted(glob.glob(os.path.join(DATA, "**", "*.json"), recursive=True)):
         with open(jpath, encoding="utf-8") as f:
@@ -138,29 +157,23 @@ def collect_tiered_chars() -> list[list[str]]:
         with open(tpath, encoding="utf-8") as f:
             all_strs.append(f.read())
 
-    rare_pool = sorted(
-        {ch for s in all_strs for ch in s if is_non_gb2312(ch) and ch not in seen},
+    rare_rest = sorted(
+        {ch for s in all_strs for ch in s if is_non_gb2312(ch) and ch not in seen_rare},
         key=ord,
     )
-    for ch in rare_pool:
-        seen.add(ch)
-        tier3.append(ch)
+    seen_rare.update(rare_rest)
+
+    rare_slices: list[list[str]] = []
+    if rare_ch01:
+        rare_slices.append(rare_ch01)
+    for i in range(0, len(rare_rest), SLICE_SIZE):
+        rare_slices.append(rare_rest[i : i + SLICE_SIZE])
 
     print(
-        f"分层字集统计：Tier0(标题篇名)={len(tier0)}, Tier1(逍遥游)={len(tier1)}, "
-        f"Tier2(全书古文)={len(tier2)}, Tier3(考据僻字)={len(tier3)} → 合计 {len(seen)} 字"
+        f"双族统计：Zhuangzi Serif={len(seen_classical)} 字({len(classical_slices)} 片), "
+        f"Zhuangzi Rare={len(seen_rare)} 字({len(rare_slices)} 片)"
     )
-
-    slices: list[list[str]] = []
-    # Tier 0 独立成片，避免与内文混合；其余按 SLICE_SIZE 均匀切分
-    for i in range(0, len(tier0), SLICE_SIZE):
-        slices.append(tier0[i : i + SLICE_SIZE])
-    for i in range(0, len(tier1), SLICE_SIZE):
-        slices.append(tier1[i : i + SLICE_SIZE])
-    rest = tier2 + tier3
-    for i in range(0, len(rest), SLICE_SIZE):
-        slices.append(rest[i : i + SLICE_SIZE])
-    return slices
+    return classical_slices, rare_slices, (seen_classical | seen_rare)
 
 
 def format_exact_unicode_range(chars: list[str]) -> str:
@@ -197,11 +210,10 @@ def main():
         print(f"未找到源字体: {FONT_SRC}", file=sys.stderr)
         sys.exit(1)
 
-    slices = collect_tiered_chars()
-    all_chars = sorted(ch for s in slices for ch in s)
+    classical_slices, rare_slices, all_union = collect_dual_families()
     chars_file = os.path.join(ROOT, "scripts", "fonts", "chars.txt")
     with open(chars_file, "w", encoding="utf-8") as f:
-        f.write("".join(all_chars))
+        f.write("".join(sorted(all_union)))
 
     if os.path.exists(SLICES_DIR):
         shutil.rmtree(SLICES_DIR)
@@ -222,15 +234,25 @@ def main():
     total_bytes = 0
 
     try:
-        for idx, chunk in enumerate(slices):
-            fname = f"zhuangzi-slice-{idx:02d}.woff2"
+        for idx, chunk in enumerate(classical_slices):
+            fname = f"zhuangzi-cls-{idx:02d}.woff2"
             sz = save_woff2(tmp_base, chunk, os.path.join(SLICES_DIR, fname))
             total_bytes += sz
             urange = format_exact_unicode_range(chunk)
             css_rules.append(
                 f'@font-face{{font-family:"Zhuangzi Serif";src:{local_src},url("/fonts/slices/{fname}") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:{urange}}}'
             )
-            print(f"  [slice-{idx:02d}] {len(chunk):3d} chars: {sz/1024:5.1f} KB")
+            print(f"  [cls-{idx:02d}]  {len(chunk):3d} chars: {sz/1024:5.1f} KB")
+
+        for idx, chunk in enumerate(rare_slices):
+            fname = f"zhuangzi-rare-{idx:02d}.woff2"
+            sz = save_woff2(tmp_base, chunk, os.path.join(SLICES_DIR, fname))
+            total_bytes += sz
+            urange = format_exact_unicode_range(chunk)
+            css_rules.append(
+                f'@font-face{{font-family:"Zhuangzi Rare";src:{local_src},url("/fonts/slices/{fname}") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:{urange}}}'
+            )
+            print(f"  [rare-{idx:02d}] {len(chunk):3d} chars: {sz/1024:5.1f} KB")
     finally:
         if os.path.exists(tmp_base):
             os.remove(tmp_base)
@@ -244,8 +266,7 @@ def main():
         f.write(ts_content)
 
     print(
-        f"完成：{len(slices)} 个零重叠分片，总体积 {total_bytes/1024:.1f} KB，"
-        f"内联 CSS {len(css_str)/1024:.1f} KB → {TS_OUT}"
+        f"完成：总体积 {total_bytes/1024:.1f} KB，内联 CSS {len(css_str)/1024:.1f} KB → {TS_OUT}"
     )
 
 

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import DailyPassage from "@/components/DailyPassage";
+import DailyPassage, { type DailySnippet } from "@/components/DailyPassage";
 import ReadingHistoryWidget from "@/components/ReadingHistory";
 import SearchBar from "@/components/SearchBar";
+import { chapters } from "@/data/chapters";
 import { chaptersMeta } from "@/data/chapters/metadata";
 import { concepts } from "@/data/concepts";
 import { STARTER_CHAPTER_IDS } from "@/lib/chapters";
@@ -44,13 +45,24 @@ export default function Home() {
   const totalPassages = chaptersMeta.reduce((a, c) => a + c.passageCount, 0);
   const totalConcepts = concepts.length;
   const featuredChapters = chaptersMeta.filter((ch) => featuredSlugs.includes(ch.id));
+  const dailyPool: DailySnippet[] = chapters.map((ch, idx) => {
+    const pIdx = idx % ch.passages.length;
+    const p = ch.passages[pIdx]!;
+    return {
+      chapterId: ch.id,
+      chapterTitle: ch.title,
+      passageNum: pIdx + 1,
+      original: p.original.length > 120 ? `${p.original.slice(0, 120)}…` : p.original,
+      translation: p.translation.length > 140 ? `${p.translation.slice(0, 140)}…` : p.translation,
+    };
+  });
 
   return (
     <div className="max-w-6xl mx-auto">
       {/* ============================================
           Hero Section — Ink Wash Gradient
           ============================================ */}
-      <section className="hero-gradient relative overflow-hidden px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
+      <section className="hero-gradient relative overflow-hidden px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-28">
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/4 left-[10%] w-64 h-64 rounded-full bg-[var(--text-accent)]/3 blur-3xl" />
@@ -122,7 +134,7 @@ export default function Home() {
           Stats Row
           ============================================ */}
       <section
-        className="px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 animate-fade-in-up mb-8 sm:mb-10"
+        className="px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 animate-fade-in-up mb-12 sm:mb-14"
         style={{ animationDelay: "0.1s" }}
       >
         <div className="max-w-lg mx-auto">
@@ -149,7 +161,7 @@ export default function Home() {
       {/* ============================================
           Daily Passage
           ============================================ */}
-      <DailyPassage />
+      <DailyPassage pool={dailyPool} />
 
       {/* ============================================
           Featured Chapters — Highlights
