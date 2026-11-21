@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
           cache: npm
@@ -55,14 +55,14 @@ jobs:
     # 不再 needs: verify —— 两者互不依赖，并行跑可把总时长缩短一个 job；
     # 部署仍要求 verify / build / lighthouse 全部通过。
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
       # Next 增量构建缓存（未命中时不影响正确性）
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: .next/cache
           key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'next.config.ts') }}
@@ -86,7 +86,7 @@ jobs:
       # 真实 Chrome（Runner 自带）打开产物：无控制台报错 / 无 CSP 违规 / 客户端路由 / SW 离线回放
       - name: 浏览器冒烟
         run: npm run smoke
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: out
           path: out/
@@ -99,12 +99,12 @@ jobs:
     timeout-minutes: 20
     needs: build
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v7
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: out
           path: out
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
       # Ubuntu Runner 默认无任何中文系统回退字体（fc-list :lang=zh 为空），
@@ -150,13 +150,13 @@ jobs:
     steps:
       # 必须检出仓库：wrangler 从工作目录读取 functions/ 与 wrangler.toml。
       # 此前这里只下载 out/ 产物，CI 发布出去的站点**不带 /api/chat 边缘函数**。
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: |
             functions
             wrangler.toml
           sparse-checkout-cone-mode: false
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: out
           path: out
@@ -178,7 +178,7 @@ jobs:
           fi
       - name: 推送至 Cloudflare Pages
         if: steps.cf_creds.outputs.configured == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
